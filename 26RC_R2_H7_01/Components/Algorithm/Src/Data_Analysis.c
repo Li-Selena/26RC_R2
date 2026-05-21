@@ -14,6 +14,10 @@ extern void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_u
 extern void LEG_task_USB(float legx,float legy,float h);
 extern void Arm_task_USB(float x,float y,float z);
 
+//模式选择
+extern uint8_t USB_Task_flag;
+extern uint8_t USART_Task_flag ;
+
 //使能标志位
 uint8_t Mecanum_control_flag = 0U;
 uint8_t LEG_control_flag = 0U;
@@ -173,7 +177,8 @@ static void USB_ALL_DISABLE(const uint8_t *datas, uint8_t len)
 }
 static void USB_ALL_MODE_SWITCH(const uint8_t *datas, uint8_t len)
 {
-    
+    USB_Task_flag = 1U;
+    USART_Task_flag  = 0U;
 }
 static void USB_ALL_STOP(const uint8_t *datas, uint8_t len)
 {
@@ -204,8 +209,8 @@ static void USB_MEC_SET_TARGET(const uint8_t *datas, uint8_t len)
     }
 
     /* 根据你的底盘约束修改范围 */
-    vx = Remote_Clamp(vx, MEC_REMOTE_VX_MIN_MS, MEC_REMOTE_VX_MAX_MS);
-    vy = Remote_Clamp(vy, MEC_REMOTE_VY_MIN_MS, MEC_REMOTE_VY_MAX_MS);
+    vx = Remote_Clamp(vx, MEC_REMOTE_VX_MIN_RPM, MEC_REMOTE_VX_MAX_RPM);
+    vy = Remote_Clamp(vy, MEC_REMOTE_VY_MIN_RPM, MEC_REMOTE_VY_MAX_RPM);
     vw = Remote_Clamp(vw, MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
 
     /* 保存最近一次USB底盘目标 */

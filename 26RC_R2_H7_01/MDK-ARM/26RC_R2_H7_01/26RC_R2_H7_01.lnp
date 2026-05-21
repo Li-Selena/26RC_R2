@@ -9,6 +9,7 @@
 "26rc_r2_h7_01\fdcan_receive.o"
 "26rc_r2_h7_01\imu.o"
 "26rc_r2_h7_01\wit_c_sdk.o"
+"26rc_r2_h7_01\arm_tools.o"
 "26rc_r2_h7_01\crc.o"
 "26rc_r2_h7_01\leg.o"
 "26rc_r2_h7_01\mecanum_classic.o"

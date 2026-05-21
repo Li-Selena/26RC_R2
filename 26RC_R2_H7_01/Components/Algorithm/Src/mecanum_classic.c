@@ -17,72 +17,34 @@ static float max_f(float a, float b)
 }
 
 /**
- * @brief Âó¿ËÄÉÄ·ÂÖÄæÔË¶¯Ñ§
+ * @brief ï¿½ï¿½ï¿½ï¿½ï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½Ë¶ï¿½Ñ§
  */
-//void Mecanum_Calc(
-//    const ChassisVel_t *chassis,
-//    const MecanumParam_t *param,
-//    WheelSpeed_t *wheel)
-//{
-//    float r = param->wheel_radius;
-//    float L = param->wheel_base * 0.5f;
-//    float W = param->wheel_track * 0.5f;
 
-//    float vx = chassis->vx;
-//    float vy = chassis->vy;
-//    float vw = chassis->vw;//chassis->vwÎªÄ¿±ê½ÇËÙ¶Èpid£¬pid(ÍÓÂÝÒÇ¶ÁÈ¡Öµ£¬Ä¿±êÖµ)
-
-//    //Äæ½âËã
-//    float k = (L + W) * vw;
-
-//    wheel->fl = ( vx - vy - k ) / r;
-//    wheel->fr = ( vx + vy + k ) / r;
-//    wheel->bl = ( vx + vy - k ) / r;
-//    wheel->br = ( vx - vy + k ) / r;
-
-//    //ËÙ¶È¹éÒ»»¯
-//    float max_val = 0.0f;
-
-//    max_val = max_f(max_val, abs_f(wheel->fl));
-//    max_val = max_f(max_val, abs_f(wheel->fr));
-//    max_val = max_f(max_val, abs_f(wheel->bl));
-//    max_val = max_f(max_val, abs_f(wheel->br));
-
-//    if (max_val > param->max_wheel_speed)
-//    {
-//        float scale = param->max_wheel_speed / max_val;
-
-//        wheel->fl *= scale;
-//        wheel->fr *= scale;
-//        wheel->bl *= scale;
-//        wheel->br *= scale;
-//    }
-//}
 
 void Mecanum_Calc(
     const ChassisVel_t *chassis,
     const MecanumParam_t *param,
     WheelSpeed_t *wheel)
 {
-    float r = param->wheel_radius;       // ÂÖ×Ó°ë¾¶
-    float L = param->wheel_base * 0.5f;  // Öá¾àµÄÒ»°ë£¨Ç°ºóÂÖÖÐÐÄµ½µ×ÅÌÖÐÐÄµÄ¾àÀë£©
-    float W = param->wheel_track * 0.5f; // ÂÖ¾àµÄÒ»°ë£¨×óÓÒÂÖÖÐÐÄµ½µ×ÅÌÖÐÐÄµÄ¾àÀë£©
+    float r = param->wheel_radius;       // ï¿½ï¿½ï¿½Ó°ë¾¶
+    float L = param->wheel_base * 0.5f;  // ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ë£¨Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄµÄ¾ï¿½ï¿½ë£©
+    float W = param->wheel_track * 0.5f; // ï¿½Ö¾ï¿½ï¿½Ò»ï¿½ë£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÄµÄ¾ï¿½ï¿½ë£©
 
-    // ÌáÈ¡µ×ÅÌËÙ¶È£¨chassis->vy=Ç°½ø/ºóÍË£¬chassis->vx=×ó/ÓÒÆ½ÒÆ£¬chassis->vw=×Ô×ª£©
-    float chassis_vx = chassis->vx;  // ÐÂXÖá£ºÏòÓÒÎªÕý
-    float chassis_vy = chassis->vy;  // ÐÂYÖá£ºÏòÉÏ£¨Ç°½ø£©ÎªÕý
-    float chassis_vw = -chassis->vw;  // ×Ô×ª£ºÄæÊ±Õë£¨×ó×ª£©ÎªÕý//chassis->vwÎªÄ¿±ê½ÇËÙ¶Èpid£¬pid(ÍÓÂÝÒÇ¶ÁÈ¡Öµ£¬Ä¿±êÖµ)
+    // ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½Ù¶È£ï¿½chassis->vy=Ç°ï¿½ï¿½/ï¿½ï¿½ï¿½Ë£ï¿½chassis->vx=ï¿½ï¿½/ï¿½ï¿½Æ½ï¿½Æ£ï¿½chassis->vw=ï¿½ï¿½×ªï¿½ï¿½
+    float chassis_vx = chassis->vx;  // ï¿½ï¿½Xï¿½á£ºï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
+    float chassis_vy = chassis->vy;  // ï¿½ï¿½Yï¿½á£ºï¿½ï¿½ï¿½Ï£ï¿½Ç°ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½
+    float chassis_vw = -chassis->vw;  // ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½Ê±ï¿½ë£¨ï¿½ï¿½×ªï¿½ï¿½Îªï¿½ï¿½//chassis->vwÎªÄ¿ï¿½ï¿½ï¿½ï¿½Ù¶ï¿½pidï¿½ï¿½pid(ï¿½ï¿½ï¿½ï¿½ï¿½Ç¶ï¿½È¡Öµï¿½ï¿½Ä¿ï¿½ï¿½Öµ)
 
-    // Äæ½âËãºËÐÄ¹«Ê½£¨ÊÊÅäÐÂ×ø±êÏµ£©
-    float k = (L + W) * chassis_vw;  // ×Ô×ªÏîÏµÊý
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½Ê½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+    float k = (L + W) * chassis_vw;  // ï¿½ï¿½×ªï¿½ï¿½Ïµï¿½ï¿½
 
-    // ÂÖ×Ó×ªËÙ¼ÆËã£¨rad/s£©£ºfl=×óÇ°¡¢fr=ÓÒÇ°¡¢bl=×óºó¡¢br=ÓÒºó
-    wheel->fl = (chassis_vy + chassis_vx - k) / r;  // ×óÇ°ÂÖ
-    wheel->fr = (chassis_vy - chassis_vx + k) / r;  // ÓÒÇ°ÂÖ
-    wheel->bl = (chassis_vy - chassis_vx - k) / r;  // ×óºóÂÖ
-    wheel->br = (chassis_vy + chassis_vx + k) / r;  // ÓÒºóÂÖ
+    // ï¿½ï¿½ï¿½ï¿½×ªï¿½Ù¼ï¿½ï¿½ã£¨rad/sï¿½ï¿½ï¿½ï¿½fl=ï¿½ï¿½Ç°ï¿½ï¿½fr=ï¿½ï¿½Ç°ï¿½ï¿½bl=ï¿½ï¿½ï¿½br=ï¿½Òºï¿½
+    wheel->fl = (chassis_vy + chassis_vx - k) / r;  // ï¿½ï¿½Ç°ï¿½ï¿½
+    wheel->fr = (chassis_vy - chassis_vx + k) / r;  // ï¿½ï¿½Ç°ï¿½ï¿½
+    wheel->bl = (chassis_vy - chassis_vx - k) / r;  // ï¿½ï¿½ï¿½ï¿½ï¿½
+    wheel->br = (chassis_vy + chassis_vx + k) / r;  // ï¿½Òºï¿½ï¿½ï¿½
 
-    // ËÙ¶È¹éÒ»»¯£º·ÀÖ¹µ¥¸öÂÖ×Ó×ªËÙ³¬¹ý×î´óÏÞÖÆ
+    // ï¿½Ù¶È¹ï¿½Ò»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½Ù³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     float max_val = 0.0f;
     max_val = max_f(max_val, abs_f(wheel->fl));
     max_val = max_f(max_val, abs_f(wheel->fr));

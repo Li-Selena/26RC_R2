@@ -82,8 +82,10 @@ void Control_Task(void const * argument){
   {
     USB_RX_task();
     BT_Data_MAC_Process(&total_vel.vx,&total_vel.vy,&total_vel.vw,&LEG_Cmd); 
+    
+    // USB_Task_flag = 1U;
+    // USART_Task_flag = 0U;
 
-    // Arm_task();
     if(USART_Task_flag == 1U)
     {
         Mecanum_task();

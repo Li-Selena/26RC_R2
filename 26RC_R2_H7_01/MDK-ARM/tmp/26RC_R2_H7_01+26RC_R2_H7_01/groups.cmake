@@ -52,6 +52,7 @@ add_library(Group_Components_Device OBJECT
   "${SOLUTION_ROOT}/../Components/Device/Src/fdcan_receive.c"
   "${SOLUTION_ROOT}/../Components/Device/Src/imu.c"
   "${SOLUTION_ROOT}/../Components/Device/Src/wit_c_sdk.c"
+  "${SOLUTION_ROOT}/../Components/Device/Src/arm_tools.c"
 )
 target_include_directories(Group_Components_Device PUBLIC
   $<TARGET_PROPERTY:${CONTEXT},INTERFACE_INCLUDE_DIRECTORIES>

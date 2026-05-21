@@ -447,6 +447,11 @@
               <FileType>1</FileType>
               <FilePath>..\Components\Device\Src\wit_c_sdk.c</FilePath>
             </File>
+            <File>
+              <FileName>arm_tools.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Components\Device\Src\arm_tools.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>

@@ -1,12 +1,12 @@
 #ifndef MECANUM_KINEMATICS_H
 #define MECANUM_KINEMATICS_H
 
-#define MEC_REMOTE_VX_MIN_MS   -500.0f   // m/s
-#define MEC_REMOTE_VX_MAX_MS    500.0f   // m/s  
-#define MEC_REMOTE_VY_MIN_MS   -500.0f   // m/s
-#define MEC_REMOTE_VY_MAX_MS    500.0f   // m/s  
-#define MEC_REMOTE_VW_MIN_RAD_S   -3.14f/2.0f*250.0f  // rad/s
-#define MEC_REMOTE_VW_MAX_RAD_S    3.14f/2.0f*250.0f  // rad/s   
+#define MEC_REMOTE_VX_MIN_RPM      -9000.0f   // rpm
+#define MEC_REMOTE_VX_MAX_RPM       9000.0f   // rpm
+#define MEC_REMOTE_VY_MIN_RPM      -9000.0f   // rpm
+#define MEC_REMOTE_VY_MAX_RPM       9000.0f   // rpm
+#define MEC_REMOTE_VW_MIN_RAD_S    -3.14f/2.0f*250.0f  // rad/s
+#define MEC_REMOTE_VW_MAX_RAD_S     3.14f/2.0f*250.0f  // rad/s   
 
 typedef struct
 {

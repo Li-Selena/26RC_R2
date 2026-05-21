@@ -92,6 +92,7 @@ project:
         - file: ../Components/Device/Src/fdcan_receive.c
         - file: ../Components/Device/Src/imu.c
         - file: ../Components/Device/Src/wit_c_sdk.c
+        - file: ../Components/Device/Src/arm_tools.c
     - group: Components/Algorithm
       files:
         - file: ../Components/Algorithm/Src/CRC.c

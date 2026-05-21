@@ -18,7 +18,7 @@ volatile uint8_t bt_parse_ok = 0;
 uint8_t btReceiveData = 0;
 
 uint8_t USB_Task_flag = 0;
-uint8_t USART_Task_flag = 0;\
+uint8_t USART_Task_flag = 0;
 uint8_t UU_flag = 0;
 
 

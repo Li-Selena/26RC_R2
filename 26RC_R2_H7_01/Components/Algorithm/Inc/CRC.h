@@ -4,19 +4,19 @@
 #include "stm32h7xx_hal.h"
 #include <stdint.h>
 
-#define ARM_REMOTE_X_MIN_MM   (-500.0f)
-#define ARM_REMOTE_X_MAX_MM   ( 500.0f)
+#define ARM_REMOTE_X_MIN_MM   (-500.0f )
+#define ARM_REMOTE_X_MAX_MM   ( 500.0f )
 
-#define ARM_REMOTE_Y_MIN_MM   (-500.0f)
-#define ARM_REMOTE_Y_MAX_MM   ( 500.0f)
+#define ARM_REMOTE_Y_MIN_MM   (-500.0f )
+#define ARM_REMOTE_Y_MAX_MM   ( 500.0f )
 
-#define ARM_REMOTE_Z_MIN_MM   ( 50.0f)
-#define ARM_REMOTE_Z_MAX_MM   ( 500.0f)
+#define ARM_REMOTE_Z_MIN_MM   ( 50.0f  )
+#define ARM_REMOTE_Z_MAX_MM   ( 500.0f )
 
-#define ARM_REMOTE_RAW_XY_MIN  (-127.0f)  // 接收XY轴原始值最小值
-#define ARM_REMOTE_RAW_XY_MAX  ( 127.0f)  // 接收XY轴原始值最大值
-#define ARM_REMOTE_RAW_Z_MIN   (50.0f)   // 接收Z轴原始值最小值
-#define ARM_REMOTE_RAW_Z_MAX   (120.0f)   // 接收Z轴原始值最大值
+#define ARM_REMOTE_RAW_XY_MIN  (-127.0f)   // 接收XY轴原始值最小值
+#define ARM_REMOTE_RAW_XY_MAX  ( 127.0f)   // 接收XY轴原始值最大值
+#define ARM_REMOTE_RAW_Z_MIN   (50.0f  )   // 接收Z轴原始值最小值
+#define ARM_REMOTE_RAW_Z_MAX   (120.0f )   // 接收Z轴原始值最大值
 
 /* 遥控器接收状态 */
 typedef enum

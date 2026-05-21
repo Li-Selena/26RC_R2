@@ -181,6 +181,8 @@ build:
           category: sourceC
         - file: ../../../../Components/Device/Src/wit_c_sdk.c
           category: sourceC
+        - file: ../../../../Components/Device/Src/arm_tools.c
+          category: sourceC
     - group: Components/Algorithm
       files:
         - file: ../../../../Components/Algorithm/Src/CRC.c

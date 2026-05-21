@@ -17,6 +17,7 @@ static void DM_Moter3_Init(int Mode);
 static void DM_Moter4_Init(int Mode);
 static void DM_Moter5_Init(int Mode);
 static void DM_Moter6_Init(int Mode);
+static void DM_save_pos_zero(void);
 
 void MCU_Init(void)
 {
@@ -37,6 +38,7 @@ static void DM_Moter_Init(void)
 	DM_Moter4_Init(pos_mode);
 	DM_Moter5_Init(pos_mode);
 	DM_Moter6_Init(pos_mode);
+	// DM_save_pos_zero();
 	
 }
 
@@ -71,7 +73,6 @@ static void DM_Moter1_Init(int Mode)
 	Delay_ms(100);
 	
 	dm_motor_enable(&hfdcan1, &motor[Motor1]);	
-//	save_pos_zero(&hfdcan1, motor[Motor1].id,POS_MODE);
 	
 }
 static void DM_Moter2_Init(int Mode)
@@ -90,7 +91,6 @@ static void DM_Moter2_Init(int Mode)
 	Delay_ms(100);
 	
 	dm_motor_enable(&hfdcan1, &motor[Motor2]);	
-//	save_pos_zero(&hfdcan1, motor[Motor2].id,POS_MODE);
 }
 static void DM_Moter3_Init(int Mode)
 {
@@ -108,7 +108,6 @@ static void DM_Moter3_Init(int Mode)
 	Delay_ms(100);
 	
 	dm_motor_enable(&hfdcan1, &motor[Motor3]);	
-//	save_pos_zero(&hfdcan1, motor[Motor3].id,POS_MODE);
 	
 }
 static void DM_Moter4_Init(int Mode)
@@ -127,7 +126,6 @@ static void DM_Moter4_Init(int Mode)
 	Delay_ms(100);
 	
 	dm_motor_enable(&hfdcan1, &motor[Motor4]);	
-//	save_pos_zero(&hfdcan1, motor[Motor4].id,POS_MODE);
 	
 }
 static void DM_Moter5_Init(int Mode)
@@ -146,7 +144,6 @@ static void DM_Moter5_Init(int Mode)
 	Delay_ms(100);
 	
 	dm_motor_enable(&hfdcan1, &motor[Motor5]);	
-//	save_pos_zero(&hfdcan1, motor[Motor5].id,POS_MODE);
 	
 }
 static void DM_Moter6_Init(int Mode)
@@ -165,6 +162,15 @@ static void DM_Moter6_Init(int Mode)
 	Delay_ms(100);
 	
 	dm_motor_enable(&hfdcan1, &motor[Motor6]);	
-//	save_pos_zero(&hfdcan1, motor[Motor6].id,POS_MODE);
 	
+}
+
+static void DM_save_pos_zero(void)
+{
+	save_pos_zero(&hfdcan1, motor[Motor1].id,POS_MODE);
+	save_pos_zero(&hfdcan1, motor[Motor2].id,POS_MODE);
+	save_pos_zero(&hfdcan1, motor[Motor3].id,POS_MODE);
+	save_pos_zero(&hfdcan1, motor[Motor4].id,POS_MODE);
+	save_pos_zero(&hfdcan1, motor[Motor5].id,POS_MODE);
+	save_pos_zero(&hfdcan1, motor[Motor6].id,POS_MODE);
 }
