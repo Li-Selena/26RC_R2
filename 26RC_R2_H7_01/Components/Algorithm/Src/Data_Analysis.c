@@ -10,7 +10,7 @@ static uint8_t USB_Decode3Float(const uint8_t *datas, uint8_t len,
                                 float *v1, float *v2, float *v3);
 static float Remote_Clamp(float num, float min_val, float max_val);
 
-extern void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, WheelSpeed_t *speed_user);    //麦克纳姆轮底盘控制处理，专门给USB数据解析调用的接口
+extern void Mecanum_task_USB(ChassisVel_t *chassis_user, TrapezoidMecanumParam_t *param_user, WheelSpeed_t *speed_user);    //麦克纳姆轮底盘控制处理，专门给USB数据解析调用的接口
 extern void LEG_task_USB(float legx,float legy,float h);
 extern void Arm_task_USB(float x,float y,float z);
 
@@ -24,7 +24,7 @@ uint8_t LEG_control_flag = 0U;
 uint8_t Arm_control_flag = 0U;
 
 //麦克纳姆底盘参数
-extern MecanumParam_t mecParam;
+extern TrapezoidMecanumParam_t mecParam;
 ChassisVel_t total_vel_USB = {0};
 WheelSpeed_t total_speed_USB = {0};
 

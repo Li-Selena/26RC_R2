@@ -68,4 +68,5 @@
   ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h \
   ..\Components\Algorithm\Inc\arm_user.h \
   ..\Components\Algorithm\Inc\arm_echo_uart10.h \
+  ..\Components\Device\Inc\arm_tools.h \
   ..\Applications\Task\Inc\INS_Task.h

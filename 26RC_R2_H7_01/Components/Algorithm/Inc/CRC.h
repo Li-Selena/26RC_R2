@@ -34,7 +34,7 @@ typedef enum
  * byte7           : arm_flag
  * byte8  ~ byte10 : arm_X / arm_Y / arm_Z
  */
-#define BT_FRAME_DATA_LEN   14U
+#define BT_FRAME_DATA_LEN   16U
 
 extern ParseState BT_Uart10;
 extern uint8_t bt_data[BT_FRAME_DATA_LEN];
@@ -62,6 +62,9 @@ extern float arm_Z;
 
 extern int8_t pre_step_flag;
 extern float pre_step_wheel_speed ;
+
+extern uint8_t tool_flag;
+extern uint8_t tooluse_flag;
 
 void UART10_Receive(uint8_t receiveData);
 void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd);

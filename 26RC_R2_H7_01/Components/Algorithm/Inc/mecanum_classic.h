@@ -23,21 +23,27 @@ typedef struct
     float br;
 } WheelSpeed_t;
 
+
 typedef struct
 {
-    float wheel_radius;     // r  (m)
-    float wheel_base;       // L  (m) ǰ���־�
-    float wheel_track;      // W  (m) �����־�
-    float max_wheel_speed;  // ������� (rad/s �� rpm�������һ��)
-} MecanumParam_t;
+    float wheel_radius;     // r (m) 轮子半径
+    
+    // 梯形底盘特有参数（均为主轴中心到轮子中心的距离）
+    float L_front;          // 前轴到中心的距离 (m)
+    float L_rear;           // 后轴到中心的距离 (m)
+    float W_front;          // 前轮左右轮距的一半 (m)
+    float W_rear;           // 后轮左右轮距的一半 (m)
+    
+    float max_wheel_speed;  // 最大轮速
+} TrapezoidMecanumParam_t;
 
 extern ChassisVel_t total_vel ;
 extern WheelSpeed_t total_speed;
-extern MecanumParam_t mecParam;
+extern TrapezoidMecanumParam_t mecParam;
 
 void Mecanum_Calc(
     const ChassisVel_t *chassis,
-    const MecanumParam_t *param,
+    const TrapezoidMecanumParam_t *param,
     WheelSpeed_t *wheel);
 
 #endif

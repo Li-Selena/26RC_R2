@@ -92,12 +92,12 @@ void CAN_Task(void const * argument){
 
 		    Delay_ms(1);
 		}
-            pos_ctrl(&hfdcan1,motor[Motor1].id,lf_leg.theta1,0.2);
-		    pos_ctrl(&hfdcan1,motor[Motor2].id,lf_leg.theta2,0.2);
-		    pos_ctrl(&hfdcan1,motor[Motor3].id,rf_leg.theta1,0.2);
-		    pos_ctrl(&hfdcan1,motor[Motor4].id,rf_leg.theta2,0.2);
-		    pos_ctrl(&hfdcan1,motor[Motor5].id,lb_leg,1);
-		    pos_ctrl(&hfdcan1,motor[Motor6].id,rb_leg,1);
+            pos_ctrl(&hfdcan1,motor[Motor1].id,lf_leg.theta1,0.5);
+		    pos_ctrl(&hfdcan1,motor[Motor2].id,lf_leg.theta2,0.5);
+		    pos_ctrl(&hfdcan1,motor[Motor3].id,rf_leg.theta1,0.5);
+		    pos_ctrl(&hfdcan1,motor[Motor4].id,rf_leg.theta2,0.5);
+		    pos_ctrl(&hfdcan1,motor[Motor5].id,lb_leg,2);
+		    pos_ctrl(&hfdcan1,motor[Motor6].id,rb_leg,2);
 
 		    // pos_ctrl(&hfdcan1,motor[Motor1].id,0,0.5);
 		    // pos_ctrl(&hfdcan1,motor[Motor2].id,0,0.5);

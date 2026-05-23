@@ -13,7 +13,7 @@ build-idx:
         info:
           - 26RC_R2_H7_01.cbuild-pack.yml - file is already up-to-date
           - 26RC_R2_H7_01+26RC_R2_H7_01.cbuild-run.yml - file is already up-to-date
-          - 26RC_R2_H7_01+26RC_R2_H7_01.cbuild.yml - file generated successfully
+          - 26RC_R2_H7_01+26RC_R2_H7_01.cbuild.yml - file is already up-to-date
       packs-unused:
         - pack: ARM::CMSIS-DSP@1.16.2
         - pack: ARM::CMSIS-NN@4.1.0

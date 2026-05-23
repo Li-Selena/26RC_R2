@@ -38,7 +38,7 @@ extern uint8_t LEG_control_flag ;
 extern uint8_t Arm_control_flag ;
 
 //麦克纳姆底盘参数
-extern MecanumParam_t mecParam;
+extern TrapezoidMecanumParam_t mecParam;
 extern ChassisVel_t total_vel_USB;
 extern WheelSpeed_t total_speed_USB;
 

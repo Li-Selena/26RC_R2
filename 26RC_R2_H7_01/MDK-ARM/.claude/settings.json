@@ -2,6 +2,9 @@
   "permissions": {
     "allow": [
       "Read(//f/spareE/Vinci_Robocon_2026/26_RC_Projects/**)"
+    ],
+    "additionalDirectories": [
+      "f:\\spareE\\Vinci_Robocon_2026\\26_RC_Projects\\26RC_R2_H7_01\\Components\\Algorithm\\Src"
     ]
   }
 }

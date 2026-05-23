@@ -63,4 +63,8 @@
   ..\Components\Algorithm\Inc\leg.h \
   ..\Components\Algorithm\Inc\mecanum_classic.h \
   ..\Components\Algorithm\Inc\CRC.h ..\BSP\Inc\bsp_uart.h \
-  ..\Components\Algorithm\Inc\arm_echo_uart10.h
+  ..\Components\Algorithm\Inc\arm_echo_uart10.h \
+  ..\Components\Device\Inc\arm_tools.h \
+  ..\Components\Algorithm\Inc\Data_analysis.h \
+  ..\Applications\Task\Inc\CAN_Task.h \
+  ..\Applications\Task\Inc\INS_Task.h

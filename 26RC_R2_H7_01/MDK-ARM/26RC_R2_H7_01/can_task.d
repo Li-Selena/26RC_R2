@@ -65,6 +65,10 @@
   ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h \
   ..\Components\Algorithm\Inc\arm_user.h \
   ..\Components\Algorithm\Inc\arm_echo_uart10.h \
+  ..\Components\Device\Inc\arm_tools.h \
+  ..\Components\Algorithm\Inc\Data_analysis.h \
+  ..\Applications\Task\Inc\CAN_Task.h \
+  ..\Applications\Task\Inc\INS_Task.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\CMSIS_RTOS\cmsis_os.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h \
   ..\Core\Inc\FreeRTOSConfig.h \
@@ -78,7 +82,4 @@
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\timers.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\queue.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
-  ..\Applications\Task\Inc\CAN_Task.h \
-  ..\Components\Algorithm\Inc\Data_Analysis.h \
-  ..\Applications\Task\Inc\INS_Task.h
+  ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h

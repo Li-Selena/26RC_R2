@@ -32,7 +32,7 @@ float start_Z_USB = 0.0f;
 //�����ķ�ֵ��̿���
 extern ChassisVel_t total_vel ;
 extern WheelSpeed_t total_speed;
-extern MecanumParam_t mecParam;
+extern TrapezoidMecanumParam_t mecParam;
 
 
 //�������
@@ -54,6 +54,15 @@ extern float legInit_offest;
 //����ָ���ݶ�
 extern int8_t control_cmd ;
 
+//工具句柄
+extern clamp_Handle_t clamp;
+extern chuck_Handle_t chuck;
+
+//串口控制切换工具
+extern uint8_t tool_flag;
+extern uint8_t tooluse_flag;
+
+
 
 //��������
 static void USB_RX_task(void);             //usb���մ���
@@ -62,9 +71,9 @@ static void Mecanum_task(void);             //�����ķ�ֵ��̿��
 static void LEG_task(void);                       //������ƴ���
 static void Arm_task(void);    //��е�ۿ��ƴ���
 
-void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, WheelSpeed_t *speed_user);    //�����ķ�ֵ��̿��ƴ�����ר�Ÿ�USB���ݽ������õĽӿ�
-void LEG_task_USB(float legx,float legy,float h);    //������ƴ�����ר�Ÿ�USB���ݽ������õĽӿ�
-void Arm_task_USB(float x,float y,float z);    //��е�ۿ��ƴ�����ר�Ÿ�USB���ݽ������õĽӿ�
+void Mecanum_task_USB(ChassisVel_t *chassis_user, TrapezoidMecanumParam_t *param_user, WheelSpeed_t *speed_user);    //ķֵ̿ƴרŸUSBݽõĽӿ
+void LEG_task_USB(float legx,float legy,float h);    //ƴרŸUSBݽõĽӿ
+void Arm_task_USB(float x,float y,float z);    //еۿƴרŸUSBݽõĽӿ
 
 void Control_Task(void const * argument){
 	osDelay(1000);
@@ -77,6 +86,9 @@ void Control_Task(void const * argument){
 	// ArmEchoUart10_Init();
 	ArmIK_ComponentInit();
 
+    clamp_init(&clamp);
+    chuck_init(&chuck);
+
 
   for(;;)
   {
@@ -88,6 +100,10 @@ void Control_Task(void const * argument){
 
     if(USART_Task_flag == 1U)
     {
+
+        chuck_state_machine_run(&chuck);
+        clamp_state_machine_run(&clamp);
+
         Mecanum_task();
         osDelay(1);
 
@@ -166,8 +182,11 @@ static void LEG_task(void)
             lf_last_theta2 = lf_leg.theta2;
 
             /* 模型角 -> 控制角 */
-            lf_leg.theta1 = -lf_last_theta1 + LEGINIT_OFFSET;
-            lf_leg.theta2 =  lf_last_theta2 - LEGINIT_OFFSET;
+            // lf_leg.theta1 = -lf_last_theta1 + LEGINIT_OFFSET;
+            // lf_leg.theta2 =  lf_last_theta2 - LEGINIT_OFFSET;
+        	lf_leg.theta1 = -lf_last_theta1;
+	        lf_leg.theta2 =  lf_last_theta2;
+
         }
 
         /* 右前腿 */
@@ -178,8 +197,10 @@ static void LEG_task(void)
             rf_last_theta2 = rf_leg.theta2;
 
             /* 模型角 -> 控制角 */
-            rf_leg.theta1 =  rf_last_theta1 - LEGINIT_OFFSET;
-            rf_leg.theta2 = -rf_last_theta2 + LEGINIT_OFFSET;
+            // rf_leg.theta1 =  rf_last_theta1 - LEGINIT_OFFSET;
+            // rf_leg.theta2 = -rf_last_theta2 + LEGINIT_OFFSET;
+        	rf_leg.theta1 =  rf_last_theta1;
+	        rf_leg.theta2 = -rf_last_theta2;
         }
         lb_leg = 4.0f * (-leghtheta)*3.14159f/180.0f;
 	    rb_leg = 4.0f * ( leghtheta)*3.14159f/180.0f;
@@ -240,7 +261,7 @@ static void Arm_task()
 
 
 
-void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, WheelSpeed_t *speed_user)    //�����ķ�ֵ��̿��ƴ�����ר�Ÿ�USB���ݽ������õĽӿ�
+void Mecanum_task_USB(ChassisVel_t *chassis_user, TrapezoidMecanumParam_t *param_user, WheelSpeed_t *speed_user)    //�����ķ�ֵ��̿��ƴ�����ר�Ÿ�USB���ݽ������õĽӿ�
 {
     Mecanum_Calc(chassis_user, param_user, speed_user);
 }

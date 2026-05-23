@@ -3,6 +3,7 @@
 #include "struct_typedef.h"
 #include "math.h"
 #include <string.h>
+#include "arm_tools.h"
 
 
 
@@ -42,6 +43,9 @@ float mid_Z = 0.0f;
 //上台阶前轮转速
 int8_t pre_step_flag = 0;
 float pre_step_wheel_speed = 0.0f;
+
+uint8_t tool_flag = 0;
+uint8_t tooluse_flag = 0;
 
 
 static int8_t RemoteArm_ClampRawInt8(int8_t raw, int8_t min_val, int8_t max_val);
@@ -214,16 +218,49 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
     {
         USART_Task_flag = 1U;
         USB_Task_flag = 0U;
+        set_clamp_controlSource(&clamp, TOOL_USART_SOURCE);
+        set_chuck_controlSource(&chuck, TOOL_USART_SOURCE);
+
     }
     if(UU_flag == 1U)
     {
         USB_Task_flag = 1U;
         USART_Task_flag = 0U;
+        set_clamp_controlSource(&clamp, TOOL_USB_SOURCE);
+        set_chuck_controlSource(&chuck, TOOL_USB_SOURCE);
+
     }
 
     pre_step_flag = frame[12];
     pre_step_wheel_speed = (int8_t)frame[13] / 128.0f * 2048.0f;
    
+    tool_flag = frame[14];
+    tooluse_flag = frame[15];
+
+// 操作吸盘
+    if(tool_flag == 0U) 
+    {
+        // 只有当期望状态与当前状态不同时，才触发动作
+        if(tooluse_flag == 0U && chuck.state != CHUCK_CLOSE) {
+            trigger_chuck_action(&chuck, CHUCK_CLOSE);
+        }
+        else if(tooluse_flag == 1U && chuck.state != CHUCK_OPEN) {
+            trigger_chuck_action(&chuck, CHUCK_OPEN);
+        }
+    }
+    // 操作夹爪
+    else if(tool_flag == 1U) 
+    {
+        if(tooluse_flag == 0U && clamp.state != CLAMP_CLOSE) {
+            trigger_clamp_action(&clamp, CLAMP_CLOSE);
+        }
+        else if(tooluse_flag == 1U && clamp.state != CLAMP_OPEN) {
+            trigger_clamp_action(&clamp, CLAMP_OPEN);
+        }
+    }
+
+
+
 
 }
 
