@@ -25,6 +25,8 @@ void MCU_Init(void)
 	DM_Moter_Init();
 	DJI_Moter_Init();
 	PID_devices_Init();
+	PID_Yaw_Init();
+
 }
 
 static void DM_Moter_Init(void)

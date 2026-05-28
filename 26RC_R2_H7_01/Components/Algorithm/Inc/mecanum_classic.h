@@ -1,12 +1,16 @@
 #ifndef MECANUM_KINEMATICS_H
 #define MECANUM_KINEMATICS_H
 
-#define MEC_REMOTE_VX_MIN_RPM      -9000.0f   // rpm
-#define MEC_REMOTE_VX_MAX_RPM       9000.0f   // rpm
-#define MEC_REMOTE_VY_MIN_RPM      -9000.0f   // rpm
-#define MEC_REMOTE_VY_MAX_RPM       9000.0f   // rpm
-#define MEC_REMOTE_VW_MIN_RAD_S    -3.14f/2.0f*250.0f  // rad/s
-#define MEC_REMOTE_VW_MAX_RAD_S     3.14f/2.0f*250.0f  // rad/s   
+#define MEC_R  0.075f   // m 轮子半径
+#define RPM_TO_MS  (2.0f * 3.1415926f * MEC_R / 60.0f) // rpm 转换为 m/s 的系数
+#define MOTOR_IN2OUT (187.0f / 3591.0f) // 电机转速到轮子转速的转换系数（根据实际测量）
+
+#define MEC_REMOTE_VX_MIN_RPM      -9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // 3.68m/s 
+#define MEC_REMOTE_VX_MAX_RPM       9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // m/s
+#define MEC_REMOTE_VY_MIN_RPM      -9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // m/s
+#define MEC_REMOTE_VY_MAX_RPM       9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // m/s
+#define MEC_REMOTE_VW_MIN_RAD_S    -3.1415926f * 2.0f / 20.0f  // rad/s
+#define MEC_REMOTE_VW_MAX_RAD_S     3.1415926f * 2.0f / 20.0f  // rad/s
 
 typedef struct
 {

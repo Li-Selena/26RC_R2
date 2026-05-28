@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(cd \"f:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02\" && ls -la)",
+      "Read(//f/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/**)",
+      "Bash(find \"f:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02\" -type d -iname \"*fdcan*\" -o -type d -iname \"*can*\" 2>/dev/null | head -80)"
+    ]
+  }
+}

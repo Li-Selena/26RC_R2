@@ -1,0 +1,155 @@
+#include "Control_Task.h"
+#include "cmsis_os.h"
+#include "pid_user.h"
+#include "CAN_Task.h"
+
+extern float ctrl_j1,ctrl_j2,ctrl_j3;
+extern float model_theta1,model_theta2,model_theta3;
+extern float ctrl_J_USB[4];
+extern float model_J_USB[4];
+extern float ctrl_J_USART[4];
+extern float model_J_USART[4];
+
+extern WheelSpeed_t total_speed ;
+//腿电机角度 rad
+
+static float AngleClamp60(float deg);
+
+
+void CAN_Task(void const * argument){
+	Delay_ms(5000);
+	float Tnum23 = 360.0f / 8192.0f / 3591.0f *187.0f / 5.0f;
+	float Tnum1  = 360.0f / 8192.0f / 36.0f / 94.0f * 19.0f;
+	float mecNum = MOTOR_IN2OUT * RPM_TO_MS;
+	for(;;)
+    {
+
+        // if(USART_Task_flag == 1U)
+		// {
+		// 	if(pre_step_flag == 0)
+        // 	{
+		//     	FDCAN2_CMD_1(PID_velocity_realize_2(total_speed.fl / mecNum,1),
+		// 			         PID_velocity_realize_2(-total_speed.fr / mecNum,2),
+		// 			         PID_velocity_realize_2(total_speed.bl / mecNum,3),
+		// 			         PID_velocity_realize_2(-total_speed.br / mecNum,4)
+		//     	);
+
+		// 	}
+		// 	if(pre_step_flag == 1)
+		// 	{
+		// 		FDCAN2_CMD_1(PID_velocity_realize_2(pre_step_wheel_speed / mecNum,1),
+		// 			         PID_velocity_realize_2(-pre_step_wheel_speed / mecNum,2),
+		// 		 	         PID_velocity_realize_2(total_speed.bl / mecNum,3),
+		// 		 	         PID_velocity_realize_2(-total_speed.br / mecNum,4)
+		//     	);
+		// 	}
+
+		// 	FDCAN3_CMD_1(pid_call_3(-AngleClamp60(ctrl_J_USART[0]) / Tnum1, 1),
+		//     	         pid_call_3( ctrl_J_USART[1] / Tnum23, 2), 
+		//     	         pid_call_3( ctrl_J_USART[2] / Tnum23 ,3), 
+		//     	         0
+		// 	);
+		// 	// FDCAN3_CMD_1(0,
+		//     // 	         30.0f / Tnum, 
+		//     // 	         30.0f / Tnum , 
+		//     // 	         0
+		// 	// );
+
+
+		// }
+		// if(USB_Task_flag == 1U)
+		// {
+        //     if(pre_step_flag == 0)
+        //     {
+		//         FDCAN2_CMD_1(PID_velocity_realize_2(total_speed_USB.fl / mecNum,1),
+		// 		             PID_velocity_realize_2(-total_speed_USB.fr / mecNum,2),
+		// 		             PID_velocity_realize_2(total_speed_USB.bl / mecNum,3),
+		// 		             PID_velocity_realize_2(-total_speed_USB.br / mecNum,4)
+		//         );
+
+		//     }
+		//     if(pre_step_flag == 1)
+		//     {
+		// 	    FDCAN2_CMD_1(PID_velocity_realize_2(pre_step_wheel_speed / mecNum,1),
+		// 		             PID_velocity_realize_2(-pre_step_wheel_speed / mecNum,2),
+		// 		             PID_velocity_realize_2(total_speed_USB.bl / mecNum,3),
+		// 		             PID_velocity_realize_2(-total_speed_USB.br / mecNum,4)
+		//         );
+		//     }
+		//     FDCAN3_CMD_1(pid_call_3(-AngleClamp60(ctrl_J_USB[0]) / Tnum1,1),
+		//                  pid_call_3(ctrl_J_USB[1] / Tnum23, 2), 
+		//                  pid_call_3( ctrl_J_USB[2] / Tnum23 ,3), 
+		//                  0
+		//     );
+
+
+		//     Delay_ms(1);
+		// }
+		FDCAN1_CMD_1(100,100,100,100);
+		FDCAN2_CMD_1(100,100,100,100);
+		FDCAN3_CMD_1(100,100,100,100);
+		Delay_ms(1);
+		
+        osDelay(1);
+    }
+
+	
+}
+
+
+float AngleClamp60(float deg)
+{
+    if (deg > 60.0f)
+        return 60.0f;
+    else if (deg < -60.0f)
+        return -60.0f;
+    else
+        return deg;
+}
+//测试用例
+	// FDCAN3_CMD_1(PID_velocity_realize_3(1500,1), 
+	// 	         PID_velocity_realize_3(1500,2), 
+	// 	         PID_velocity_realize_3(1500,3), 
+	// 	         PID_velocity_realize_3(1500,4)
+	// );
+//		FDCAN3_CMD_1(0, 
+//		             0, 
+//		             0, 
+//		             PID_velocity_realize_3(1500,4)
+//		);
+//		FDCAN3_CMD_1(0,
+//		             pid_call_3(-ctrl_j2 / Tnum, 2), 
+//		             pid_call_3( ctrl_j3 / Tnum ,3), 
+//		             0
+//		);
+
+    // osDelay(1);
+
+
+	// FDCAN2_CMD_1(PID_velocity_realize_2(1500,1), 
+	// 	         PID_velocity_realize_2(1500,2), 
+	// 	         PID_velocity_realize_2(1500,3), 
+	// 	         PID_velocity_realize_2(1500,4)
+	// );
+
+    // osDelay(1);
+		// FDCAN2_CMD_1(PID_velocity_realize_2(1500,1), 
+		// 	         PID_velocity_realize_2(1500,2), 
+		// 	         PID_velocity_realize_2(1500,3), 
+		// 	         PID_velocity_realize_2(1500,4)
+		// 			);	
+		// FDCAN3_CMD_1(PID_velocity_realize_3(1500,1), 
+		// 	         PID_velocity_realize_3(1500,2), 
+		// 	         PID_velocity_realize_3(1500,3), 
+		// 	         PID_velocity_realize_3(1500,4)
+		// 			);		
+		// FDCAN2_CMD_1(0, 
+		// 	         0, 
+		// 	         0, 
+		// 	         0
+		// 			);	
+		// FDCAN3_CMD_1(0, 
+		// 	         0, 
+		// 	         0, 
+		// 	         0
+		// 			);	

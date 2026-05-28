@@ -16,7 +16,8 @@
 //麦克纳姆底盘控制
 #define USB_CMD_MEC_ENABLE        0x11U
 #define USB_CMD_MEC_DISABLE       0x10U
-#define USB_CMD_MEC_SET_TARGET    0x12U//目标点下发
+#define USB_CMD_MEC_SET_TARGET1   0x1AU//机器人坐标
+#define USB_CMD_MEC_SET_TARGET2   0x1BU//世界坐标
 #define USB_CMD_MEC_STOP          0x13U
 #define USB_CMD_MEC_GET_STATUS    0x14U
 //腿部控制

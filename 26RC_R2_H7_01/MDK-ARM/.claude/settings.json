@@ -1,7 +1,10 @@
 {
   "permissions": {
     "allow": [
-      "Read(//f/spareE/Vinci_Robocon_2026/26_RC_Projects/**)"
+      "Read(//f/spareE/Vinci_Robocon_2026/26_RC_Projects/**)",
+      "Bash(xxd)",
+      "Bash(cd \"f:/spareE/Vinci_Robocon_2026/26_RC_Projects/26RC_R2_H7_01\" && sed -i '/^}$/{ *)",
+      "Bash(grep -n \"^}$\" Components/Controller/Src/pid_user.c)"
     ],
     "additionalDirectories": [
       "f:\\spareE\\Vinci_Robocon_2026\\26_RC_Projects\\26RC_R2_H7_01\\Components\\Algorithm\\Src"

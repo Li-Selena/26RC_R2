@@ -44,4 +44,8 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd_ex.h \
   ..\BSP\Inc\include.h ..\Core\Inc\main.h ..\Core\Inc\gpio.h \
   ..\BSP\Inc\struct_typedef.h ..\Components\Device\Inc\fdcan_receive.h \
-  ..\BSP\Inc\bsp_fdcan.h ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_tick.h
+  ..\BSP\Inc\bsp_fdcan.h ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_tick.h \
+  ..\Components\Device\Inc\imu.h ..\Components\Device\Inc\wit_c_sdk.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdio.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
+  ..\Components\Device\Inc\REG.h

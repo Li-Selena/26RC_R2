@@ -4,10 +4,11 @@
 #include "mecanum_classic.h"
 #include <string.h>
 #include <stddef.h>
+#include "pid_user.h"
 
 static float USB_BytesToFloatLE(const uint8_t *buf);
-static uint8_t USB_Decode3Float(const uint8_t *datas, uint8_t len,
-                                float *v1, float *v2, float *v3);
+static uint8_t USB_Decode4Float(const uint8_t *datas, uint8_t len,
+                                float *d1, float *d2, float *d3, float *d4);
 static float Remote_Clamp(float num, float min_val, float max_val);
 
 extern void Mecanum_task_USB(ChassisVel_t *chassis_user, TrapezoidMecanumParam_t *param_user, WheelSpeed_t *speed_user);    //麦克纳姆轮底盘控制处理，专门给USB数据解析调用的接口
@@ -49,7 +50,8 @@ static void USB_ALL_GET_STATUS(const uint8_t *datas, uint8_t len);
 
 static void USB_MEC_ENABLE(const uint8_t *datas, uint8_t len);
 static void USB_MEC_DISABLE(const uint8_t *datas, uint8_t len);
-static void USB_MEC_SET_TARGET(const uint8_t *datas, uint8_t len);
+static void USB_MEC_SET_TARGET1(const uint8_t *datas, uint8_t len);
+static void USB_MEC_SET_TARGET2(const uint8_t *datas, uint8_t len);
 static void USB_MEC_STOP(const uint8_t *datas, uint8_t len);
 static void USB_MEC_GET_STATUS(const uint8_t *datas, uint8_t len);
 
@@ -98,8 +100,12 @@ void Data_Analysis(uint8_t cmd, const uint8_t* datas, uint8_t len)
             USB_MEC_DISABLE(datas, len);
         break;
 
-        case USB_CMD_MEC_SET_TARGET:
-            USB_MEC_SET_TARGET(datas, len);
+        case USB_CMD_MEC_SET_TARGET1:
+            USB_MEC_SET_TARGET1(datas, len);
+        break;
+
+        case USB_CMD_MEC_SET_TARGET2:
+            USB_MEC_SET_TARGET2(datas, len);
         break;
 
         case USB_CMD_MEC_STOP:
@@ -198,11 +204,12 @@ static void USB_MEC_DISABLE(const uint8_t *datas, uint8_t len)
 {
     Mecanum_control_flag = 0U;
 }
-static void USB_MEC_SET_TARGET(const uint8_t *datas, uint8_t len)
+static void USB_MEC_SET_TARGET1(const uint8_t *datas, uint8_t len)
 {
-    float vx, vy, vw;
+    Chassis_Yaw_PID_Clear();
+    float vx, vy, vw, angle;
 
-    if (USB_Decode3Float(datas, len, &vx, &vy, &vw) == 0U)
+    if (USB_Decode4Float(datas, len, &vx, &vy, &vw, &angle) == 0U)
     {
         /* 这里可以换成底盘自己的错误回传命令 */
         return;
@@ -211,7 +218,7 @@ static void USB_MEC_SET_TARGET(const uint8_t *datas, uint8_t len)
     /* 根据你的底盘约束修改范围 */
     vx = Remote_Clamp(vx, MEC_REMOTE_VX_MIN_RPM, MEC_REMOTE_VX_MAX_RPM);
     vy = Remote_Clamp(vy, MEC_REMOTE_VY_MIN_RPM, MEC_REMOTE_VY_MAX_RPM);
-    vw = Remote_Clamp(vw, MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
+    vw = Remote_Clamp(vw + Chassis_Yaw_Robot_Frame_Ctrl(angle), MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
 
     /* 保存最近一次USB底盘目标 */
     total_vel_USB.vx = vx;
@@ -233,6 +240,41 @@ static void USB_MEC_SET_TARGET(const uint8_t *datas, uint8_t len)
         }
     }
 }
+static void USB_MEC_SET_TARGET2(const uint8_t *datas, uint8_t len)
+{
+    Chassis_Yaw_PID_Clear();
+    float vx, vy, vw, angle;
+
+    if (USB_Decode4Float(datas, len, &vx, &vy, &vw, &angle) == 0U)
+    {
+        /* 这里可以换成底盘自己的错误回传命令 */
+        return;
+    }
+
+    /* 根据你的底盘约束修改范围 */
+    vx = Remote_Clamp(vx, MEC_REMOTE_VX_MIN_RPM, MEC_REMOTE_VX_MAX_RPM);
+    vy = Remote_Clamp(vy, MEC_REMOTE_VY_MIN_RPM, MEC_REMOTE_VY_MAX_RPM);
+    vw = Remote_Clamp(vw + Chassis_Yaw_World_Frame_Ctrl(angle), MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
+
+    /* 保存最近一次USB底盘目标 */
+    total_vel_USB.vx = vx;
+    total_vel_USB.vy = vy;
+    total_vel_USB.vw = vw;
+
+    if (USB_Task_flag == 1U)
+    {
+        if (Mecanum_control_flag == 1U)
+        {
+            Mecanum_task_USB(&total_vel_USB, &mecParam, &total_speed_USB);
+        }
+        else 
+        {
+            total_speed_USB.fl = 0.0f;
+            total_speed_USB.fr = 0.0f;
+            total_speed_USB.bl = 0.0f;
+            total_speed_USB.br = 0.0f;
+        }
+    }}
 static void USB_MEC_STOP(const uint8_t *datas, uint8_t len)
 {
     total_speed_USB.fl = 0.0f;
@@ -268,7 +310,7 @@ static void USB_LEG_SET_TARGET(const uint8_t *datas, uint8_t len)
 {
     float legx, legy, h;
 
-    if (USB_Decode3Float(datas, len, &legx, &legy, &h) == 0U)
+    if (USB_Decode4Float(datas, len, &legx, &legy, &h, NULL) == 0U)
     {
         /* 这里你可以换成腿部自己的错误回传命令 */
         return;
@@ -338,7 +380,7 @@ static void USB_ARM_SET_TARGET(const uint8_t *datas, uint8_t len)
 {
     float x, y, z;
 
-    if (USB_Decode3Float(datas, len, &x, &y, &z) == 0U)
+    if (USB_Decode4Float(datas, len, &x, &y, &z, NULL) == 0U)
     {
         uint8_t tx_data[2];
         tx_data[0] = ARM_IK_RESULT_PARAM_ERR;
@@ -367,11 +409,11 @@ static void USB_ARM_SET_TARGET(const uint8_t *datas, uint8_t len)
 	        ctrl_J_USB[1] = 0.0f;
 	        ctrl_J_USB[2] = 0.0f;
         }
-        if(state_arm_flag_num != Arm_control_flag)
-        {
-            state_arm_flag_num = Arm_control_flag;
-            state_arm_flag_count ++;
-        }
+        // if(state_arm_flag_num != Arm_control_flag)
+        // {
+        //     state_arm_flag_num = Arm_control_flag;
+        //     state_arm_flag_count ++;
+        // }
 
     }
 }
@@ -405,27 +447,37 @@ static float USB_BytesToFloatLE(const uint8_t *buf)
     return u.f;
 }
 
-static uint8_t USB_Decode3Float(const uint8_t *datas, uint8_t len,
-                                float *v1, float *v2, float *v3)
+static uint8_t USB_Decode4Float(const uint8_t *datas, uint8_t len,
+                                float *d1, float *d2, float *d3, float *d4)
 {
-    if ((datas == NULL) || (v1 == NULL) || (v2 == NULL) || (v3 == NULL))
+    /* 前3个参数是刚需，必须非空 */
+    if ((datas == NULL) || (d1 == NULL) || (d2 == NULL) || (d3 == NULL))
     {
         return 0U;
     }
 
-    /* 3个float，一共12字节 */
-    if (len != 12U)
+    /* 兼容 16 字节 (4个float) */
+    if (len == 16U && d4 != NULL)
     {
-        return 0U;
+        *d1 = USB_BytesToFloatLE(&datas[0]);
+        *d2 = USB_BytesToFloatLE(&datas[4]);
+        *d3 = USB_BytesToFloatLE(&datas[8]);
+        *d4 = USB_BytesToFloatLE(&datas[12]);
+        return 1U;
+    }
+    /* 兼容 12 字节 (3个float) */
+    else if (len == 12U)
+    {
+        *d1 = USB_BytesToFloatLE(&datas[0]);
+        *d2 = USB_BytesToFloatLE(&datas[4]);
+        *d3 = USB_BytesToFloatLE(&datas[8]);
+        /* 如果外部依然传入了 d4 的地址，保险起见清零 */
+        if (d4 != NULL) *d4 = 0.0f; 
+        return 1U;
     }
 
-    *v1 = USB_BytesToFloatLE(&datas[0]);
-    *v2 = USB_BytesToFloatLE(&datas[4]);
-    *v3 = USB_BytesToFloatLE(&datas[8]);
-
-    return 1U;
+    return 0U; // 长度不符合预期
 }
-
 static float Remote_Clamp(float num, float min_val, float max_val)
 {
     if (num < min_val)

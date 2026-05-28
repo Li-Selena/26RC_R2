@@ -28,6 +28,7 @@ void CAN_Task(void const * argument){
 	Delay_ms(5000);
 	float Tnum23 = 360.0f / 8192.0f / 3591.0f *187.0f / 5.0f;
 	float Tnum1  = 360.0f / 8192.0f / 36.0f / 94.0f * 19.0f;
+	float mecNum = MOTOR_IN2OUT * RPM_TO_MS;
 	for(;;)
     {
 
@@ -35,19 +36,19 @@ void CAN_Task(void const * argument){
 		{
 			if(pre_step_flag == 0)
         	{
-		    	FDCAN2_CMD_1(PID_velocity_realize_2(total_speed.fl,1),
-					         PID_velocity_realize_2(-total_speed.fr,2),
-					         PID_velocity_realize_2(total_speed.bl,3),
-					         PID_velocity_realize_2(-total_speed.br,4)
+		    	FDCAN2_CMD_1(PID_velocity_realize_2(total_speed.fl / mecNum,1),
+					         PID_velocity_realize_2(-total_speed.fr / mecNum,2),
+					         PID_velocity_realize_2(total_speed.bl / mecNum,3),
+					         PID_velocity_realize_2(-total_speed.br / mecNum,4)
 		    	);
 
 			}
 			if(pre_step_flag == 1)
 			{
-				FDCAN2_CMD_1(PID_velocity_realize_2(pre_step_wheel_speed,1),
-					         PID_velocity_realize_2(-pre_step_wheel_speed,2),
-				 	         PID_velocity_realize_2(total_speed.bl,3),
-				 	         PID_velocity_realize_2(-total_speed.br,4)
+				FDCAN2_CMD_1(PID_velocity_realize_2(pre_step_wheel_speed / mecNum,1),
+					         PID_velocity_realize_2(-pre_step_wheel_speed / mecNum,2),
+				 	         PID_velocity_realize_2(total_speed.bl / mecNum,3),
+				 	         PID_velocity_realize_2(-total_speed.br / mecNum,4)
 		    	);
 			}
 
@@ -68,19 +69,19 @@ void CAN_Task(void const * argument){
 		{
             if(pre_step_flag == 0)
             {
-		        FDCAN2_CMD_1(PID_velocity_realize_2(total_speed_USB.fl,1),
-				             PID_velocity_realize_2(-total_speed_USB.fr,2),
-				             PID_velocity_realize_2(total_speed_USB.bl,3),
-				             PID_velocity_realize_2(-total_speed_USB.br,4)
+		        FDCAN2_CMD_1(PID_velocity_realize_2(total_speed_USB.fl / mecNum,1),
+				             PID_velocity_realize_2(-total_speed_USB.fr / mecNum,2),
+				             PID_velocity_realize_2(total_speed_USB.bl / mecNum,3),
+				             PID_velocity_realize_2(-total_speed_USB.br / mecNum,4)
 		        );
 
 		    }
 		    if(pre_step_flag == 1)
 		    {
-			    FDCAN2_CMD_1(PID_velocity_realize_2(pre_step_wheel_speed,1),
-				             PID_velocity_realize_2(-pre_step_wheel_speed,2),
-				             PID_velocity_realize_2(total_speed_USB.bl,3),
-				             PID_velocity_realize_2(-total_speed_USB.br,4)
+			    FDCAN2_CMD_1(PID_velocity_realize_2(pre_step_wheel_speed / mecNum,1),
+				             PID_velocity_realize_2(-pre_step_wheel_speed / mecNum,2),
+				             PID_velocity_realize_2(total_speed_USB.bl / mecNum,3),
+				             PID_velocity_realize_2(-total_speed_USB.br / mecNum,4)
 		        );
 		    }
 		    FDCAN3_CMD_1(pid_call_3(-AngleClamp60(ctrl_J_USB[0]) / Tnum1,1),
