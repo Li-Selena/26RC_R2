@@ -10,209 +10,133 @@ extern motor_measure_t motor_fdcan1[8];
 extern motor_measure_t motor_fdcan2[8];
 extern motor_measure_t motor_fdcan3[8];
 
+static void FDCAN_Motor_Filter_Init(FDCAN_HandleTypeDef *hfdcan, uint32_t fifo)
+{
+    FDCAN_FilterTypeDef sFilterConfig = {0};
 
+    sFilterConfig.IdType = FDCAN_STANDARD_ID;
+    sFilterConfig.FilterIndex = 0U;
+    sFilterConfig.FilterType = FDCAN_FILTER_MASK;
+    sFilterConfig.FilterConfig = fifo;
+    sFilterConfig.FilterID1 = CAN_CHASSIS_ALL_ID;
+    sFilterConfig.FilterID2 = 0x7F0U;
 
-//dji
+    if (HAL_FDCAN_ConfigFilter(hfdcan, &sFilterConfig) != HAL_OK)
+    {
+        Error_Handler();
+    }
+}
+
+static void FDCAN_Process_Motor_Rx(FDCAN_HandleTypeDef *hfdcan, uint32_t fifo, motor_measure_t *motor)
+{
+    FDCAN_RxHeaderTypeDef rx_header;
+    uint8_t rx_data[8];
+    uint32_t motor_index;
+
+    while (HAL_FDCAN_GetRxFifoFillLevel(hfdcan, fifo) > 0U)
+    {
+        if (HAL_FDCAN_GetRxMessage(hfdcan, fifo, &rx_header, rx_data) != HAL_OK)
+        {
+            break;
+        }
+
+        if ((rx_header.IdType != FDCAN_STANDARD_ID) ||
+            (rx_header.Identifier < CAN_3508_M1_ID) ||
+            (rx_header.Identifier > CAN_3508_M8_ID))
+        {
+            continue;
+        }
+
+        motor_index = rx_header.Identifier - CAN_3508_M1_ID;
+        motor[motor_index].msg_cnt++;
+
+        if (motor[motor_index].msg_cnt <= 50U)
+        {
+            get_motor_offset(&motor[motor_index], rx_data);
+        }
+        else
+        {
+            get_motor_measure(&motor[motor_index], rx_data);
+        }
+    }
+}
+
 void FDCAN_Start(FDCAN_HandleTypeDef *hfdcan)
 {
-    /* 启动 FDCAN */
+    uint32_t notification = 0U;
+
+    if (hfdcan == NULL)
+    {
+        return;
+    }
+
     if (HAL_FDCAN_Start(hfdcan) != HAL_OK)
     {
         Error_Handler();
     }
 
-	if(hfdcan == &hfdcan1){
-        if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO0_NEW_MESSAGE, 0) != HAL_OK)
-        {
-            Error_Handler();
-        }
-	}
-		if(hfdcan == &hfdcan2){
-        if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0) != HAL_OK)
-        {
-            Error_Handler();
-        }
-	}
-		if(hfdcan == &hfdcan3){
-        if (HAL_FDCAN_ActivateNotification(hfdcan, FDCAN_IT_RX_FIFO1_NEW_MESSAGE, 0) != HAL_OK)
-        {
-            Error_Handler();
-        }
-	}
+    if (hfdcan == &hfdcan1)
+    {
+        notification = FDCAN_IT_RX_FIFO0_NEW_MESSAGE;
+    }
+    else if ((hfdcan == &hfdcan2) || (hfdcan == &hfdcan3))
+    {
+        notification = FDCAN_IT_RX_FIFO1_NEW_MESSAGE;
+    }
+    else
+    {
+        return;
+    }
 
-    /* 激活 FIFO0 新消息中断 */
-}
-void FDCAN1_Filter_Init(void)
-{
-    FDCAN_FilterTypeDef sFilterConfig;
-
-    sFilterConfig.IdType = FDCAN_STANDARD_ID;
-    sFilterConfig.FilterIndex = 0;                        // 选择索引 0，便于与原来 bank 对照
-    sFilterConfig.FilterType = FDCAN_FILTER_MASK;
-    sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO0;
-    sFilterConfig.FilterID1 = 0x000;
-    sFilterConfig.FilterID2 = 0x000;                      // mask 0 -> 接收所有
-    if (HAL_FDCAN_ConfigFilter(&hfdcan1, &sFilterConfig) != HAL_OK)
+    if (HAL_FDCAN_ActivateNotification(hfdcan, notification, 0U) != HAL_OK)
     {
         Error_Handler();
     }
-	FDCAN_Start(&hfdcan1);
 }
 
+void FDCAN1_Filter_Init(void)
+{
+    FDCAN_Motor_Filter_Init(&hfdcan1, FDCAN_FILTER_TO_RXFIFO0);
+}
 
 void FDCAN2_Filter_Init(void)
 {
-    FDCAN_FilterTypeDef sFilterConfig;
-
-    sFilterConfig.IdType = FDCAN_STANDARD_ID;
-    sFilterConfig.FilterIndex = 7;                        // 选择索引 7，便于与原来 bank 对照
-    sFilterConfig.FilterType = FDCAN_FILTER_MASK;
-    sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
-    sFilterConfig.FilterID1 = 0x000;
-    sFilterConfig.FilterID2 = 0x000;                      // mask 0 -> 接收所有
-    if (HAL_FDCAN_ConfigFilter(&hfdcan2, &sFilterConfig) != HAL_OK)
-    {
-        Error_Handler();
-    }
-	FDCAN_Start(&hfdcan2);
+    FDCAN_Motor_Filter_Init(&hfdcan2, FDCAN_FILTER_TO_RXFIFO1);
 }
 
 void FDCAN3_Filter_Init(void)
 {
-    FDCAN_FilterTypeDef sFilterConfig;
-
-    sFilterConfig.IdType = FDCAN_STANDARD_ID;
-    sFilterConfig.FilterIndex = 14;                        // 选择索引 14，便于与原来 bank 对照
-    sFilterConfig.FilterType = FDCAN_FILTER_MASK;
-    sFilterConfig.FilterConfig = FDCAN_FILTER_TO_RXFIFO1;
-    sFilterConfig.FilterID1 = 0x000;
-    sFilterConfig.FilterID2 = 0x000;                      // mask 0 -> 接收所有
-    if (HAL_FDCAN_ConfigFilter(&hfdcan3, &sFilterConfig) != HAL_OK)
-    {
-        Error_Handler();
-    }
-	FDCAN_Start(&hfdcan3);
+    FDCAN_Motor_Filter_Init(&hfdcan3, FDCAN_FILTER_TO_RXFIFO1);
 }
 
-//fdcan_callback
+void FDCAN_Motor_Start_All(void)
+{
+    FDCAN_Start(&hfdcan1);
+    FDCAN_Start(&hfdcan2);
+    FDCAN_Start(&hfdcan3);
+}
+
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
-	FDCAN_RxHeaderTypeDef rx_header;
-  uint8_t rx_data[8];
-    if (hfdcan == &hfdcan1)
+    if ((hfdcan == &hfdcan1) && ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET))
     {
-		if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET)
-        {
-            if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO0, &rx_header, rx_data) != HAL_OK)
-            {
-                /* 可选：错误处理 */
-                return;
-            }
-
-            /* 处理电机数据 ID */
-				// DJI 3508 / M2006 电机反馈 ID 范围：0x201 ~ 0x207
-            if (rx_header.Identifier >= CAN_3508_M1_ID && rx_header.Identifier <= CAN_3508_M7_ID)
-            {
-                uint8_t i = (uint8_t)(rx_header.Identifier - CAN_3508_M1_ID);
-                motor_measure_t *m = NULL;
-
-            
-                m = &motor_fdcan1[i];
-
-                if (m)
-                {
-                    m->msg_cnt++;
-                    if (m->msg_cnt <= 50)
-                        get_motor_offset(m, rx_data);
-                    else
-                        get_motor_measure(m, rx_data);
-                }
-            }
-            else
-            {
-                /* 其它 ID 可按需扩展处理 */
-            }
-      }
-
+        FDCAN_Process_Motor_Rx(hfdcan, FDCAN_RX_FIFO0, motor_fdcan1);
     }
 }
-//fdcan_callback
+
 void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
 {
-	FDCAN_RxHeaderTypeDef rx_header;
-  uint8_t rx_data[8];
-
-		if (hfdcan == &hfdcan2)
+    if ((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) == RESET)
     {
-		
-      if ((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != RESET)
-      {
-        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &rx_header, rx_data) != HAL_OK)
-        {
-            /* 可选：错误处理 */
-            return;
-        }
-
-        /* 处理电机数据 ID */
-				// DJI 3508 / M2006 电机反馈 ID 范围：0x201 ~ 0x207
-        if (rx_header.Identifier >= CAN_3508_M1_ID && rx_header.Identifier <= CAN_3508_M7_ID)
-        {
-            uint8_t i = (uint8_t)(rx_header.Identifier - CAN_3508_M1_ID);
-            motor_measure_t *m = NULL;
-
-            
-            m = &motor_fdcan2[i];
-
-            if (m)
-            {
-                m->msg_cnt++;
-                if (m->msg_cnt <= 50)
-                    get_motor_offset(m, rx_data);
-                else
-                    get_motor_measure(m, rx_data);
-            }
-        }
-        else
-        {
-            /* 其它 ID 可按需扩展处理 */
-        }
-      }
-    }
-		if (hfdcan == &hfdcan3)
-    {
-		/* 如果是 FIFO0 新消息中断 */
-      if ((RxFifo1ITs & FDCAN_IT_RX_FIFO1_NEW_MESSAGE) != RESET)
-      {
-        if (HAL_FDCAN_GetRxMessage(hfdcan, FDCAN_RX_FIFO1, &rx_header, rx_data) != HAL_OK)
-        {
-            /* 可选：错误处理 */
-            return;
-        }
-
-        /* 处理电机数据 ID */
-				// DJI 3508 / M2006 电机反馈 ID 范围：0x201 ~ 0x207
-        if (rx_header.Identifier >= CAN_3508_M1_ID && rx_header.Identifier <= CAN_3508_M7_ID)
-        {
-            uint8_t i = (uint8_t)(rx_header.Identifier - CAN_3508_M1_ID);
-            motor_measure_t *m = NULL;
-
-            
-            m = &motor_fdcan3[i];
-
-            if (m)
-            {
-                m->msg_cnt++;
-                if (m->msg_cnt <= 50)
-                    get_motor_offset(m, rx_data);
-                else
-                    get_motor_measure(m, rx_data);
-            }
-        }
-        else
-        {
-            /* 其它 ID 可按需扩展处理 */
-        }
-      }
+        return;
     }
 
+    if (hfdcan == &hfdcan2)
+    {
+        FDCAN_Process_Motor_Rx(hfdcan, FDCAN_RX_FIFO1, motor_fdcan2);
+    }
+    else if (hfdcan == &hfdcan3)
+    {
+        FDCAN_Process_Motor_Rx(hfdcan, FDCAN_RX_FIFO1, motor_fdcan3);
+    }
 }

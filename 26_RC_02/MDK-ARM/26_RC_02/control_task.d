@@ -61,7 +61,13 @@
   ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
   ..\Components\Algorithm\Inc\mecanum_classic.h \
-  ..\Components\Algorithm\Inc\CRC.h ..\BSP\Inc\bsp_uart.h \
+  ..\Components\Algorithm\Inc\CRC.h \
+  ..\Applications\App_user\Inc\R2_move.h \
+  ..\Components\Algorithm\Inc\chassis_move.h \
+  ..\Components\Algorithm\Inc\speedPlanner.h \
+  ..\Components\Algorithm\Inc\s_curve.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
+  ..\Applications\R2_user\Inc\R2_climb.h ..\BSP\Inc\bsp_uart.h \
   ..\USB_DEVICE\App\usbd_cdc_if.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Inc\usbd_cdc.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
@@ -69,7 +75,6 @@
   ..\USB_DEVICE\Target\usbd_conf.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdio.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdlib.h \
-  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
   ..\BSP\Inc\bsp_usb.h ..\USB_DEVICE\App\usb_device.h \
@@ -77,6 +82,7 @@
   ..\Components\Algorithm\Inc\arm_user.h \
   ..\Components\Algorithm\Inc\arm_echo_uart10.h \
   ..\Components\Device\Inc\arm_tools.h \
-  ..\Components\Algorithm\Inc\Data_analysis.h \
-  ..\Applications\Task\Inc\CAN_Task.h \
-  ..\Applications\Task\Inc\INS_Task.h
+  ..\Applications\Task\Inc\INS_Task.h ..\Components\Device\Inc\imu.h \
+  ..\Components\Device\Inc\wit_c_sdk.h ..\Components\Device\Inc\REG.h \
+  ..\Components\Algorithm\Inc\Data_Analysis.h \
+  ..\Applications\Task\Inc\CAN_Task.h

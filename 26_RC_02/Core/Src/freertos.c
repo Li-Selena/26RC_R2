@@ -59,6 +59,9 @@ osStaticThreadDef_t Start_PCTX_TaskControlBlock;
 osThreadId Start_PCRX_TaskHandle;
 uint32_t Start_PCRX_TaskBuffer[ 2048 ];
 osStaticThreadDef_t Start_PCRX_TaskControlBlock;
+osThreadId Start_INS_TaskHandle;
+uint32_t Start_INS_TaskBuffer[ 2048 ];
+osStaticThreadDef_t Start_INS_TaskControlBlock;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN FunctionPrototypes */
@@ -69,6 +72,7 @@ void Control_Task(void const * argument);
 void CAN_Task(void const * argument);
 void PC_TX_Task(void const * argument);
 void PC_RX_Task(void const * argument);
+void INS_Task(void const * argument);
 
 extern void MX_USB_DEVICE_Init(void);
 void MX_FREERTOS_Init(void); /* (MISRA C 2004 rule 8.1) */
@@ -131,6 +135,10 @@ void MX_FREERTOS_Init(void) {
   /* definition and creation of Start_PCRX_Task */
   osThreadStaticDef(Start_PCRX_Task, PC_RX_Task, osPriorityAboveNormal, 0, 2048, Start_PCRX_TaskBuffer, &Start_PCRX_TaskControlBlock);
   Start_PCRX_TaskHandle = osThreadCreate(osThread(Start_PCRX_Task), NULL);
+
+  /* definition and creation of Start_INS_Task */
+  osThreadStaticDef(Start_INS_Task, INS_Task, osPriorityHigh, 0, 2048, Start_INS_TaskBuffer, &Start_INS_TaskControlBlock);
+  Start_INS_TaskHandle = osThreadCreate(osThread(Start_INS_Task), NULL);
 
   /* USER CODE BEGIN RTOS_THREADS */
   /* add threads, ... */
@@ -210,6 +218,24 @@ __weak void PC_RX_Task(void const * argument)
     osDelay(1);
   }
   /* USER CODE END PC_RX_Task */
+}
+
+/* USER CODE BEGIN Header_INS_Task */
+/**
+* @brief Function implementing the Start_INS_Task thread.
+* @param argument: Not used
+* @retval None
+*/
+/* USER CODE END Header_INS_Task */
+__weak void INS_Task(void const * argument)
+{
+  /* USER CODE BEGIN INS_Task */
+  /* Infinite loop */
+  for(;;)
+  {
+    osDelay(1);
+  }
+  /* USER CODE END INS_Task */
 }
 
 /* Private application code --------------------------------------------------*/

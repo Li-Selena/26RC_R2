@@ -1,0 +1,7 @@
+{
+    "debug.hideSlowPreLaunchWarning": true,
+    "debug.showInStatusBar": "never",
+    "clangd.arguments": [
+        "--compile-commands-dir=f:\\spareE\\Vinci_Robocon_2026\\26_RC_Projects\\26_R2_03\\MDK-ARM\\out\\26_R2_03\\26_R2_03"
+    ]
+}

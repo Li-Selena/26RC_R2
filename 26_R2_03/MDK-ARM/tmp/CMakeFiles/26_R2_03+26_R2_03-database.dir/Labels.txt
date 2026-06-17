@@ -1,0 +1,11 @@
+# Target labels
+ 26_R2_03+26_R2_03
+# Source files and their labels
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/CMakeFiles/26_R2_03+26_R2_03-database
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/CMakeFiles/26_R2_03+26_R2_03-database.rule
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-database.rule
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-configure.rule
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-patch.rule
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-update.rule
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-download.rule
+F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-mkdir.rule

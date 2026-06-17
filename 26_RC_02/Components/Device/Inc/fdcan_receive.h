@@ -14,6 +14,7 @@ typedef enum
     CAN_3508_M5_ID = 0x205,
     CAN_3508_M6_ID = 0x206,
     CAN_3508_M7_ID = 0x207,
+    CAN_3508_M8_ID = 0x208,
     CAN_3508_ALL_ID = 0x1FF,
 } can_msg_id_e;
 
@@ -32,8 +33,9 @@ typedef struct
 		uint32_t			msg_cnt;
 } motor_measure_t;
 
-extern motor_measure_t motor_fdcan2[8];
-extern motor_measure_t motor_fdcan3[8];
+extern motor_measure_t motor_fdcan1[8];  /* 底盘四轮 + 小电机 */
+extern motor_measure_t motor_fdcan2[8];  /* 抬升四电机 */
+extern motor_measure_t motor_fdcan3[8];  /* 机械臂电机 */
 
 
 void get_motor_measure(motor_measure_t *ptr,uint8_t data[]);
@@ -41,7 +43,7 @@ void get_motor_offset(motor_measure_t *ptr, uint8_t data[]);
 void get_total_angle(motor_measure_t *p);
 
 
-void FDCAN_Send(FDCAN_HandleTypeDef *hfdcan, uint16_t std_id,
+uint8_t FDCAN_Send(FDCAN_HandleTypeDef *hfdcan, uint16_t std_id,
                        int16_t m1, int16_t m2, int16_t m3, int16_t m4);
 
 void FDCAN1_CMD_1(int16_t motor1, int16_t motor2, int16_t motor3, int16_t motor4);

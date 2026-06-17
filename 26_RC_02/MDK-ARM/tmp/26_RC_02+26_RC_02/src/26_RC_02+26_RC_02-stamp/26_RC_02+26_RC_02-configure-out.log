@@ -6,6 +6,6 @@
 -- Check for working C compiler: c:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armclang.exe - skipped
 -- Detecting C compile features
 -- Detecting C compile features - done
--- Configuring done (4.9s)
--- Generating done (0.1s)
+-- Configuring done (5.8s)
+-- Generating done (0.2s)
 -- Build files have been written to: F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/MDK-ARM/tmp/1

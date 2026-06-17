@@ -66,8 +66,6 @@
                 "gdbserver",
                 "--probe",
                 "cmsisdap:",
-                "--connect",
-                "attach",
                 "--persist",
                 "--reset-run",
                 "--cbuild-run",

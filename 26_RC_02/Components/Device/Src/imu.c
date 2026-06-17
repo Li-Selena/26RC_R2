@@ -1,135 +1,257 @@
 #include "imu.h"
+#include <string.h>
 
 extern UART_HandleTypeDef huart7;
-/* 全局变量定义 */
+
+#define IMU_RX_DMA_BUF_LEN 256U
+#define IMU_OUTPUT_RATE    RRATE_200HZ
+#define IMU_DMA_AXI_BASE   0x2401FF00U
+
 IMU_Data_t imu_data = {0};
-uint8_t imu_rx_byte = 0;  // UART7中断接收缓存（单字节）
+IMU_Debug_t g_imu_debug = {0};
+uint8_t imu_rx_byte = 0;  /* Kept for old external references. */
 
+static uint8_t imu_rx_dma_reserve[IMU_RX_DMA_BUF_LEN] __attribute__((section(".imu_dma"), aligned(32), used));
+static uint8_t *const imu_rx_dma_buf = (uint8_t *)IMU_DMA_AXI_BASE;
+static volatile uint16_t imu_rx_dma_read_pos = 0;
+static volatile uint8_t imu_rx_dma_started = 0;
+static volatile uint8_t imu_initialized = 0;
 
-/* 寄存器地址宏定义（若wit_c_sdk.h未定义则补充） */
 #ifndef AX
-#define AX          0x00    // 加速度X轴寄存器地址
-#define AY          0x01    // 加速度Y轴寄存器地址
-#define AZ          0x02    // 加速度Z轴寄存器地址
-#define GX          0x03    // X轴陀螺仪寄存器地址
-#define GY          0x04    // Y轴陀螺仪寄存器地址
-#define GZ          0x05    // Z轴陀螺仪寄存器地址
-#define Roll        0x14    // 横滚角寄存器地址
-#define Pitch       0x15    // 俯仰角寄存器地址
-#define Yaw         0x16    // 偏航角寄存器地址
-
+#define AX          0x00
+#define AY          0x01
+#define AZ          0x02
+#define GX          0x03
+#define GY          0x04
+#define GZ          0x05
+#define Roll        0x14
+#define Pitch       0x15
+#define Yaw         0x16
 #endif
 
-/* SDK回调函数声明（静态函数，仅本文件使用） */
 static void IMU_SerialWrite(uint8_t *pData, uint32_t len);
 static void IMU_DelayMs(uint32_t ms);
 static void IMU_RegUpdateCallback(uint32_t uiReg, uint32_t uiLen);
+static HAL_StatusTypeDef IMU_StartDmaReceive(void);
+static void IMU_ProcessDmaRange(uint16_t begin, uint16_t end);
+static uint8_t IMU_RegRangeContains(uint32_t first_reg, uint32_t reg_num, uint32_t wanted_reg);
 
-/**
- * @brief  IMU初始化（基于CubeMX配置的UART7）
- * @note   1. 开启UART7接收中断 2. 注册SDK回调 3. 初始化SDK
- */
 void IMU_Init(void)
 {
-    /* 1. 开启UART7第一次接收中断 */
-    if (HAL_UART_Receive_IT(&huart7, &imu_rx_byte, 1) != HAL_OK)
+    if (imu_initialized != 0U)
     {
-        Error_Handler();
+        return;
     }
 
-    /* 2. 注册SDK回调函数 */
-    WitSerialWriteRegister(IMU_SerialWrite);    
-    WitRegisterCallBack(IMU_RegUpdateCallback); 
+    WitSerialWriteRegister(IMU_SerialWrite);
+    WitRegisterCallBack(IMU_RegUpdateCallback);
     WitDelayMsRegister((DelaymsCb)IMU_DelayMs);
 
-    /* 3. 初始化Wit SDK */
     if (WitInit(WIT_PROTOCOL_NORMAL, 0xFF) != WIT_HAL_OK)
     {
         Error_Handler();
     }
 
-    /* 4. 配置IMU参数：输出 加速度+陀螺仪+角度 */
-    WitSetOutputRate(RRATE_100HZ);
-    WitSetContent(RSW_ACC | RSW_GYRO | RSW_ANGLE); // 关键：添加RSW_GYRO
+    if (IMU_StartDmaReceive() != HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    if (WitSetOutputRate(IMU_OUTPUT_RATE) != WIT_HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    if (WitSetContent(RSW_ACC | RSW_GYRO | RSW_ANGLE) != WIT_HAL_OK)
+    {
+        Error_Handler();
+    }
+
+    imu_initialized = 1U;
+    g_imu_debug.initialized = 1U;
 }
 
+void IMU_RxDmaEventCallback(uint16_t size)
+{
+    uint16_t write_pos = size;
 
+    if ((imu_rx_dma_started == 0U) || (write_pos > IMU_RX_DMA_BUF_LEN))
+    {
+        g_imu_debug.dma_rx_overrun_count++;
+        return;
+    }
 
-/**
- * @brief  SDK串口发送函数（适配CubeMX的UART7）
- * @param  pData: 发送数据缓冲区
- * @param  len: 发送长度
- */
+    g_imu_debug.dma_rx_event_count++;
+    g_imu_debug.last_dma_size = size;
+    g_imu_debug.last_dma_read_pos = imu_rx_dma_read_pos;
+    g_imu_debug.dma_event_type = HAL_UARTEx_GetRxEventType(&huart7);
+    if (huart7.hdmarx != NULL)
+    {
+        g_imu_debug.dma_ndtr = __HAL_DMA_GET_COUNTER(huart7.hdmarx);
+    }
+
+    SCB_InvalidateDCache_by_Addr((uint32_t *)imu_rx_dma_buf, IMU_RX_DMA_BUF_LEN);
+
+    if (write_pos == imu_rx_dma_read_pos)
+    {
+        return;
+    }
+
+    if (write_pos > imu_rx_dma_read_pos)
+    {
+        g_imu_debug.dma_rx_byte_count += (uint32_t)(write_pos - imu_rx_dma_read_pos);
+        IMU_ProcessDmaRange(imu_rx_dma_read_pos, write_pos);
+    }
+    else
+    {
+        g_imu_debug.dma_rx_byte_count += (uint32_t)(IMU_RX_DMA_BUF_LEN - imu_rx_dma_read_pos + write_pos);
+        IMU_ProcessDmaRange(imu_rx_dma_read_pos, IMU_RX_DMA_BUF_LEN);
+        if (write_pos > 0U)
+        {
+            IMU_ProcessDmaRange(0U, write_pos);
+        }
+    }
+
+    imu_rx_dma_read_pos = write_pos;
+    if (imu_rx_dma_read_pos >= IMU_RX_DMA_BUF_LEN)
+    {
+        imu_rx_dma_read_pos = 0U;
+    }
+}
+
+void IMU_RestartDmaReceive(void)
+{
+    g_imu_debug.dma_restart_count++;
+    g_imu_debug.last_error_code = (uint8_t)huart7.ErrorCode;
+    imu_rx_dma_started = 0U;
+    (void)HAL_UART_DMAStop(&huart7);
+    (void)HAL_UART_AbortReceive(&huart7);
+    if (IMU_StartDmaReceive() != HAL_OK)
+    {
+        g_imu_debug.dma_restart_fail_count++;
+    }
+}
+
+void IMU_ParseData(void)
+{
+    /* Data is parsed byte-by-byte by WitSerialDataIn() from DMA RX events. */
+}
+
+static HAL_StatusTypeDef IMU_StartDmaReceive(void)
+{
+    HAL_StatusTypeDef status;
+
+    imu_rx_dma_read_pos = 0U;
+    g_imu_debug.dma_buf_addr = (uint32_t)imu_rx_dma_buf;
+    g_imu_debug.rx_mode = 2U;
+    memset(imu_rx_dma_buf, 0, IMU_RX_DMA_BUF_LEN);
+    SCB_CleanInvalidateDCache_by_Addr((uint32_t *)imu_rx_dma_buf, IMU_RX_DMA_BUF_LEN);
+
+    status = HAL_UARTEx_ReceiveToIdle_DMA(&huart7, imu_rx_dma_buf, IMU_RX_DMA_BUF_LEN);
+    if (status == HAL_OK)
+    {
+        imu_rx_dma_started = 1U;
+        g_imu_debug.dma_started = 1U;
+        g_imu_debug.dma_start_count++;
+        if (huart7.hdmarx != NULL)
+        {
+            __HAL_DMA_DISABLE_IT(huart7.hdmarx, DMA_IT_HT);
+            g_imu_debug.dma_ndtr = __HAL_DMA_GET_COUNTER(huart7.hdmarx);
+        }
+    }
+    else
+    {
+        imu_rx_dma_started = 0U;
+        g_imu_debug.dma_started = 0U;
+    }
+
+    return status;
+}
+
+static void IMU_ProcessDmaRange(uint16_t begin, uint16_t end)
+{
+    while (begin < end)
+    {
+        imu_rx_byte = imu_rx_dma_buf[begin];
+        g_imu_debug.last_rx_byte = imu_rx_byte;
+        WitSerialDataIn(imu_rx_byte);
+        begin++;
+    }
+}
+
 static void IMU_SerialWrite(uint8_t *pData, uint32_t len)
 {
-    /* 非阻塞发送（中断模式），避免阻塞中断上下文 */
-    HAL_UART_Transmit_IT(&huart7, pData, len);
+    (void)HAL_UART_Transmit(&huart7, pData, (uint16_t)len, 20U);
 }
 
-/**
- * @brief  SDK延时函数（复用CubeMX的HAL_Delay）
- * @param  ms: 延时毫秒数
- */
 static void IMU_DelayMs(uint32_t ms)
 {
     Delay_ms(ms);
 }
 
-/**
- * @brief  SDK数据更新回调（解析加速度/角度）
- * @param  uiReg: 寄存器起始地址
- * @param  uiLen: 寄存器长度
- */
 static void IMU_RegUpdateCallback(uint32_t uiReg, uint32_t uiLen)
 {
-    /* 临界区保护：防止主循环读取时数据错乱 */
+    uint32_t primask;
+    uint32_t now_tick;
+
+    now_tick = HAL_GetTick();
+    primask = __get_PRIMASK();
     __disable_irq();
 
-    switch(uiReg)
+    g_imu_debug.reg_update_count++;
+    g_imu_debug.last_update_tick = now_tick;
+    g_imu_debug.last_reg = uiReg;
+    g_imu_debug.last_reg_num = uiLen;
+
+    if (IMU_RegRangeContains(uiReg, uiLen, AX) != 0U)
     {
-        case AX: // 加速度寄存器
-            imu_data.acc_x = (float)sReg[AX] / 32768.0f * 16.0f;
-            imu_data.acc_y = (float)sReg[AY] / 32768.0f * 16.0f;
-            imu_data.acc_z = (float)sReg[AZ] / 32768.0f * 16.0f;
-            imu_data.update_flag = 1;
-            break;
-				 case GX: // 陀螺仪（角加速度）寄存器
-            // 转换为实际角加速度（量程±2000°/s）
-            imu_data.gyro_x = (float)sReg[GX] / 32768.0f * 2000.0f;
-            imu_data.gyro_y = (float)sReg[GY] / 32768.0f * 2000.0f;
-            imu_data.gyro_z = (float)sReg[GZ] / 32768.0f * 2000.0f;
-            imu_data.update_flag = 1;
-            break;
-
-        case Roll: // 角度寄存器
-            imu_data.roll  = (float)sReg[Roll] / 32768.0f * 180.0f;
-            imu_data.pitch = (float)sReg[Pitch] / 32768.0f * 180.0f;
-            imu_data.yaw   = (float)sReg[Yaw] / 32768.0f * 180.0f;
-            imu_data.update_flag = 1;
-            break;
-
-        default:
-            break;
+        g_imu_debug.raw_acc[0] = sReg[AX];
+        g_imu_debug.raw_acc[1] = sReg[AY];
+        g_imu_debug.raw_acc[2] = sReg[AZ];
+        imu_data.acc_x = (float)sReg[AX] / 32768.0f * 16.0f;
+        imu_data.acc_y = (float)sReg[AY] / 32768.0f * 16.0f;
+        imu_data.acc_z = (float)sReg[AZ] / 32768.0f * 16.0f;
+        imu_data.last_update_tick = now_tick;
+        imu_data.online = 1U;
+        imu_data.update_flag = 1U;
+        g_imu_debug.acc_update_count++;
     }
 
-    __enable_irq(); // 恢复中断
+    if (IMU_RegRangeContains(uiReg, uiLen, GX) != 0U)
+    {
+        g_imu_debug.raw_gyro[0] = sReg[GX];
+        g_imu_debug.raw_gyro[1] = sReg[GY];
+        g_imu_debug.raw_gyro[2] = sReg[GZ];
+        imu_data.gyro_x = (float)sReg[GX] / 32768.0f * 2000.0f;
+        imu_data.gyro_y = (float)sReg[GY] / 32768.0f * 2000.0f;
+        imu_data.gyro_z = (float)sReg[GZ] / 32768.0f * 2000.0f;
+        imu_data.last_update_tick = now_tick;
+        imu_data.online = 1U;
+        imu_data.update_flag = 1U;
+        g_imu_debug.gyro_update_count++;
+    }
+
+    if (IMU_RegRangeContains(uiReg, uiLen, Roll) != 0U)
+    {
+        g_imu_debug.raw_angle[0] = sReg[Roll];
+        g_imu_debug.raw_angle[1] = sReg[Pitch];
+        g_imu_debug.raw_angle[2] = sReg[Yaw];
+        imu_data.roll = (float)sReg[Roll] / 32768.0f * 180.0f;
+        imu_data.pitch = (float)sReg[Pitch] / 32768.0f * 180.0f;
+        imu_data.yaw = (float)sReg[Yaw] / 32768.0f * 180.0f;
+        imu_data.last_update_tick = now_tick;
+        imu_data.online = 1U;
+        imu_data.update_flag = 1U;
+        g_imu_debug.angle_update_count++;
+    }
+
+    if (primask == 0U)
+    {
+        __enable_irq();
+    }
 }
 
-///**
-// * @brief  IMU数据解析辅助函数（主循环调用）
-// * @note   非必需，仅用于封装业务逻辑
-// */
-//void IMU_ParseData(void)
-//{
-//    if (imu_data.update_flag == 1)
-//    {
-//        /* 示例：打印数据（需初始化调试串口，如UART1） */
-//        char buf[128] = {0};
-//        sprintf(buf, "Acc:%.2f,%.2f,%.2f | Angle:%.2f,%.2f,%.2f\r\n",
-//                imu_data.acc_x, imu_data.acc_y, imu_data.acc_z,
-//                imu_data.roll, imu_data.pitch, imu_data.yaw);
-//        HAL_UART_Transmit(&huart1, (uint8_t*)buf, strlen(buf), 100);
-
-//        imu_data.update_flag = 0; // 清零更新标志
-//    }
-//}
+static uint8_t IMU_RegRangeContains(uint32_t first_reg, uint32_t reg_num, uint32_t wanted_reg)
+{
+    return ((wanted_reg >= first_reg) && (wanted_reg < (first_reg + reg_num))) ? 1U : 0U;
+}

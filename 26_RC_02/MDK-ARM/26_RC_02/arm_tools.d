@@ -45,26 +45,19 @@
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
   ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
-  ..\Components\Algorithm\Inc\Data_analysis.h \
-  ..\Applications\Task\Inc\CAN_Task.h \
-  ..\Applications\Task\Inc\Control_Task.h ..\BSP\Inc\bsp_mcu.h \
-  ..\Components\Algorithm\Inc\mecanum_classic.h \
-  ..\Components\Algorithm\Inc\CRC.h ..\BSP\Inc\bsp_uart.h \
-  ..\USB_DEVICE\App\usbd_cdc_if.h \
-  ..\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Inc\usbd_cdc.h \
-  ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
+  ..\Components\Algorithm\Inc\arm_user.h ..\BSP\Inc\bsp_usb.h \
+  ..\USB_DEVICE\App\usb_device.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_def.h \
   ..\USB_DEVICE\Target\usbd_conf.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdio.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdlib.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
+  ..\USB_DEVICE\App\usbd_cdc_if.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Inc\usbd_cdc.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
-  ..\BSP\Inc\bsp_usb.h ..\USB_DEVICE\App\usb_device.h \
   ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h \
-  ..\Components\Algorithm\Inc\arm_user.h \
-  ..\Components\Algorithm\Inc\arm_echo_uart10.h \
-  ..\Applications\Task\Inc\INS_Task.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h \
   ..\Core\Inc\FreeRTOSConfig.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\projdefs.h \

@@ -1,0 +1,52 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/CMakeFiles/26_R2_03+26_R2_03"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/CMakeFiles/26_R2_03+26_R2_03.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/CMakeFiles/26_R2_03+26_R2_03-complete.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-build.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-configure.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-database.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-download.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-executes.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-install.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-mkdir.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-patch.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-test.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/MDK-ARM/tmp/26_R2_03+26_R2_03/src/26_R2_03+26_R2_03-stamp/26_R2_03+26_R2_03-update.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"26_R2_03+26_R2_03"
+		],
+		"name" : "26_R2_03+26_R2_03"
+	}
+}

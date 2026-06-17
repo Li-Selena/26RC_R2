@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//f/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/Components/Device/Src/**)",
+      "Read(//f/spareE/Vinci_Robocon_2026/26_RC_Projects/26_R2_03/**)",
+      "Read(//f/spareE/Vinci_Robocon_2026/26_RC_Projects/**)"
+    ],
+    "additionalDirectories": [
+      "f:\\spareE\\Vinci_Robocon_2026\\26_RC_Projects\\26_R2_03\\Components\\Device\\Src"
+    ]
+  }
+}

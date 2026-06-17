@@ -19,6 +19,7 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "cmsis_os.h"
+#include "dma.h"
 #include "fdcan.h"
 #include "memorymap.h"
 #include "tim.h"
@@ -30,6 +31,7 @@
 /* USER CODE BEGIN Includes */
 #include "include.h"
 #include "bsp_tick.h"
+#include "Control_Task.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -98,6 +100,7 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_FDCAN1_Init();
   MX_FDCAN2_Init();
   MX_FDCAN3_Init();
@@ -237,6 +240,10 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_IncTick();
   }
   /* USER CODE BEGIN Callback 1 */
+    if (htim->Instance == TIM3)
+  {
+    control_tim1mscallback();
+  }
 
   /* USER CODE END Callback 1 */
 }

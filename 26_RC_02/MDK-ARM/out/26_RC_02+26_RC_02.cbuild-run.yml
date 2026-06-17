@@ -1,11 +1,12 @@
 cbuild-run:
-  generated-by: csolution version 2.13.0+p3-g40b6564e
+  generated-by: csolution version 2.14.1+p9-g859cb6c9
   solution: ../26_RC_02.csolution.yml
   target-type: 26_RC_02
   target-set: <default>
   compiler: AC6
   device: STMicroelectronics::STM32H723VGTx
   device-pack: Keil::STM32H7xx_DFP@4.1.3
+  device-pack-path: ${CMSIS_PACK_ROOT}/Keil/STM32H7xx_DFP/4.1.3
   output:
     - file: 26_RC_02/26_RC_02/26_RC_02.axf
       info: generate by 26_RC_02+26_RC_02
@@ -17,27 +18,40 @@ cbuild-run:
         access: rx
         start: 0x08000000
         size: 0x00100000
+        default: true
         from-pack: Keil::STM32H7xx_DFP@4.1.3
       - name: DTCMRAM
         access: rwx
         start: 0x20000000
         size: 0x00020000
+        default: false
         from-pack: Keil::STM32H7xx_DFP@4.1.3
       - name: RAM_D1
         access: rwx
         start: 0x24000000
         size: 0x00050000
+        default: true
         from-pack: Keil::STM32H7xx_DFP@4.1.3
       - name: RAM_D2
         access: rwx
         start: 0x30000000
         size: 0x00008000
+        default: true
         from-pack: Keil::STM32H7xx_DFP@4.1.3
       - name: RAM_D3
         access: rwx
         start: 0x38000000
         size: 0x00004000
+        default: true
         from-pack: Keil::STM32H7xx_DFP@4.1.3
+    processors:
+      - core: Cortex-M7
+        revision: r0p1
+        endian: little
+        fpu: dp
+        mpu: present
+        dsp: present
+        max-clock: 550000000
   system-descriptions:
     - file: ${CMSIS_PACK_ROOT}/Keil/STM32H7xx_DFP/4.1.3/CMSIS/SVD/STM32H723.svd
       type: svd

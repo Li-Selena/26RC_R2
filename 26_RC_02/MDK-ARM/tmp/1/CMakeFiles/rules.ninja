@@ -55,6 +55,16 @@ rule C_COMPILER__Group_Applications_Task_unscanned_
 #############################################
 # Rule for compiling C files.
 
+rule C_COMPILER__Group_Applications_R2_user_unscanned_
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for compiling C files.
+
 rule C_COMPILER__Group_Components_Algorithm_unscanned_
   depfile = $DEP_FILE
   deps = gcc
@@ -146,6 +156,16 @@ rule C_COMPILER__Group_Middlewares_FreeRTOS_unscanned_
 # Rule for compiling C files.
 
 rule C_COMPILER__Group_Middlewares_USB_Device_Library_unscanned_
+  depfile = $DEP_FILE
+  deps = gcc
+  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  description = Building C object $out
+
+
+#############################################
+# Rule for compiling C files.
+
+rule C_COMPILER__ARM_CMSIS_DSP_Source_1_16_2_unscanned_
   depfile = $DEP_FILE
   deps = gcc
   command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in

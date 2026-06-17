@@ -54,8 +54,8 @@
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\queue.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
-  ..\Core\Inc\fdcan.h ..\Core\Inc\memorymap.h ..\Core\Inc\tim.h \
-  ..\Core\Inc\usart.h ..\USB_DEVICE\App\usb_device.h \
+  ..\Core\Inc\dma.h ..\Core\Inc\fdcan.h ..\Core\Inc\memorymap.h \
+  ..\Core\Inc\tim.h ..\Core\Inc\usart.h ..\USB_DEVICE\App\usb_device.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_def.h \
   ..\USB_DEVICE\Target\usbd_conf.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdio.h \
@@ -64,4 +64,24 @@
   ..\Core\Inc\gpio.h ..\BSP\Inc\include.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
   ..\Components\Controller\Inc\pid.h \
-  ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h
+  ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
+  ..\Applications\Task\Inc\Control_Task.h ..\BSP\Inc\bsp_mcu.h \
+  ..\Components\Algorithm\Inc\mecanum_classic.h \
+  ..\Components\Algorithm\Inc\CRC.h \
+  ..\Applications\App_user\Inc\R2_move.h \
+  ..\Components\Algorithm\Inc\chassis_move.h \
+  ..\Components\Algorithm\Inc\speedPlanner.h \
+  ..\Components\Algorithm\Inc\s_curve.h \
+  ..\Applications\R2_user\Inc\R2_climb.h ..\BSP\Inc\bsp_uart.h \
+  ..\USB_DEVICE\App\usbd_cdc_if.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Inc\usbd_cdc.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
+  ..\BSP\Inc\bsp_usb.h \
+  ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h \
+  ..\Components\Algorithm\Inc\arm_user.h \
+  ..\Components\Algorithm\Inc\arm_echo_uart10.h \
+  ..\Components\Device\Inc\arm_tools.h \
+  ..\Applications\Task\Inc\INS_Task.h ..\Components\Device\Inc\imu.h \
+  ..\Components\Device\Inc\wit_c_sdk.h ..\Components\Device\Inc\REG.h

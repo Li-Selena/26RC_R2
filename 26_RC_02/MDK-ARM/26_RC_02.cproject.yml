@@ -1,9 +1,9 @@
 project:
   packs:
     - pack: ARM::CMSIS@^5.9.0
+    - pack: ARM::CMSIS-DSP@^1.16.2
     - pack: Keil::STM32H7xx_DFP@^4.1.3
     - pack: ARM::CMSIS-NN@^4.0.0
-    - pack: ARM::CMSIS-DSP@^1.10.1
   setups:
     - setup: Options for 26_RC_02
       processor:
@@ -22,6 +22,8 @@ project:
         - ../Drivers/CMSIS/Device/ST/STM32H7xx/Include
         - ../Drivers/CMSIS/Include
         - ../Applications/Task/Inc
+        - ../Applications/App_user/Inc
+        - ../Applications/R2_user/Inc
         - ../Components/Algorithm/Inc
         - ../Components/Controller/Inc
         - ../Components/Device/Inc
@@ -82,6 +84,10 @@ project:
         - file: ../Core/Src/main.c
         - file: ../Core/Src/gpio.c
         - file: ../Core/Src/freertos.c
+        - file: ../Core/Src/dma.c
+          misc:
+            - CPP:
+                - -xc++
         - file: ../Core/Src/fdcan.c
         - file: ../Core/Src/memorymap.c
         - file: ../Core/Src/tim.c
@@ -95,6 +101,11 @@ project:
         - file: ../Applications/Task/Src/Control_Task.c
         - file: ../Applications/Task/Src/PC_RX_Task.c
         - file: ../Applications/Task/Src/PC_TX_Task.c
+        - file: ../Applications/Task/Src/INS_Task.c
+    - group: Applications/R2_user
+      files:
+        - file: ../Applications/App_user/Src/R2_move.c
+        - file: ../Applications/R2_user/Src/R2_climb.c
     - group: Components/Algorithm
       files:
         - file: ../Components/Algorithm/Src/arm_echo_uart10.c
@@ -104,6 +115,9 @@ project:
         - file: ../Components/Algorithm/Src/Data_Analysis.c
         - file: ../Components/Algorithm/Src/mecanum_classic.c
         - file: ../Components/Algorithm/Src/speedPlanner.c
+        - file: ../Components/Algorithm/Src/s_curve.c
+        - file: ../Components/Algorithm/Src/chassis_move.c
+        - file: ../Components/Algorithm/Src/ins_nav_math.c
     - group: Components/Controller
       files:
         - file: ../Components/Controller/Src/pid.c
@@ -178,3 +192,4 @@ project:
         - file: ../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Src/usbd_cdc.c
   components:
     - component: ARM::CMSIS:CORE
+    - component: ARM::CMSIS:DSP&Source

@@ -2,39 +2,64 @@
 #include "bsp_tick.h"
 #include "fdcan_receive.h"
 #include <stdint.h>
+#include <math.h>
 #include "FreeRTOS.h"
 #include "task.h"
 
 //工具切换电机，只有电机motor_fdcan3[4]，两个工具固定在电机上
 extern motor_measure_t motor_fdcan3[8];
 
-//工具句柄
-clamp_Handle_t clamp;
-chuck_Handle_t chuck;
+//工具句柄：USART 与 USB 各自保存独立状态，当前控制源只决定哪套目标驱动物理电机
+clamp_Handle_t clamp_usart;
+clamp_Handle_t clamp_usb;
+chuck_Handle_t chuck_usart;
+chuck_Handle_t chuck_usb;
+uint8_t tool_dev_usart = 0U;
+uint8_t tool_dev_usb = 0U;
+
+static uint8_t s_tool_active_source = TOOL_USART_SOURCE;
+
+static void Tool_HoldClamp(clamp_Handle_t *clamp);
+static void Tool_HoldChuck(chuck_Handle_t *chuck);
 
 //工具初始化
 void clamp_init(clamp_Handle_t *clamp)
 {
+    if (clamp == 0) {
+        return;
+    }
     clamp->state = CLAMP_CLOSE;
     clamp->control_source[0] = 0U;          //USART
     clamp->control_source[1] = 0U;          //USB
     clamp->real_angle = motor_fdcan3[3].total_angle;
     clamp->target_angle = 0.0f;
     clamp->safe_flag = 0U;
+    clamp->run_status = TOOL_STATUS_IDLE;
+    clamp->pending_state = CLAMP_CLOSE;
+    clamp->start_tick = 0U;
 }
 
 void chuck_init(chuck_Handle_t *chuck)
 {
+    if (chuck == 0) {
+        return;
+    }
     chuck->state = CHUCK_CLOSE;
     chuck->control_source[0] = 0U;          //USART
     chuck->control_source[1] = 0U;          //USB
     chuck->real_angle = motor_fdcan3[3].total_angle;
     chuck->target_angle = 0.0f;
     chuck->safe_flag = 0U;
+    chuck->run_status = TOOL_STATUS_IDLE;
+    chuck->pending_state = CHUCK_CLOSE;
+    chuck->start_tick = 0U;
 }
 //设置工具控制信号源
 void set_clamp_controlSource(clamp_Handle_t *clamp, uint8_t source)
 {
+    if (clamp == 0) {
+        return;
+    }
     if(source == TOOL_USART_SOURCE)
     {
         clamp->control_source[0] = 1U;
@@ -49,6 +74,9 @@ void set_clamp_controlSource(clamp_Handle_t *clamp, uint8_t source)
 
 void set_chuck_controlSource(chuck_Handle_t *chuck, uint8_t source)
 {
+    if (chuck == 0) {
+        return;
+    }
     if(source == TOOL_USART_SOURCE)
     {
         chuck->control_source[0] = 1U;
@@ -63,18 +91,27 @@ void set_chuck_controlSource(chuck_Handle_t *chuck, uint8_t source)
 //获取电机实际角度
 int update_clamp_real_angle(clamp_Handle_t *clamp, float angle)
 {
+    if (clamp == 0) {
+        return 0;
+    }
     clamp->real_angle = angle;
     return 1;
 }
 
 int update_chuck_real_angle(chuck_Handle_t *chuck, float angle)
 {
+    if (chuck == 0) {
+        return 0;
+    }
     chuck->real_angle = angle;
     return 1;
 }
 //获取安全标志（是否达到目标角度）
 int get_clamp_safe_flag(clamp_Handle_t *clamp)
 {
+    if (clamp == 0) {
+        return SAFE_NO;
+    }
     update_clamp_real_angle(clamp, motor_fdcan3[3].total_angle);
     if(fabsf(clamp->real_angle - clamp->target_angle) < 1.0f)
     {
@@ -90,6 +127,9 @@ int get_clamp_safe_flag(clamp_Handle_t *clamp)
 
 int get_chuck_safe_flag(chuck_Handle_t *chuck)
 {
+    if (chuck == 0) {
+        return SAFE_NO;
+    }
     update_chuck_real_angle(chuck, motor_fdcan3[3].total_angle);
     if(fabsf(chuck->real_angle - chuck->target_angle) < 1.0f)
     {
@@ -105,12 +145,38 @@ int get_chuck_safe_flag(chuck_Handle_t *chuck)
 //更新控制目标角度
 void set_clamp_target_angle(clamp_Handle_t *clamp, float angle)
 {
+    if (clamp == 0) {
+        return;
+    }
     clamp->target_angle = angle;
 }
 
 void set_chuck_target_angle(chuck_Handle_t *chuck, float angle)
 {
+    if (chuck == 0) {
+        return;
+    }
     chuck->target_angle = angle;
+}
+
+static void Tool_HoldClamp(clamp_Handle_t *clamp)
+{
+    if (clamp == 0) {
+        return;
+    }
+
+    update_clamp_real_angle(clamp, motor_fdcan3[3].total_angle);
+    clamp->target_angle = clamp->real_angle;
+}
+
+static void Tool_HoldChuck(chuck_Handle_t *chuck)
+{
+    if (chuck == 0) {
+        return;
+    }
+
+    update_chuck_real_angle(chuck, motor_fdcan3[3].total_angle);
+    chuck->target_angle = chuck->real_angle;
 }
 //更新使用控制状态
 // int update_clamp_control_state(clamp_Handle_t *clamp,uint8_t state)
@@ -147,6 +213,9 @@ void set_chuck_target_angle(chuck_Handle_t *chuck, float angle)
 
 void trigger_clamp_action(clamp_Handle_t *clamp, uint8_t target_state)
 {
+    if (clamp == 0) {
+        return;
+    }
     // 防御性编程：如果正在运动中，可以拒绝新指令，或者重置超时时间
     if(clamp->run_status == TOOL_STATUS_MOVING) {
         return; 
@@ -167,6 +236,9 @@ void trigger_clamp_action(clamp_Handle_t *clamp, uint8_t target_state)
 // 状态机步进函数（放在主循环或周期任务中高频调用）
 void clamp_state_machine_run(clamp_Handle_t *clamp)
 {
+    if (clamp == 0) {
+        return;
+    }
     switch(clamp->run_status)
     {
         case TOOL_STATUS_IDLE:
@@ -185,6 +257,7 @@ void clamp_state_machine_run(clamp_Handle_t *clamp)
             // 2. 超时检测：如果超过 1000ms 还没到位（比如夹到硬物卡死）
             else if((xTaskGetTickCount() - clamp->start_tick) > pdMS_TO_TICKS(1000))
             {
+                Tool_HoldClamp(clamp);
                 clamp->run_status = TOOL_STATUS_ERROR; // 切入错误状态
                 // 【拓展】可以在这里将 target_angle 设回当前真实角度，让电机卸力
             }
@@ -203,6 +276,9 @@ void clamp_state_machine_run(clamp_Handle_t *clamp)
 
 void trigger_chuck_action(chuck_Handle_t *chuck, uint8_t target_state)
 {
+    if (chuck == 0) {
+        return;
+    }
     // 防御性编程：如果正在运动中，可以拒绝新指令，或者重置超时时间
     if(chuck->run_status == TOOL_STATUS_MOVING) {
         return; 
@@ -223,6 +299,9 @@ void trigger_chuck_action(chuck_Handle_t *chuck, uint8_t target_state)
 // 状态机步进函数（放在主循环或周期任务中高频调用）
 void chuck_state_machine_run(chuck_Handle_t *chuck)
 {
+    if (chuck == 0) {
+        return;
+    }
     switch(chuck->run_status)
     {
         case TOOL_STATUS_IDLE:
@@ -241,6 +320,7 @@ void chuck_state_machine_run(chuck_Handle_t *chuck)
             // 2. 超时检测：如果超过 1000ms 还没到位（比如夹到硬物卡死）
             else if((xTaskGetTickCount() - chuck->start_tick) > pdMS_TO_TICKS(1000))
             {
+                Tool_HoldChuck(chuck);
                 chuck->run_status = TOOL_STATUS_ERROR; // 切入错误状态
                 // 【拓展】可以在这里将 target_angle 设回当前真实角度，让电机卸力
             }
@@ -255,4 +335,140 @@ void chuck_state_machine_run(chuck_Handle_t *chuck)
             chuck->run_status = TOOL_STATUS_IDLE;
             break;
     }
+}
+
+void Tool_InitAll(void)
+{
+    clamp_init(&clamp_usart);
+    clamp_init(&clamp_usb);
+    chuck_init(&chuck_usart);
+    chuck_init(&chuck_usb);
+
+    tool_dev_usart = 0U;
+    tool_dev_usb = 0U;
+    Tool_SetActiveSource(TOOL_USART_SOURCE);
+}
+
+void Tool_SetActiveSource(uint8_t source)
+{
+    if (source != TOOL_USB_SOURCE) {
+        source = TOOL_USART_SOURCE;
+    }
+
+    s_tool_active_source = source;
+
+    clamp_usart.control_source[0] = (source == TOOL_USART_SOURCE) ? 1U : 0U;
+    clamp_usart.control_source[1] = 0U;
+    chuck_usart.control_source[0] = (source == TOOL_USART_SOURCE) ? 1U : 0U;
+    chuck_usart.control_source[1] = 0U;
+
+    clamp_usb.control_source[0] = 0U;
+    clamp_usb.control_source[1] = (source == TOOL_USB_SOURCE) ? 1U : 0U;
+    chuck_usb.control_source[0] = 0U;
+    chuck_usb.control_source[1] = (source == TOOL_USB_SOURCE) ? 1U : 0U;
+}
+
+uint8_t Tool_GetActiveSource(void)
+{
+    return s_tool_active_source;
+}
+
+clamp_Handle_t *Tool_GetClamp(uint8_t source)
+{
+    return (source == TOOL_USB_SOURCE) ? &clamp_usb : &clamp_usart;
+}
+
+chuck_Handle_t *Tool_GetChuck(uint8_t source)
+{
+    return (source == TOOL_USB_SOURCE) ? &chuck_usb : &chuck_usart;
+}
+
+clamp_Handle_t *Tool_GetActiveClamp(void)
+{
+    return Tool_GetClamp(s_tool_active_source);
+}
+
+chuck_Handle_t *Tool_GetActiveChuck(void)
+{
+    return Tool_GetChuck(s_tool_active_source);
+}
+
+void Tool_SetSelectedDev(uint8_t source, uint8_t dev)
+{
+    uint8_t clean_dev = (dev == 0U) ? 0U : 1U;
+    uint8_t old_dev = Tool_GetSelectedDev(source);
+
+    if (old_dev != clean_dev) {
+        if (old_dev == 0U) {
+            Tool_GetChuck(source)->run_status = TOOL_STATUS_IDLE;
+        } else {
+            Tool_GetClamp(source)->run_status = TOOL_STATUS_IDLE;
+        }
+    }
+
+    if (source == TOOL_USB_SOURCE) {
+        tool_dev_usb = clean_dev;
+    } else {
+        tool_dev_usart = clean_dev;
+    }
+}
+
+uint8_t Tool_GetSelectedDev(uint8_t source)
+{
+    return (source == TOOL_USB_SOURCE) ? tool_dev_usb : tool_dev_usart;
+}
+
+uint8_t Tool_GetActiveSelectedDev(void)
+{
+    return Tool_GetSelectedDev(s_tool_active_source);
+}
+
+void Tool_RunActiveStateMachine(void)
+{
+    if (Tool_GetActiveSelectedDev() == 0U) {
+        chuck_state_machine_run(Tool_GetActiveChuck());
+    } else {
+        clamp_state_machine_run(Tool_GetActiveClamp());
+    }
+}
+
+void Tool_StopSource(uint8_t source)
+{
+    if (Tool_GetSelectedDev(source) == 0U) {
+        chuck_Handle_t *tool_chuck = Tool_GetChuck(source);
+        set_chuck_target_angle(tool_chuck, CHUCK_TARGET_ANGLE);
+        tool_chuck->pending_state = CHUCK_OPEN;
+        tool_chuck->start_tick = xTaskGetTickCount();
+        tool_chuck->run_status = TOOL_STATUS_MOVING;
+    } else {
+        clamp_Handle_t *tool_clamp = Tool_GetClamp(source);
+        set_clamp_target_angle(tool_clamp, CLAMP_TARGET_ANGLE);
+        tool_clamp->pending_state = CLAMP_OPEN;
+        tool_clamp->start_tick = xTaskGetTickCount();
+        tool_clamp->run_status = TOOL_STATUS_MOVING;
+    }
+}
+
+void Tool_HoldSource(uint8_t source)
+{
+    if (Tool_GetSelectedDev(source) == 0U) {
+        chuck_Handle_t *tool_chuck = Tool_GetChuck(source);
+        Tool_HoldChuck(tool_chuck);
+        tool_chuck->pending_state = tool_chuck->state;
+        tool_chuck->run_status = TOOL_STATUS_IDLE;
+    } else {
+        clamp_Handle_t *tool_clamp = Tool_GetClamp(source);
+        Tool_HoldClamp(tool_clamp);
+        tool_clamp->pending_state = tool_clamp->state;
+        tool_clamp->run_status = TOOL_STATUS_IDLE;
+    }
+}
+
+float Tool_GetActiveTargetAngle(void)
+{
+    if (Tool_GetActiveSelectedDev() == 0U) {
+        return Tool_GetActiveChuck()->target_angle;
+    }
+
+    return Tool_GetActiveClamp()->target_angle;
 }

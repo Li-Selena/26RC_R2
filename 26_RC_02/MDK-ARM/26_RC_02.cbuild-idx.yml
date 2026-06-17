@@ -1,5 +1,5 @@
 build-idx:
-  generated-by: csolution version 2.13.0+p3-g40b6564e
+  generated-by: csolution version 2.14.1+p9-g859cb6c9
   csolution: 26_RC_02.csolution.yml
   cbuild-run: out/26_RC_02+26_RC_02.cbuild-run.yml
   tmpdir: tmp
@@ -13,7 +13,6 @@ build-idx:
         info:
           - 26_RC_02.cbuild-pack.yml - file is already up-to-date
           - 26_RC_02+26_RC_02.cbuild-run.yml - file is already up-to-date
-          - 26_RC_02+26_RC_02.cbuild.yml - file generated successfully
+          - 26_RC_02+26_RC_02.cbuild.yml - file is already up-to-date
       packs-unused:
-        - pack: ARM::CMSIS-DSP@1.16.2
         - pack: ARM::CMSIS-NN@4.1.0

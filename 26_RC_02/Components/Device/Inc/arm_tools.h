@@ -2,7 +2,6 @@
 #define __ARM_TOOLS_H
 
 #include "include.h"
-#include "Data_analysis.h"
 #include "arm_user.h"
 #include <stdint.h>
 
@@ -11,7 +10,8 @@
 #define TOOL_USB_SOURCE   1U
 
 //工具切换角度与电机实际转动角度
-#define TOOL2MOTOR     0.0f             /* 8191.0f * 36.0f / 360.0f; */
+// 真实开合角度未标定前保持 0，先接通控制链路，避免实车突然大动作。
+#define TOOL2MOTOR     0.0f             /* 标定后可改为 8191.0f * 36.0f / 360.0f */
 #define CLAMP_TARGET_ANGLE (  0.0f * TOOL2MOTOR)
 #define CHUCK_TARGET_ANGLE (180.0f * TOOL2MOTOR)
 
@@ -68,8 +68,12 @@ typedef struct{
     uint32_t start_tick;         // 记录动作开始的系统节拍，用于计算超时
 }chuck_Handle_t;
 
-extern clamp_Handle_t clamp;
-extern chuck_Handle_t chuck;
+extern clamp_Handle_t clamp_usart;
+extern clamp_Handle_t clamp_usb;
+extern chuck_Handle_t chuck_usart;
+extern chuck_Handle_t chuck_usb;
+extern uint8_t tool_dev_usart;
+extern uint8_t tool_dev_usb;
 
 extern void clamp_init(clamp_Handle_t *clamp);
 extern void chuck_init(chuck_Handle_t *chuck);
@@ -86,6 +90,20 @@ extern void trigger_chuck_action(chuck_Handle_t *chuck, uint8_t target_state);
 extern void clamp_state_machine_run(clamp_Handle_t *clamp);     
 extern void chuck_state_machine_run(chuck_Handle_t *chuck);
 
+void Tool_InitAll(void);
+void Tool_SetActiveSource(uint8_t source);
+uint8_t Tool_GetActiveSource(void);
+clamp_Handle_t *Tool_GetClamp(uint8_t source);
+chuck_Handle_t *Tool_GetChuck(uint8_t source);
+clamp_Handle_t *Tool_GetActiveClamp(void);
+chuck_Handle_t *Tool_GetActiveChuck(void);
+void Tool_SetSelectedDev(uint8_t source, uint8_t dev);
+uint8_t Tool_GetSelectedDev(uint8_t source);
+uint8_t Tool_GetActiveSelectedDev(void);
+void Tool_RunActiveStateMachine(void);
+void Tool_StopSource(uint8_t source);
+void Tool_HoldSource(uint8_t source);
+float Tool_GetActiveTargetAngle(void);
 
 
 

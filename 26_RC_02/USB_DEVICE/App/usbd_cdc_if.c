@@ -546,6 +546,12 @@ static int8_t CDC_TransmitCplt_HS(uint8_t *Buf, uint32_t *Len, uint8_t epnum)
   UNUSED(Buf);
   UNUSED(Len);
   UNUSED(epnum);
+
+  /* 推进 TX ring 读指针，清除 inflight，提交下一块 */
+  s_txR    = (s_txR + s_txInflight) % CDC_APP_TX_RING_SIZE;
+  s_txInflight = 0U;
+  CDC_App_TxTask();
+
   /* USER CODE END 14 */
   return result;
 }

@@ -4,8 +4,8 @@
 #include "arm_user.h"
 #include "Control_Task.h"
 
-extern uint8_t USB_Task_flag;
-extern uint8_t USART_Task_flag ;
+extern volatile uint8_t USB_Task_flag;
+extern volatile uint8_t USART_Task_flag ;
 
 void ArmIK_ComponentStep(float x, float y, float z);
 

@@ -4,13 +4,13 @@
 #include "math.h"
 #include <string.h>
 #include "arm_tools.h"
+#include "R2_move.h"
 
 
-
-/* ���ھ�� */
+/* 串口句柄 */
 extern UART_HandleTypeDef huart10;
 
-/* ȫ�ֽ���״̬ */
+/* 全局接收状态 */
 ParseState BT_Uart10 = STATE_WAIT_HEADER;
 uint8_t bt_data[BT_FRAME_DATA_LEN];
 uint8_t data_index = 0;
@@ -18,49 +18,50 @@ uint8_t checksum = 0;
 volatile uint8_t bt_parse_ok = 0;
 uint8_t btReceiveData = 0;
 
-uint8_t USB_Task_flag = 0;
-uint8_t USART_Task_flag = 0;
+/* 调试观测：最新一帧的解析结果 */
+CRC_Debug_t crc_dbg = {0};
+
+volatile uint8_t USB_Task_flag   = 0U;
+volatile uint8_t USART_Task_flag = 1U;  /* 上电默认 USART 源激活 */
 uint8_t UU_flag = 0;
 
-
-/* �Ȳ������� */
-int8_t leg_flag = 0;
-float legx = 0.0f;
-float legy = 0.0f;
-float leghtheta = 0.0f;
-
-/* ��е�ۿ����� */
+/* 机械臂控制量 */
 int8_t arm_flag = 0;
 float arm_X = 0.0f;
 float arm_Y = 0.0f;
 float arm_Z = 0.0f;
 
-float mid_X = 0.0f;
-float mid_Y = 0.0f; 
-float mid_Z = 0.0f;
-
-
-//上台阶前轮转速
-int8_t pre_step_flag = 0;
-float pre_step_wheel_speed = 0.0f;
-
 uint8_t tool_flag = 0;
 uint8_t tooluse_flag = 0;
+uint8_t climb_enable_flag = 0U;
+uint8_t climb_step_flag = 0U;
+uint8_t climb_auto_flag = 0U;
 
 
-static int8_t RemoteArm_ClampRawInt8(int8_t raw, int8_t min_val, int8_t max_val);
-static float RemoteArm_MapToRange(float raw, float in_min, float in_max, float out_min, float out_max);
-static float RemoteArm_Clamp(float x, float min_val, float max_val);
+static float clamp_float(float x, float min_val, float max_val);
+extern void Arm_HoldCurrentPosition(uint8_t source);
+
+static volatile uint8_t s_usart_control_timeout = 0U;
+static volatile uint32_t s_usart_control_timeout_tick = 0U;
+
+void Control_SetSource(uint8_t source)
+{
+    if (source == TOOL_USB_SOURCE) {
+        USB_Task_flag = 1U;
+        USART_Task_flag = 0U;
+        Tool_SetActiveSource(TOOL_USB_SOURCE);
+    } else {
+        USART_Task_flag = 1U;
+        USB_Task_flag = 0U;
+        Tool_SetActiveSource(TOOL_USART_SOURCE);
+    }
+}
 
 /*
- * UART10 ���ֽڽ���״̬��
+ * UART10 单字节接收状态机
  *
- * ֡��ʽ��
- *   0xA5 + 11�ֽ����� + 1�ֽ�У��� + 0x5A
- *
- * У�����
- *   checksum = data[0] + data[1] + ... + data[10]
- *   ȡ��8λ
+ * 帧格式：0xA5 + 36 字节数据区 + 1 字节校验和 + 0x5A
+ * 校验和 = data[0] + ... + data[35] 取低 8 位
  */
 void UART10_Receive(uint8_t receiveData)
 {
@@ -107,13 +108,23 @@ void UART10_Receive(uint8_t receiveData)
                     calc_checksum += bt_data[i];
                 }
 
+                crc_dbg.checksum_calc = calc_checksum;
+                crc_dbg.checksum_recv = checksum;
+
                 if (calc_checksum == checksum)
                 {
+                    crc_dbg.last_frame_tick = HAL_GetTick();
+                    crc_dbg.checksum_ok = 1U;
                     bt_parse_ok = 1U;
+                }
+                else
+                {
+                    crc_dbg.checksum_fail_count++;
+                    crc_dbg.last_checksum_fail_tick = HAL_GetTick();
+                    crc_dbg.checksum_ok = 0U;
                 }
             }
 
-            /* ���۳ɹ�ʧ�ܣ��ص��ȴ���ͷ */
             BT_Uart10 = STATE_WAIT_HEADER;
             data_index = 0;
         }
@@ -129,179 +140,215 @@ void UART10_Receive(uint8_t receiveData)
 }
 
 /*
- * ��������һ֡ң��������
- *
- * ע�⣺
- * ���ﲻ�ٴ����洫 byte[] ������
- * ֱ�Ӷ�ȡȫ�� bt_data����������һ�ݱ��ؿ��գ�
- * �����ж���д����һ֡ʱ�ѵ�ǰ�������̴�ϡ�
+ * 从帧中读取一个 float（little-endian）。
  */
+static float read_float_le(const uint8_t *buf)
+{
+    union { uint8_t b[4]; float f; } u;
+    u.b[0] = buf[0];
+    u.b[1] = buf[1];
+    u.b[2] = buf[2];
+    u.b[3] = buf[3];
+    return u.f;
+}
 
+/*
+ * R2 底盘数据解析（直接传 float，无需 int16 编解码）。
+ *
+ * @param ctrl  目标控制器
+ * @param mode  0-7 运动模式
+ * @param p1    VEL:vx(m/s) / POS:dx(m)
+ * @param p2    VEL:vy(m/s) / POS:dy(m)
+ * @param p3    VEL:vw(rad/s) / POS:dyaw(rad)
+ */
+void R2_Chassis_Process(R2_Move_Ctrl_t *ctrl, uint8_t mode,
+                        float p1, float p2, float p3)
+{
+    R2_MoveMode_t m;
+
+    /* 全 0 = 无模式激活 → 急停 */
+    if (mode > 7U) {
+        R2_Move_Stop(ctrl);
+        return;
+    }
+
+    m = (R2_MoveMode_t)mode;
+
+    R2_Move_SetMode(ctrl, m);
+
+    if (R2_Move_IsVelMode(m)) {
+        R2_Move_SetVel(ctrl, p1, p2, p3);
+    } else {
+        R2_Move_SetDist(ctrl, p1, p2, p3);
+    }
+}
+
+/*
+ * 处理完整一帧 UART10 遥控数据。
+ * CRC 仅服务 USART 遥控器 → 固定写入 g_r2_ctrl_usart。
+ *
+ * 帧布局：
+ *   byte 0~11  : 控制字段（mode, arm, UU, tool...）
+ *   byte 12~35 : 6 个 float（chassis×3 + arm×3）
+ */
 void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
 {
     uint8_t frame[BT_FRAME_DATA_LEN];
+    uint8_t mode;
+    float   chs_p1, chs_p2, chs_p3;
+    float   ax, ay, az;
 
-    (void)cmd; /* �㵱ǰ������û�����õ� cmd�������ȱ����ӿ� */
+    (void)cmd;
+    (void)V_x; (void)V_y; (void)V_w;
 
-    if ((V_x == 0) || (V_y == 0) || (V_w == 0))
-    {
-        return;
-    }
-
-    if (bt_parse_ok == 0U)
-    {
-        return;
-    }
+    if (bt_parse_ok == 0U) return;
 
     __disable_irq();
     memcpy(frame, bt_data, sizeof(frame));
     bt_parse_ok = 0U;
     __enable_irq();
 
-    /* ���̿��� */
-    *V_x = (int8_t)frame[0] / 128.0f * 3.68f;
-    *V_y = (int8_t)frame[1] / 128.0f * 3.68f;
-    *V_w = (int8_t)frame[2] / 128.0f * 3.68f;
-
-    /* �Ȳ����� */
-    legx = (float)(int8_t)frame[3] / 128.0f * 180.0f;
-    legy = (float)(int8_t)frame[4] / 128.0f * 180.0f;
-    leghtheta = (float)(int8_t)frame[5] / 128.0f * 55.0f;
-
-    if (fabsf(legx) >= 180.0f)      legx = (legx > 0.0f) ? 180.0f : -180.0f;
-    if (fabsf(legy) >= 180.0f)      legy = (legy > 0.0f) ? 180.0f : -180.0f;
-    if (fabsf(leghtheta) >= 55.0f)  leghtheta = (leghtheta > 0.0f) ? 55.0f : -55.0f;
-
-    leg_flag = (int8_t)frame[6];
-
-    /* ��е�ۿ��� */
-    arm_flag = (int8_t)frame[7];
-    // 步骤1：提取原始值（int8_t）
-    int8_t raw_x = (int8_t)frame[8];
-    int8_t raw_y = (int8_t)frame[9];
-    int8_t raw_z = (int8_t)frame[10];
-
-    // 步骤2：原始值截断（确保不超出通信约定的安全范围）
-    raw_x = RemoteArm_ClampRawInt8(raw_x, ARM_REMOTE_RAW_XY_MIN, ARM_REMOTE_RAW_XY_MAX);
-    raw_y = RemoteArm_ClampRawInt8(raw_y, ARM_REMOTE_RAW_XY_MIN, ARM_REMOTE_RAW_XY_MAX);
-    raw_z = RemoteArm_ClampRawInt8(raw_z, ARM_REMOTE_RAW_Z_MIN, ARM_REMOTE_RAW_Z_MAX);
-
-    // 步骤3：映射到机械臂物理范围（mm）
-    mid_X = RemoteArm_MapToRange((float)raw_x, 
-                                ARM_REMOTE_RAW_XY_MIN, ARM_REMOTE_RAW_XY_MAX,
-                                ARM_REMOTE_X_MIN_MM, ARM_REMOTE_X_MAX_MM);
-    mid_Y = RemoteArm_MapToRange((float)raw_y, 
-                                ARM_REMOTE_RAW_XY_MIN, ARM_REMOTE_RAW_XY_MAX,
-                                ARM_REMOTE_Y_MIN_MM, ARM_REMOTE_Y_MAX_MM);
-    mid_Z = RemoteArm_MapToRange((float)raw_z, 
-                                ARM_REMOTE_RAW_Z_MIN, ARM_REMOTE_RAW_Z_MAX,
-                                ARM_REMOTE_Z_MIN_MM, ARM_REMOTE_Z_MAX_MM);
-
-    // 步骤4：最终物理范围校验（双重保险，防止映射计算误差）
-    mid_X = RemoteArm_Clamp(mid_X, ARM_REMOTE_X_MIN_MM, ARM_REMOTE_X_MAX_MM);
-    mid_Y = RemoteArm_Clamp(mid_Y, ARM_REMOTE_Y_MIN_MM, ARM_REMOTE_Y_MAX_MM);
-    mid_Z = RemoteArm_Clamp(mid_Z, ARM_REMOTE_Z_MIN_MM, ARM_REMOTE_Z_MAX_MM);    
-
-    if (arm_flag == 1)
+    /* ── byte 0~7: 8 个模式标志位，同时只有一个为 1，全 0 = 静止 ── */
     {
-        arm_X = mid_X;
-        arm_Y = mid_Y;
-        arm_Z = mid_Z;
+        uint8_t i;
+        mode = 0xFFU;
+        for (i = 0U; i < 8U; i++) {
+            if (frame[i] == 1U) { mode = i; break; }
+        }
     }
-    else
-    {
+
+    /* ── byte 8~11: 4 控制字节 ── */
+    arm_flag     = (int8_t)frame[8];  /* ARM */
+    UU_flag      = frame[9];          /* UU  */
+    tool_flag    = frame[10];         /* tool */
+    tooluse_flag = frame[11];         /* state */
+    climb_enable_flag = frame[12];
+    climb_step_flag   = frame[13];
+    climb_auto_flag   = frame[14];
+
+    /* Current float payload starts after the 3 climb bytes: byte 15~38. */
+
+    /* ── 6 float 数据区（byte 12~35） ── */
+    chs_p1 = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 0U]);   /* chassis param1 */
+    chs_p2 = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 4U]);   /* chassis param2 */
+    chs_p3 = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 8U]);   /* chassis param3 */
+    ax     = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 12U]);  /* arm_x (mm) */
+    ay     = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 16U]);  /* arm_y (mm) */
+    az     = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 20U]);  /* arm_z (mm) */
+
+    /* ── 填充调试观测变量 ── */
+    crc_dbg.mode         = mode;
+    crc_dbg.chs_p1       = chs_p1;
+    crc_dbg.chs_p2       = chs_p2;
+    crc_dbg.chs_p3       = chs_p3;
+    crc_dbg.arm_x        = ax;
+    crc_dbg.arm_y        = ay;
+    crc_dbg.arm_z        = az;
+    crc_dbg.arm_flag     = (uint8_t)arm_flag;
+    crc_dbg.uu_flag      = UU_flag;
+    crc_dbg.tool_flag    = tool_flag;
+    crc_dbg.tooluse_flag = tooluse_flag;
+    crc_dbg.climb_enable = climb_enable_flag;
+    crc_dbg.climb_step   = climb_step_flag;
+    crc_dbg.climb_auto   = climb_auto_flag;
+    crc_dbg.frame_count++;
+    crc_dbg.last_frame_tick = HAL_GetTick();
+    crc_dbg.checksum_ok  = 1U;
+    crc_dbg.control_timeout = 0U;
+    s_usart_control_timeout = 0U;
+
+    /* ── R2 底盘控制（UART 遥控器 → USART 控制器） ── */
+    R2_Chassis_Process(&g_r2_ctrl_usart, mode, chs_p1, chs_p2, chs_p3);
+    R2_Climb_SetInput(&g_r2_climb_usart,
+                      climb_enable_flag,
+                      climb_step_flag,
+                      climb_auto_flag);
+
+    /* ── 机械臂控制 ── */
+    ax = clamp_float(ax, ARM_REMOTE_X_MIN_MM, ARM_REMOTE_X_MAX_MM);
+    ay = clamp_float(ay, ARM_REMOTE_Y_MIN_MM, ARM_REMOTE_Y_MAX_MM);
+    az = clamp_float(az, ARM_REMOTE_Z_MIN_MM, ARM_REMOTE_Z_MAX_MM);
+
+    if (arm_flag == 1) {
+        arm_X = ax;
+        arm_Y = ay;
+        arm_Z = az;
+    } else {
         arm_X = 0.0f;
         arm_Y = 0.0f;
         arm_Z = 0.0f;
     }
-    UU_flag = frame[11];
-    if(UU_flag == 0U)
-    {
-        USART_Task_flag = 1U;
-        USB_Task_flag = 0U;
-        set_clamp_controlSource(&clamp, TOOL_USART_SOURCE);
-        set_chuck_controlSource(&chuck, TOOL_USART_SOURCE);
 
-    }
-    if(UU_flag == 1U)
-    {
-        USB_Task_flag = 1U;
-        USART_Task_flag = 0U;
-        set_clamp_controlSource(&clamp, TOOL_USB_SOURCE);
-        set_chuck_controlSource(&chuck, TOOL_USB_SOURCE);
+    /* ── USART/USB 控制源切换 ── */
+    Control_SetSource((UU_flag == 1U) ? TOOL_USB_SOURCE : TOOL_USART_SOURCE);
 
-    }
+    /* ── 工具控制 ── */
+    if (USART_Task_flag == 1U) {
+        Tool_SetSelectedDev(TOOL_USART_SOURCE, tool_flag);
 
-    pre_step_flag = frame[12];
-    pre_step_wheel_speed = (int8_t)frame[13] / 128.0f * 2048.0f;
-   
-    tool_flag = frame[14];
-    tooluse_flag = frame[15];
-
-// 操作吸盘
-    if(tool_flag == 0U) 
-    {
-        // 只有当期望状态与当前状态不同时，才触发动作
-        if(tooluse_flag == 0U && chuck.state != CHUCK_CLOSE) {
-            trigger_chuck_action(&chuck, CHUCK_CLOSE);
-        }
-        else if(tooluse_flag == 1U && chuck.state != CHUCK_OPEN) {
-            trigger_chuck_action(&chuck, CHUCK_OPEN);
+        if (tool_flag == 0U) {
+            chuck_Handle_t *usart_chuck = Tool_GetChuck(TOOL_USART_SOURCE);
+            if (tooluse_flag == 0U && usart_chuck->state != CHUCK_CLOSE) {
+                trigger_chuck_action(usart_chuck, CHUCK_CLOSE);
+            } else if (tooluse_flag == 1U && usart_chuck->state != CHUCK_OPEN) {
+                trigger_chuck_action(usart_chuck, CHUCK_OPEN);
+            }
+        } else if (tool_flag == 1U) {
+            clamp_Handle_t *usart_clamp = Tool_GetClamp(TOOL_USART_SOURCE);
+            if (tooluse_flag == 0U && usart_clamp->state != CLAMP_CLOSE) {
+                trigger_clamp_action(usart_clamp, CLAMP_CLOSE);
+            } else if (tooluse_flag == 1U && usart_clamp->state != CLAMP_OPEN) {
+                trigger_clamp_action(usart_clamp, CLAMP_OPEN);
+            }
         }
     }
-    // 操作夹爪
-    else if(tool_flag == 1U) 
-    {
-        if(tooluse_flag == 0U && clamp.state != CLAMP_CLOSE) {
-            trigger_clamp_action(&clamp, CLAMP_CLOSE);
-        }
-        else if(tooluse_flag == 1U && clamp.state != CLAMP_OPEN) {
-            trigger_clamp_action(&clamp, CLAMP_OPEN);
-        }
-    }
-
-
-
-
 }
 
 
-// 新增：原始值截断函数（针对int8_t类型）
-static int8_t RemoteArm_ClampRawInt8(int8_t raw, int8_t min_val, int8_t max_val)
+static float clamp_float(float x, float min_val, float max_val)
 {
-    if (raw < min_val)
-    {
-        return min_val;
-    }
-    if (raw > max_val)
-    {
-        return max_val;
-    }
-    return raw;
-}
-
-// 原有：浮点数截断函数（保留）
-static float RemoteArm_Clamp(float x, float min_val, float max_val)
-{
-    if (x < min_val)
-    {
-        return min_val;
-    }
-    if (x > max_val)
-    {
-        return max_val;
-    }
+    if (x < min_val) return min_val;
+    if (x > max_val) return max_val;
     return x;
 }
 
-// 改造：通用映射函数（支持任意输入范围→输出范围）
-static float RemoteArm_MapToRange(float raw, float in_min, float in_max, float out_min, float out_max)
+void USART_ControlWatchdog_Check(void)
 {
-    // 避免除零（输入范围无效时返回输出最小值）
-    if (in_max - in_min < 1e-6f)
+    uint32_t now_tick;
+    uint32_t last_tick;
+    uint8_t need_hold = 0U;
+
+    now_tick = HAL_GetTick();
+
+    __disable_irq();
+    last_tick = crc_dbg.last_frame_tick;
+    if ((USART_Task_flag != 0U) &&
+        (last_tick != 0U) &&
+        (s_usart_control_timeout == 0U) &&
+        ((now_tick - last_tick) > USART_CONTROL_TIMEOUT_MS))
     {
-        return out_min;
+        s_usart_control_timeout = 1U;
+        s_usart_control_timeout_tick = now_tick;
+        crc_dbg.control_timeout = 1U;
+        need_hold = 1U;
     }
-    // 归一化→映射到目标范围
-    return out_min + (raw - in_min) * (out_max - out_min) / (in_max - in_min);
+    __enable_irq();
+
+    if (need_hold != 0U) {
+        R2_Move_Stop(&g_r2_ctrl_usart);
+        R2_Climb_Stop(&g_r2_climb_usart);
+        Arm_HoldCurrentPosition(TOOL_USART_SOURCE);
+        Tool_HoldSource(TOOL_USART_SOURCE);
+    }
+}
+
+uint8_t USART_ControlWatchdog_IsTimeout(void)
+{
+    uint8_t timeout;
+
+    __disable_irq();
+    timeout = s_usart_control_timeout;
+    __enable_irq();
+
+    return timeout;
 }

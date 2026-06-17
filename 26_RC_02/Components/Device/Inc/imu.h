@@ -1,32 +1,63 @@
 #ifndef __IMU_H
 #define __IMU_H
 
-#include "main.h"  // 包含CubeMX生成的huart7声明
+#include "main.h"
 #include "wit_c_sdk.h"
 #include "bsp_tick.h"
 
-
-/* IMU数据结构体：存储解算后的加速度和角度 */
+/* Decoded IMU data shared with control code. */
 typedef struct {
-    float acc_x;  // X轴加速度 (单位：g)
-    float acc_y;  // Y轴加速度 (单位：g)
-    float acc_z;  // Z轴加速度 (单位：g)
-	  float gyro_x; // X轴角加速度（陀螺仪） (单位：°/s)
-    float gyro_y; // Y轴角加速度（陀螺仪） (单位：°/s)
-    float gyro_z; // Z轴角加速度（陀螺仪） (单位：°/s)
-    float roll;   // 横滚角 (单位：°)
-    float pitch;  // 俯仰角 (单位：°)
-    float yaw;    // 偏航角 (单位：°)
+    float acc_x;   /* g */
+    float acc_y;   /* g */
+    float acc_z;   /* g */
+    float gyro_x;  /* deg/s */
+    float gyro_y;  /* deg/s */
+    float gyro_z;  /* deg/s */
+    float roll;    /* deg */
+    float pitch;   /* deg */
+    float yaw;     /* deg */
 
-    uint8_t update_flag; // 数据更新标志：1-新数据，0-无更新
+    uint32_t last_update_tick;
+    uint8_t online;
+    uint8_t update_flag;
 } IMU_Data_t;
 
-/* 全局IMU数据（供业务层访问） */
+typedef struct {
+    uint32_t dma_start_count;
+    uint32_t dma_rx_event_count;
+    uint32_t dma_rx_byte_count;
+    uint32_t dma_restart_count;
+    uint32_t reg_update_count;
+    uint32_t acc_update_count;
+    uint32_t gyro_update_count;
+    uint32_t angle_update_count;
+    uint32_t last_update_tick;
+    uint32_t last_reg;
+    uint32_t last_reg_num;
+    uint16_t last_dma_size;
+    uint16_t last_dma_read_pos;
+    uint8_t dma_started;
+    uint8_t initialized;
+    uint8_t last_rx_byte;
+    uint8_t last_error_code;
+    int16_t raw_acc[3];
+    int16_t raw_gyro[3];
+    int16_t raw_angle[3];
+    uint32_t dma_buf_addr;
+    uint32_t dma_ndtr;
+    uint32_t dma_event_type;
+    uint32_t dma_restart_fail_count;
+    uint32_t dma_rx_overrun_count;
+    uint8_t rx_mode;
+} IMU_Debug_t;
+
 extern IMU_Data_t imu_data;
+extern IMU_Debug_t g_imu_debug;
 extern uint8_t imu_rx_byte;
 
-/* 函数声明 */
-void IMU_Init(void);          // IMU初始化（开启中断+SDK注册）
-void IMU_ParseData(void);     // 数据解析辅助函数（可选）
+void IMU_Init(void);
+void IMU_ParseData(void);
+void IMU_RxDmaEventCallback(uint16_t size);
+void IMU_RestartDmaReceive(void);
 
 #endif /* __IMU_H */

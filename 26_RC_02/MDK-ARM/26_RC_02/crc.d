@@ -41,28 +41,27 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_ll_usb.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd_ex.h \
-  ..\Core\Inc\usart.h ..\Core\Inc\main.h ..\BSP\Inc\struct_typedef.h \
-  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
-  ..\Components\Device\Inc\arm_tools.h ..\BSP\Inc\include.h \
-  ..\Core\Inc\gpio.h ..\Components\Device\Inc\fdcan_receive.h \
-  ..\BSP\Inc\bsp_fdcan.h ..\Core\Inc\fdcan.h \
-  ..\Components\Controller\Inc\pid.h \
+  ..\Applications\App_user\Inc\R2_move.h \
+  ..\Components\Algorithm\Inc\chassis_move.h \
+  ..\Components\Algorithm\Inc\speedPlanner.h \
+  ..\Components\Algorithm\Inc\s_curve.h \
+  ..\Components\Algorithm\Inc\mecanum_classic.h ..\BSP\Inc\include.h \
+  ..\Core\Inc\main.h ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h \
+  ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
+  ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
-  ..\Components\Algorithm\Inc\Data_analysis.h \
-  ..\Applications\Task\Inc\CAN_Task.h \
-  ..\Applications\Task\Inc\Control_Task.h ..\BSP\Inc\bsp_mcu.h \
-  ..\Components\Algorithm\Inc\mecanum_classic.h ..\BSP\Inc\bsp_uart.h \
-  ..\USB_DEVICE\App\usbd_cdc_if.h \
-  ..\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Inc\usbd_cdc.h \
-  ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
+  ..\Applications\R2_user\Inc\R2_climb.h ..\Core\Inc\usart.h \
+  ..\Components\Device\Inc\arm_tools.h \
+  ..\Components\Algorithm\Inc\arm_user.h ..\BSP\Inc\bsp_usb.h \
+  ..\USB_DEVICE\App\usb_device.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_def.h \
   ..\USB_DEVICE\Target\usbd_conf.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdio.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdlib.h \
+  ..\USB_DEVICE\App\usbd_cdc_if.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Class\CDC\Inc\usbd_cdc.h \
+  ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
-  ..\BSP\Inc\bsp_usb.h ..\USB_DEVICE\App\usb_device.h \
-  ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h \
-  ..\Components\Algorithm\Inc\arm_user.h \
-  ..\Components\Algorithm\Inc\arm_echo_uart10.h \
-  ..\Applications\Task\Inc\INS_Task.h
+  ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h

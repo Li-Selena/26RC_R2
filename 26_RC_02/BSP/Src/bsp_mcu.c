@@ -23,13 +23,9 @@ void MCU_Init(void)
 static void DJI_Moter_Init(void)
 {
 	FDCAN1_Filter_Init();
-	HAL_FDCAN_Start(&hfdcan1);
 	FDCAN2_Filter_Init();
-	HAL_FDCAN_Start(&hfdcan2);
 	FDCAN3_Filter_Init();
-	HAL_FDCAN_Start(&hfdcan3);
-
-    PID_devices_Init();
+	FDCAN_Motor_Start_All();
 }
 
 static void H7_power(void)

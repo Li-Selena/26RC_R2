@@ -10,6 +10,9 @@ set(DPACK Keil::STM32H7xx_DFP@4.1.3)
 set(DPACK_DIR "${CMSIS_PACK_ROOT}/Keil/STM32H7xx_DFP/4.1.3")
 set(OUT_DIR "${SOLUTION_ROOT}/out/26_RC_02/26_RC_02")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_COMPILE_COMMANDS ${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json)
+set(COMPILE_COMMANDS ${OUT_DIR}/compile_commands.json)
+set(COMPILE_MACROS ${OUT_DIR}/compile_macros.h)
 set(LD_SCRIPT "${SOLUTION_ROOT}/26_RC_02_26_RC_02.sct")
 set(LD_SCRIPT_PP ${LD_SCRIPT})
 
@@ -30,9 +33,13 @@ project(${CONTEXT} LANGUAGES ASM C)
 set(CMAKE_COLOR_DIAGNOSTICS ON)
 
 # Compilation database
-add_custom_target(database
-  COMMAND ${CMAKE_COMMAND} -E make_directory "${OUT_DIR}"
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" "${OUT_DIR}"
+add_custom_target(database DEPENDS ${COMPILE_COMMANDS} ${COMPILE_MACROS})
+add_custom_command(OUTPUT ${COMPILE_COMMANDS}
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_COMPILE_COMMANDS}" "${COMPILE_COMMANDS}"
+  DEPENDS "${CMAKE_COMPILE_COMMANDS}"
+)
+add_custom_command(OUTPUT ${COMPILE_MACROS}
+  COMMAND ${CPP} ${CPP_DUMP_MACROS}
 )
 set(CMAKE_C_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
 
@@ -58,12 +65,16 @@ target_include_directories(${CONTEXT} PUBLIC
     "${SOLUTION_ROOT}/../Drivers/CMSIS/Device/ST/STM32H7xx/Include"
     "${SOLUTION_ROOT}/../Drivers/CMSIS/Include"
     "${SOLUTION_ROOT}/../Applications/Task/Inc"
+    "${SOLUTION_ROOT}/../Applications/App_user/Inc"
+    "${SOLUTION_ROOT}/../Applications/R2_user/Inc"
     "${SOLUTION_ROOT}/../Components/Algorithm/Inc"
     "${SOLUTION_ROOT}/../Components/Controller/Inc"
     "${SOLUTION_ROOT}/../Components/Device/Inc"
     "${SOLUTION_ROOT}/../BSP/Inc"
   >
   "${SOLUTION_ROOT}/RTE/_26_RC_02"
+  "${CMSIS_PACK_ROOT}/ARM/CMSIS-DSP/1.16.2/Include"
+  "${CMSIS_PACK_ROOT}/ARM/CMSIS-DSP/1.16.2/PrivateInclude"
   "${CMSIS_PACK_ROOT}/ARM/CMSIS/5.9.0/CMSIS/Core/Include"
 )
 
@@ -132,6 +143,7 @@ target_link_libraries(${CONTEXT} PUBLIC
   Group_Application_MDK-ARM
   Group_Application_User_Core
   Group_Applications_Task
+  Group_Applications_R2_user
   Group_Components_Algorithm
   Group_Components_Controller
   Group_Components_Device
@@ -143,6 +155,7 @@ target_link_libraries(${CONTEXT} PUBLIC
   Group_Middlewares_FreeRTOS
   Group_Middlewares_USB_Device_Library
   ARM_CMSIS_CORE_5_6_0
+  ARM_CMSIS_DSP_Source_1_16_2
 )
 
 # Linker options

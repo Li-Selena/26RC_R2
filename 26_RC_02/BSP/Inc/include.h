@@ -3,7 +3,6 @@
 
 #include "main.h"
 #include "gpio.h"
-//#include "bsp_delay.h"
 #include "struct_typedef.h"
 #include "fdcan_receive.h"
 #include "bsp_fdcan.h"

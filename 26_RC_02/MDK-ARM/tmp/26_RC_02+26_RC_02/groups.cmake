@@ -34,6 +34,7 @@ add_library(Group_Application_User_Core OBJECT
   "${SOLUTION_ROOT}/../Core/Src/main.c"
   "${SOLUTION_ROOT}/../Core/Src/gpio.c"
   "${SOLUTION_ROOT}/../Core/Src/freertos.c"
+  "${SOLUTION_ROOT}/../Core/Src/dma.c"
   "${SOLUTION_ROOT}/../Core/Src/fdcan.c"
   "${SOLUTION_ROOT}/../Core/Src/memorymap.c"
   "${SOLUTION_ROOT}/../Core/Src/tim.c"
@@ -58,6 +59,9 @@ target_compile_options(Group_Application_User_Core PUBLIC
 target_link_libraries(Group_Application_User_Core PUBLIC
   Group_Application_User_Core_ABSTRACTIONS
 )
+set_source_files_properties("${SOLUTION_ROOT}/../Core/Src/dma.c" PROPERTIES
+  COMPILE_OPTIONS ""
+)
 
 # group Applications/Task
 add_library(Group_Applications_Task OBJECT
@@ -65,6 +69,7 @@ add_library(Group_Applications_Task OBJECT
   "${SOLUTION_ROOT}/../Applications/Task/Src/Control_Task.c"
   "${SOLUTION_ROOT}/../Applications/Task/Src/PC_RX_Task.c"
   "${SOLUTION_ROOT}/../Applications/Task/Src/PC_TX_Task.c"
+  "${SOLUTION_ROOT}/../Applications/Task/Src/INS_Task.c"
 )
 target_include_directories(Group_Applications_Task PUBLIC
   $<TARGET_PROPERTY:${CONTEXT},INTERFACE_INCLUDE_DIRECTORIES>
@@ -83,6 +88,28 @@ target_link_libraries(Group_Applications_Task PUBLIC
   Group_Applications_Task_ABSTRACTIONS
 )
 
+# group Applications/R2_user
+add_library(Group_Applications_R2_user OBJECT
+  "${SOLUTION_ROOT}/../Applications/App_user/Src/R2_move.c"
+  "${SOLUTION_ROOT}/../Applications/R2_user/Src/R2_climb.c"
+)
+target_include_directories(Group_Applications_R2_user PUBLIC
+  $<TARGET_PROPERTY:${CONTEXT},INTERFACE_INCLUDE_DIRECTORIES>
+)
+target_compile_definitions(Group_Applications_R2_user PUBLIC
+  $<TARGET_PROPERTY:${CONTEXT},INTERFACE_COMPILE_DEFINITIONS>
+)
+add_library(Group_Applications_R2_user_ABSTRACTIONS INTERFACE)
+target_link_libraries(Group_Applications_R2_user_ABSTRACTIONS INTERFACE
+  ${CONTEXT}_ABSTRACTIONS
+)
+target_compile_options(Group_Applications_R2_user PUBLIC
+  $<TARGET_PROPERTY:${CONTEXT},INTERFACE_COMPILE_OPTIONS>
+)
+target_link_libraries(Group_Applications_R2_user PUBLIC
+  Group_Applications_R2_user_ABSTRACTIONS
+)
+
 # group Components/Algorithm
 add_library(Group_Components_Algorithm OBJECT
   "${SOLUTION_ROOT}/../Components/Algorithm/Src/arm_echo_uart10.c"
@@ -92,6 +119,9 @@ add_library(Group_Components_Algorithm OBJECT
   "${SOLUTION_ROOT}/../Components/Algorithm/Src/Data_Analysis.c"
   "${SOLUTION_ROOT}/../Components/Algorithm/Src/mecanum_classic.c"
   "${SOLUTION_ROOT}/../Components/Algorithm/Src/speedPlanner.c"
+  "${SOLUTION_ROOT}/../Components/Algorithm/Src/s_curve.c"
+  "${SOLUTION_ROOT}/../Components/Algorithm/Src/chassis_move.c"
+  "${SOLUTION_ROOT}/../Components/Algorithm/Src/ins_nav_math.c"
 )
 target_include_directories(Group_Components_Algorithm PUBLIC
   $<TARGET_PROPERTY:${CONTEXT},INTERFACE_INCLUDE_DIRECTORIES>

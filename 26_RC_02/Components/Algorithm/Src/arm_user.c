@@ -3,23 +3,23 @@
 #include "bsp_usb.h"
 #include "arm_ik_3r_safe_stm32h7.h"
 
-/* ========================= È«¾Ö¶ÔÏó ========================= */
+/* ========================= È«ï¿½Ö¶ï¿½ï¿½ï¿½ ========================= */
 /*
- * Äæ½â×é¼þ¾ä±ú
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 Arm3R_Handle_t g_arm_ik;
 
 /*
- * Ó¦ÓÃ²ãÔËÐÐ×´Ì¬
+ * Ó¦ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
  */
 ArmIK_AppState_t g_arm_ik_app;
 
 
 
 
-/* ========================= ÄÚ²¿º¯ÊýÉùÃ÷ ========================= */
+/* ========================= ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ ========================= */
 /*
- * ÏÂÃæÕâÐ©º¯ÊýÖ»ÔÚ±¾ÎÄ¼þÄÚ²¿Ê¹ÓÃ
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð©ï¿½ï¿½ï¿½ï¿½Ö»ï¿½Ú±ï¿½ï¿½Ä¼ï¿½ï¿½Ú²ï¿½Ê¹ï¿½ï¿½
  */
 static void ArmIK_ResetAppState(void);
 static void ArmIK_SendResultToUSB(uint8_t cmd, const uint8_t *data, uint16_t len);
@@ -38,10 +38,10 @@ static void ArmIK_SaveAsLastValidTarget(float x,
                                         const ArmIK_MotorDeg_t *motor_ctrl_deg);
 static uint8_t ArmIK_HandleInvalidTarget(void);
 
-/* ========================= ÄÚ²¿º¯ÊýÊµÏÖ ========================= */
+/* ========================= ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½ ========================= */
 /*
- * Çå¿ÕÓ¦ÓÃ²ã×´Ì¬
- * Ö»ÔÚ³õÊ¼»¯Ê±µ÷ÓÃ
+ * ï¿½ï¿½ï¿½Ó¦ï¿½Ã²ï¿½×´Ì¬
+ * Ö»ï¿½Ú³ï¿½Ê¼ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
  */
 static void ArmIK_ResetAppState(void)
 {
@@ -49,8 +49,8 @@ static void ArmIK_ResetAppState(void)
 }
 
 /*
- * ·¢¸ø USB ÉÏÎ»»ú
- * ÕâÀïÑØÓÃÄãÔ­À´µÄ Send_Cmd_Data()
+ * ï¿½ï¿½ï¿½ï¿½ USB ï¿½ï¿½Î»ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ Send_Cmd_Data()
  */
 static void ArmIK_SendResultToUSB(uint8_t cmd, const uint8_t *data, uint16_t len)
 {
@@ -58,17 +58,17 @@ static void ArmIK_SendResultToUSB(uint8_t cmd, const uint8_t *data, uint16_t len
 }
 
 /*
- * ·¢¸ø UART10 À¶ÑÀÒ£¿ØÆ÷
+ * ï¿½ï¿½ï¿½ï¿½ UART10 ï¿½ï¿½ï¿½ï¿½Ò£ï¿½ï¿½ï¿½ï¿½
  *
- * ÕâÀïÎÒ²»¸øÄãÇ¿ÐÐÐ´ËÀµ×²ãº¯ÊýÃû£¬
- * ÒòÎªÄãÃ»ÓÐÉÏ´« UART10 µÄ BSP ÎÄ¼þ£¬
- * ÎÒ²»ÖªµÀÄãÊµ¼Ê·¢ËÍ½Ó¿Ú½ÐÊ²Ã´¡£
+ * ï¿½ï¿½ï¿½ï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½ï¿½Ç¿ï¿½ï¿½Ð´ï¿½ï¿½ï¿½×²ãº¯ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+ * ï¿½ï¿½Îªï¿½ï¿½Ã»ï¿½ï¿½ï¿½Ï´ï¿½ UART10 ï¿½ï¿½ BSP ï¿½Ä¼ï¿½ï¿½ï¿½
+ * ï¿½Ò²ï¿½Öªï¿½ï¿½ï¿½ï¿½Êµï¿½Ê·ï¿½ï¿½Í½Ó¿Ú½ï¿½Ê²Ã´ï¿½ï¿½
  *
- * ÄãÖ»ÐèÒª°ÑÏÂÃæÕâ¾ä×¢ÊÍÌæ»»³ÉÄã×Ô¼ºµÄ UART10 ·¢ËÍº¯Êý¼´¿É¡£
+ * ï¿½ï¿½Ö»ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×¢ï¿½ï¿½ï¿½æ»»ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ UART10 ï¿½ï¿½ï¿½Íºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½É¡ï¿½
  *
- * ÀýÈç£º
+ * ï¿½ï¿½ï¿½ç£º
  * Uart10_Send_Cmd_Data(cmd, data, len);
- * »òÕß£º
+ * ï¿½ï¿½ï¿½ß£ï¿½
  * HAL_UART_Transmit(&huart10, ...);
  */
 static void ArmIK_SendResultToUART10(uint8_t cmd, const uint8_t *data, uint16_t len)
@@ -77,14 +77,14 @@ static void ArmIK_SendResultToUART10(uint8_t cmd, const uint8_t *data, uint16_t 
     (void)data;
     (void)len;
 
-    /* TODO£ºÌæ»»³ÉÄã×Ô¼ºµÄ UART10 ·¢ËÍ½Ó¿Ú */
+    /* TODOï¿½ï¿½ï¿½æ»»ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½ï¿½ UART10 ï¿½ï¿½ï¿½Í½Ó¿ï¿½ */
     /* Uart10_Send_Cmd_Data(cmd, (uint8_t *)data, len); */
 }
 
 /*
- * Í¬Ê±·¢¸ø USB ºÍ UART10
+ * Í¬Ê±ï¿½ï¿½ï¿½ï¿½ USB ï¿½ï¿½ UART10
  *
- * ×´Ì¬°üÒ»¹² 6 ×Ö½Ú£¬¸ñÊ½¼ûÍ·ÎÄ¼þËµÃ÷
+ * ×´Ì¬ï¿½ï¿½Ò»ï¿½ï¿½ 6 ï¿½Ö½Ú£ï¿½ï¿½ï¿½Ê½ï¿½ï¿½Í·ï¿½Ä¼ï¿½Ëµï¿½ï¿½
  */
 static void ArmIK_SendResultToAll(uint8_t status_code,
                                   uint8_t unsafe_reason,
@@ -111,7 +111,7 @@ static void ArmIK_SendResultToAll(uint8_t status_code,
     tx_data[5] = g_arm_ik_app.has_last_valid;
 
     /*
-     * ÕâÀï¼ÌÐøÑØÓÃÄãÔ­À´¹¤³ÌÀïÒÑ¾­ÔÚÓÃµÄÃüÁî×Ö£º
+     * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½Ãµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö£ï¿½
      * USB_CMD_ARM_IK_RESULT
      */
     ArmIK_SendResultToUSB(USB_CMD_ARM_IK_RESULT, tx_data, sizeof(tx_data));
@@ -119,11 +119,11 @@ static void ArmIK_SendResultToAll(uint8_t status_code,
 }
 
 /*
- * µç»ú·½Ïò¿ØÖÆ½Ç£¨rad£© -> µç»úÄ¿±ê½Ç£¨deg£©
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½Ç£ï¿½radï¿½ï¿½ -> ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½Ç£ï¿½degï¿½ï¿½
  *
- * ×¢Òâ£º
- * ÕâÀïÖ»×ö¡°»¡¶È×ª½Ç¶È¡±¡£
- * dir ·½ÏòÓ³ÉäÒÑ¾­ÔÚ Arm3R_GeomCtrlToMotorCtrl() Àï×öÍêÁË¡£
+ * ×¢ï¿½â£º
+ * ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½Ç¶È¡ï¿½ï¿½ï¿½
+ * dir ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ Arm3R_GeomCtrlToMotorCtrl() ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë¡ï¿½
  */
 static void ArmIK_MotorCtrlRadToDeg(const Arm3R_CtrlAngles_t *motor_ctrl_rad,
                                     ArmIK_MotorDeg_t *motor_ctrl_deg)
@@ -140,11 +140,11 @@ static void ArmIK_MotorCtrlRadToDeg(const Arm3R_CtrlAngles_t *motor_ctrl_rad,
 }
 
 /*
- * µ±±¾´ÎÄ¿±êµã¡°¿É´ïÇÒ°²È«¡±Ê±£¬
- * ½«Æä±£´æ³É¡°ÉÏÒ»×é°²È«Ä¿±ê¡±
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ã¡°ï¿½É´ï¿½ï¿½Ò°ï¿½È«ï¿½ï¿½Ê±ï¿½ï¿½
+ * ï¿½ï¿½ï¿½ä±£ï¿½ï¿½É¡ï¿½ï¿½ï¿½Ò»ï¿½é°²È«Ä¿ï¿½ê¡±
  *
- * ÕâÑùºóÃæÒ»µ©ÊÕµ½·Ç·¨Ä¿±êµã£¬
- * ¾Í¿ÉÒÔÖ±½Ó±£³ÖÉÏÒ»×é°²È«½Ç¶ÈÊä³ö
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Õµï¿½ï¿½Ç·ï¿½Ä¿ï¿½ï¿½ã£¬
+ * ï¿½Í¿ï¿½ï¿½ï¿½Ö±ï¿½Ó±ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½é°²È«ï¿½Ç¶ï¿½ï¿½ï¿½ï¿½
  */
 static void ArmIK_SaveAsLastValidTarget(float x,
                                         float y,
@@ -158,22 +158,22 @@ static void ArmIK_SaveAsLastValidTarget(float x,
         return;
     }
 
-    /* ±£´æ×î½üÒ»´Î°²È«Ä¿±êµã */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î°ï¿½È«Ä¿ï¿½ï¿½ï¿½ */
     g_arm_ik_app.last_valid_pt.x = x;
     g_arm_ik_app.last_valid_pt.y = y;
     g_arm_ik_app.last_valid_pt.z = z;
 
-    g_arm_ik_app.last_valid_model = res->model;   /* ÐÂÔö */
+    g_arm_ik_app.last_valid_model = res->model;   /* ï¿½ï¿½ï¿½ï¿½ */
 
-    /* ±£´æ×î½üÒ»´Î°²È«¿ØÖÆ½Ç */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½Î°ï¿½È«ï¿½ï¿½ï¿½Æ½ï¿½ */
     g_arm_ik_app.last_valid_geom = res->ctrl;
     g_arm_ik_app.last_valid_motor = *motor_ctrl_rad;
     g_arm_ik_app.last_valid_motor_deg = *motor_ctrl_deg;
 
-    g_arm_ik_app.active_model = res->model;       /* ÐÂÔö */
+    g_arm_ik_app.active_model = res->model;       /* ï¿½ï¿½ï¿½ï¿½ */
 
     /*
-     * µ±Ç°Êµ¼ÊÎ¬³ÖÊä³öÒ²Í¬²½¸üÐÂÎªÕâ´ÎÐÂÄ¿±ê
+     * ï¿½ï¿½Ç°Êµï¿½ï¿½Î¬ï¿½ï¿½ï¿½ï¿½ï¿½Ò²Í¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½
      */
     g_arm_ik_app.active_motor_deg = *motor_ctrl_deg;
 
@@ -181,13 +181,13 @@ static void ArmIK_SaveAsLastValidTarget(float x,
 }
 
 /*
- * µ±ÊäÈëÄ¿±êµã·Ç·¨Ê±£¬Ö´ÐÐ±£»¤¶¯×÷
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½Ç·ï¿½Ê±ï¿½ï¿½Ö´ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  *
- * ²ßÂÔÈçÏÂ£º
- * 1. Èç¹ûÒÑ¾­ÓÐÀúÊ·°²È«Ä¿±ê£¬Ôò±£³ÖÉÏÒ»×é°²È«½Ç¶ÈÄ¿±ê
- * 2. Èç¹û»¹Ã»ÓÐÀúÊ·°²È«Ä¿±ê£¬Ôò±£³Öµ±Ç°²»¶¯
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Â£ï¿½
+ * 1. ï¿½ï¿½ï¿½ï¿½Ñ¾ï¿½ï¿½ï¿½ï¿½ï¿½Ê·ï¿½ï¿½È«Ä¿ï¿½ê£¬ï¿½ò±£³ï¿½ï¿½ï¿½Ò»ï¿½é°²È«ï¿½Ç¶ï¿½Ä¿ï¿½ï¿½
+ * 2. ï¿½ï¿½ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½Ê·ï¿½ï¿½È«Ä¿ï¿½ê£¬ï¿½ò±£³Öµï¿½Ç°ï¿½ï¿½ï¿½ï¿½
  *
- * ·µ»ØÖµ£º
+ * ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½
  *   ARM_IK_ACTION_HOLD_LAST
  *   ARM_IK_ACTION_KEEP_CURRENT
  */
@@ -196,25 +196,25 @@ static uint8_t ArmIK_HandleInvalidTarget(void)
     if (g_arm_ik_app.has_last_valid != 0U)
     {
         /*
-         * Î¬³ÖÉÏÒ»×é°²È«Ä¿±ê
+         * Î¬ï¿½ï¿½ï¿½ï¿½Ò»ï¿½é°²È«Ä¿ï¿½ï¿½
          */
-        g_arm_ik_app.active_model = g_arm_ik_app.last_valid_model;        //Ä£ÐÍ½Ç
-        g_arm_ik_app.active_motor_deg = g_arm_ik_app.last_valid_motor_deg;//¿ØÖÆ½Ç
+        g_arm_ik_app.active_model = g_arm_ik_app.last_valid_model;        //Ä£ï¿½Í½ï¿½
+        g_arm_ik_app.active_motor_deg = g_arm_ik_app.last_valid_motor_deg;//ï¿½ï¿½ï¿½Æ½ï¿½
         return ARM_IK_ACTION_HOLD_LAST;
     }
 
     /*
-     * Èç¹ûÏµÍ³»¹´ÓÎ´»ñµÃ¹ýÒ»×éÓÐÐ§°²È«Ä¿±ê£¬
-     * ÄÇ¾Í²»¸üÐÂÊä³ö£¬±£³Öµ±Ç°×´Ì¬
+     * ï¿½ï¿½ï¿½ÏµÍ³ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½Ã¹ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½È«Ä¿ï¿½ê£¬
+     * ï¿½Ç¾Í²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½Ç°×´Ì¬
      */
     return ARM_IK_ACTION_KEEP_CURRENT;
 }
 
-/* ========================= ¶ÔÍâ½Ó¿ÚÊµÏÖ ========================= */
+/* ========================= ï¿½ï¿½ï¿½ï¿½Ó¿ï¿½Êµï¿½ï¿½ ========================= */
 /*
- * ³õÊ¼»¯»úÐµ±ÛÄæ½âÓ¦ÓÃ²ã
+ * ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ã²ï¿½
  *
- * ²ÎÊýÑØÓÃÄãÔ­À´ arm_user.c ÀïµÄÅäÖÃ£º
+ * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ arm_user.c ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã£ï¿½
  * d1 = 0
  * a2 = 320
  * a3 = 320
@@ -226,36 +226,36 @@ void ArmIK_ComponentInit(void)
 {
     Arm3R_Config_t cfg;
 
-    /* Á¬¸Ë²ÎÊý */
+    /* ï¿½ï¿½ï¿½Ë²ï¿½ï¿½ï¿½ */
     cfg.link.d1 = 0.0f;
     cfg.link.a2 = 320.0f;
     cfg.link.a3 = 320.0f;
 
-    /* ÉÏµç²Î¿¼Ä£ÐÍ½Ç */
+    /* ï¿½Ïµï¿½Î¿ï¿½Ä£ï¿½Í½ï¿½ */
     cfg.j1_ref.model_ref = Arm3R_DegToRad(0.0f);
     cfg.j2_ref.model_ref = Arm3R_DegToRad(70.0f);
     cfg.j3_ref.model_ref = Arm3R_DegToRad(-145.0f);
 
-    /* µç»ú·½ÏòÓ³Éä */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ */
     cfg.j1_ref.dir = +1;
     cfg.j2_ref.dir = -1;
     cfg.j3_ref.dir = +1;
 
-    /* ³õÊ¼»¯Äæ½â×é¼þ */
+    /* ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
     Arm3R_Init(&g_arm_ik, &cfg);
 
-    /* Çå¿ÕÓ¦ÓÃ²ãÔËÐÐ×´Ì¬ */
+    /* ï¿½ï¿½ï¿½Ó¦ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬ */
     ArmIK_ResetAppState();
 }
 
 /*
- * ÊäÈëÒ»¸öÄ¿±êµã£¬Íê³É£º
- * 1. Äæ½â
- * 2. °²È«ÅÐ¶Ï
- * 3. ×´Ì¬Ë«Â·»Ø´«
- * 4. ¸üÐÂµ±Ç°½Ç¶ÈÖÆÄ¿±ê
+ * ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ä¿ï¿½ï¿½ã£¬ï¿½ï¿½É£ï¿½
+ * 1. ï¿½ï¿½ï¿½
+ * 2. ï¿½ï¿½È«ï¿½Ð¶ï¿½
+ * 3. ×´Ì¬Ë«Â·ï¿½Ø´ï¿½
+ * 4. ï¿½ï¿½ï¿½Âµï¿½Ç°ï¿½Ç¶ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½
  *
- * ÕâÊÇÓ¦ÓÃ²ãµÄÖ÷Èë¿Ú
+ * ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ã²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
  */
 void ArmIK_ComponentStep(float x, float y, float z)
 {
@@ -263,45 +263,45 @@ void ArmIK_ComponentStep(float x, float y, float z)
     const Arm3R_Result_t *res;
 
     /*
-     * motor_ctrl_rad£º
-     * ÒÑ¾­³Ë¹ý dir µÄµç»ú·½Ïò¿ØÖÆ½Ç£¬µ¥Î»ÈÔÈ»ÊÇ rad
+     * motor_ctrl_radï¿½ï¿½
+     * ï¿½Ñ¾ï¿½ï¿½Ë¹ï¿½ dir ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½Ç£ï¿½ï¿½ï¿½Î»ï¿½ï¿½È»ï¿½ï¿½ rad
      */
     Arm3R_CtrlAngles_t motor_ctrl_rad;
 
     /*
-     * motor_ctrl_deg£º
-     * ×îÖÕ¸øµç»úÓÃµÄ½Ç¶ÈÖÆÄ¿±ê£¬µ¥Î»ÊÇ deg
+     * motor_ctrl_degï¿½ï¿½
+     * ï¿½ï¿½ï¿½Õ¸ï¿½ï¿½ï¿½ï¿½ï¿½ÃµÄ½Ç¶ï¿½ï¿½ï¿½Ä¿ï¿½ê£¬ï¿½ï¿½Î»ï¿½ï¿½ deg
      */
     ArmIK_MotorDeg_t motor_ctrl_deg;
 
     uint8_t action_code;
 
-    /* ±£´æ×î½üÒ»´ÎÊÕµ½µÄÄ¿±êµã */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½ */
     g_arm_ik_app.last_req_pt.x = x;
     g_arm_ik_app.last_req_pt.y = y;
     g_arm_ik_app.last_req_pt.z = z;
 
     /*
-     * Ö´ÐÐÄæ½â + °²È«ÅÐ¶¨
-     * theta1_hint ÕâÀïÑØÓÃ 0.0f
+     * Ö´ï¿½ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½È«ï¿½Ð¶ï¿½
+     * theta1_hint ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 0.0f
      */
     ret = Arm3R_Solve(&g_arm_ik, x, y, z, 0.0f);
 
     /*
-     * ¶ÁÈ¡ÄÚ²¿Çó½â½á¹û½á¹¹Ìå
+     * ï¿½ï¿½È¡ï¿½Ú²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½á¹¹ï¿½ï¿½
      */
     res = Arm3R_GetResult(&g_arm_ik);
 
     if (ret == ARM3R_OK)
     {
         /*
-         * Çé¿ö 1£ºÄ¿±êµã¿É´ïÇÒ°²È«
+         * ï¿½ï¿½ï¿½ 1ï¿½ï¿½Ä¿ï¿½ï¿½ï¿½É´ï¿½ï¿½Ò°ï¿½È«
          *
-         * ´¦ÀíÁ÷³Ì£º
-         * 1. °Ñ¼¸ºÎ¿ØÖÆ½ÇÓ³Éä³Éµç»ú·½Ïò¿ØÖÆ½Ç£¨rad£©
-         * 2. ÔÙ°Ñ rad ×ª³É deg
-         * 3. ±£´æÎªµ±Ç°ÓÐÐ§Ä¿±ê
-         * 4. ×´Ì¬»Ø´«¸ø USB ºÍ UART10
+         * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì£ï¿½
+         * 1. ï¿½Ñ¼ï¿½ï¿½Î¿ï¿½ï¿½Æ½ï¿½Ó³ï¿½ï¿½Éµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½Ç£ï¿½radï¿½ï¿½
+         * 2. ï¿½Ù°ï¿½ rad ×ªï¿½ï¿½ deg
+         * 3. ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ç°ï¿½ï¿½Ð§Ä¿ï¿½ï¿½
+         * 4. ×´Ì¬ï¿½Ø´ï¿½ï¿½ï¿½ USB ï¿½ï¿½ UART10
          */
         Arm3R_GeomCtrlToMotorCtrl(&res->ctrl, &g_arm_ik.cfg, &motor_ctrl_rad);
         ArmIK_MotorCtrlRadToDeg(&motor_ctrl_rad, &motor_ctrl_deg);
@@ -309,26 +309,30 @@ void ArmIK_ComponentStep(float x, float y, float z)
         ArmIK_SaveAsLastValidTarget(x, y, z, res, &motor_ctrl_rad, &motor_ctrl_deg);
 
         action_code = ARM_IK_ACTION_APPLY_NEW;
+        g_arm_ik_app.last_status_code = ARM_IK_RESULT_OK;
+        g_arm_ik_app.last_action_code = action_code;
         ArmIK_SendResultToAll(ARM_IK_RESULT_OK, 0U, action_code, res);
     }
     else if (ret == ARM3R_ERR_UNREACHABLE)
     {
         /*
-         * Çé¿ö 2£º¼¸ºÎ²»¿É´ï
+         * ï¿½ï¿½ï¿½ 2ï¿½ï¿½ï¿½ï¿½ï¿½Î²ï¿½ï¿½É´ï¿½
          *
-         * ²»ÄÜ²ÉÓÃ±¾´ÎÐÂÄ¿±ê£¬
-         * ×ß±£»¤²ßÂÔ£º±£³ÖÉÏÒ»×é°²È«Ä¿±ê»ò±£³Öµ±Ç°²»¶¯
+         * ï¿½ï¿½ï¿½Ü²ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ê£¬
+         * ï¿½ß±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½é°²È«Ä¿ï¿½ï¿½ò±£³Öµï¿½Ç°ï¿½ï¿½ï¿½ï¿½
          */
         action_code = ArmIK_HandleInvalidTarget();
+        g_arm_ik_app.last_status_code = ARM_IK_RESULT_UNREACHABLE;
+        g_arm_ik_app.last_action_code = action_code;
         ArmIK_SendResultToAll(ARM_IK_RESULT_UNREACHABLE, 0U, action_code, res);
     }
     else if (ret == ARM3R_ERR_UNSAFE)
     {
         /*
-         * Çé¿ö 3£º¼¸ºÎ¿É´ï£¬µ«²»Âú×ã°²È«Ô¼Êø
+         * ï¿½ï¿½ï¿½ 3ï¿½ï¿½ï¿½ï¿½ï¿½Î¿É´ï£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã°²È«Ô¼ï¿½ï¿½
          *
-         * Í¬Ñù²»ÄÜ²ÉÓÃ±¾´ÎÐÂÄ¿±ê£¬
-         * ¼ÌÐøÎ¬³Ö°²È«Êä³ö
+         * Í¬ï¿½ï¿½ï¿½ï¿½ï¿½Ü²ï¿½ï¿½Ã±ï¿½ï¿½ï¿½ï¿½ï¿½Ä¿ï¿½ê£¬
+         * ï¿½ï¿½ï¿½ï¿½Î¬ï¿½Ö°ï¿½È«ï¿½ï¿½ï¿½
          */
         uint8_t unsafe_reason = 0U;
 
@@ -338,30 +342,34 @@ void ArmIK_ComponentStep(float x, float y, float z)
         }
 
         action_code = ArmIK_HandleInvalidTarget();
+        g_arm_ik_app.last_status_code = ARM_IK_RESULT_UNSAFE;
+        g_arm_ik_app.last_action_code = action_code;
         ArmIK_SendResultToAll(ARM_IK_RESULT_UNSAFE, unsafe_reason, action_code, res);
     }
     else
     {
         /*
-         * Çé¿ö 4£º²ÎÊý´íÎó¡¢Î´³õÊ¼»¯¡¢ÆäËûÒì³£
+         * ï¿½ï¿½ï¿½ 4ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì³£
          *
-         * ÒÀÈ»²»²ÉÓÃ±¾´ÎÄ¿±ê£¬×ß±£»¤²ßÂÔ
+         * ï¿½ï¿½È»ï¿½ï¿½ï¿½ï¿½ï¿½Ã±ï¿½ï¿½ï¿½Ä¿ï¿½ê£¬ï¿½ß±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
          */
         action_code = ArmIK_HandleInvalidTarget();
+        g_arm_ik_app.last_status_code = ARM_IK_RESULT_PARAM_ERR;
+        g_arm_ik_app.last_action_code = action_code;
         ArmIK_SendResultToAll(ARM_IK_RESULT_PARAM_ERR, 0U, action_code, res);
     }
 }
 
 /*
- * ´¦ÀíÍâ²¿ÊÕµ½µÄ 3 Î¬Ä¿±êµã¸ºÔØ
+ * ï¿½ï¿½ï¿½ï¿½ï¿½â²¿ï¿½Õµï¿½ï¿½ï¿½ 3 Î¬Ä¿ï¿½ï¿½ã¸ºï¿½ï¿½
  *
- * ¸ºÔØ¸ñÊ½¹Ì¶¨Îª£º
+ * ï¿½ï¿½ï¿½Ø¸ï¿½Ê½ï¿½Ì¶ï¿½Îªï¿½ï¿½
  * payload[0..3]   -> float x
  * payload[4..7]   -> float y
  * payload[8..11]  -> float z
  *
- * ×¢Òâ£º
- * ÕâÀïÄ¬ÈÏÉÏÎ»»ú / Ò£¿ØÆ÷ Óë STM32 ¶¼°´ little-endian float Í¨ÐÅ
+ * ×¢ï¿½â£º
+ * ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½ / Ò£ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ STM32 ï¿½ï¿½ï¿½ï¿½ little-endian float Í¨ï¿½ï¿½
  */
 void ArmIK_ComponentHandleXYZPayload(const uint8_t *payload, uint16_t len)
 {
@@ -371,35 +379,37 @@ void ArmIK_ComponentHandleXYZPayload(const uint8_t *payload, uint16_t len)
     uint8_t action_code;
 
     /*
-     * ³¤¶È²»¶Ô£¬»òÕß¿ÕÖ¸Õë£º
-     * ÊÓÎªÎÞÐ§ÊäÈë
+     * ï¿½ï¿½ï¿½È²ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ß¿ï¿½Ö¸ï¿½ë£º
+     * ï¿½ï¿½Îªï¿½ï¿½Ð§ï¿½ï¿½ï¿½ï¿½
      */
     if ((payload == 0) || (len != ARM_IK_XYZ_PAYLOAD_LEN))
     {
         action_code = ArmIK_HandleInvalidTarget();
+        g_arm_ik_app.last_status_code = ARM_IK_RESULT_PARAM_ERR;
+        g_arm_ik_app.last_action_code = action_code;
         ArmIK_SendResultToAll(ARM_IK_RESULT_PARAM_ERR, 0U, action_code, 0);
         return;
     }
 
     /*
-     * ÓÃ memcpy ½âÎö float£¬
-     * ±ÜÃâÖ±½ÓÇ¿×ªÖ¸Õë´øÀ´µÄÎ´¶ÔÆë·ÃÎÊÎÊÌâ
+     * ï¿½ï¿½ memcpy ï¿½ï¿½ï¿½ï¿½ floatï¿½ï¿½
+     * ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½Ç¿×ªÖ¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      */
     memcpy(&x, &payload[0], 4);
     memcpy(&y, &payload[4], 4);
     memcpy(&z, &payload[8], 4);
 
     /*
-     * ½»¸øÖ÷´¦Àíº¯Êý
+     * ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
      */
     ArmIK_ComponentStep(x, y, z);
 }
 
 /*
- * »ñÈ¡µ±Ç°Êµ¼ÊÎ¬³ÖµÄ½Ç¶ÈÖÆÄ¿±ê
+ * ï¿½ï¿½È¡ï¿½ï¿½Ç°Êµï¿½ï¿½Î¬ï¿½ÖµÄ½Ç¶ï¿½ï¿½ï¿½Ä¿ï¿½ï¿½
  *
- * Äã×Ô¼ºµÄµç»ú¿ØÖÆ²ãÈç¹ûÖ»ÏëÄÃ×îÖÕ½Ç¶È£¬
- * Ö±½Ó¶ÁÈ¡Õâ¸ö·µ»ØÖµ¼´¿É
+ * ï¿½ï¿½ï¿½Ô¼ï¿½ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Æ²ï¿½ï¿½ï¿½ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õ½Ç¶È£ï¿½
+ * Ö±ï¿½Ó¶ï¿½È¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
  */
 const ArmIK_MotorDeg_t *ArmIK_GetActiveMotorDeg(void)
 {
@@ -407,9 +417,9 @@ const ArmIK_MotorDeg_t *ArmIK_GetActiveMotorDeg(void)
 }
 
 /*
- * »ñÈ¡ÍêÕûÓ¦ÓÃ²ã×´Ì¬
+ * ï¿½ï¿½È¡ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ã²ï¿½×´Ì¬
  *
- * µ÷ÊÔÊ±¿É²é¿´£º
+ * ï¿½ï¿½ï¿½ï¿½Ê±ï¿½É²é¿´ï¿½ï¿½
  * 1. last_req_pt
  * 2. last_valid_pt
  * 3. active_motor_deg

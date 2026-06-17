@@ -27,8 +27,6 @@
                     "gdbserver",
                     "--probe",
                     "cmsisdap:",
-                    "--connect",
-                    "attach",
                     "--cbuild-run",
                     "${command:cmsis-csolution.getCbuildRunFile}",
                     "--quiet",

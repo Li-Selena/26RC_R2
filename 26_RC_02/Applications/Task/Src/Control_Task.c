@@ -1,9 +1,16 @@
 #include "cmsis_os.h"
 #include "Control_Task.h"
+#include "Data_Analysis.h"
+#include "CRC.h"
+#include "FreeRTOS.h"
+#include "task.h"
+
+extern TIM_HandleTypeDef htim1;
+extern TIM_HandleTypeDef htim3;
 
 
-extern uint8_t USB_Task_flag;
-extern uint8_t USART_Task_flag ;
+extern volatile uint8_t USB_Task_flag;
+extern volatile uint8_t USART_Task_flag ;
 
 
 //��е�ۿ���
@@ -23,21 +30,34 @@ float start_X_USB = 0.0f;//USB启动保护
 float start_Y_USB = 0.0f;
 float start_Z_USB = 0.0f;
 
+#define ARM_HOLD_TNUM1   0.0002464f
+#define ARM_HOLD_TNUM23  0.0004577f
 
 
 
-//�����ķ�ֵ��̿���
+
+//麦克纳姆轮底盘控制
 extern ChassisVel_t total_vel ;
 extern WheelSpeed_t total_speed;
 extern MecanumParam_t mecParam;
 
+/* ── R2 底盘运动控制器 ── */
+R2_Move_Ctrl_t g_r2_ctrl_usart;
+R2_Move_Ctrl_t g_r2_ctrl_usb;
+R2_Climb_Ctrl_t g_r2_climb_usart;
+R2_Climb_Ctrl_t g_r2_climb_usb;
+R2_DebugOdom_t g_r2_debug_odom;
+
+/* 1ms 定时器计数器（由 TIM3 ISR 自增） */
+uint32_t g_r2_tick_ms = 0U;
+
+/* 1ms 里程计：记录上一周期编码器值，计算增量 */
+int32_t g_r2_last_enc[4];    /* motor_fdcan1[0..3].total_angle 上次读数 */
+uint8_t g_r2_enc_inited = 0U;
+
 
 //����ָ���ݶ�
 extern int8_t control_cmd ;
-
-//工具句柄
-extern clamp_Handle_t clamp;
-extern chuck_Handle_t chuck;
 
 //串口控制切换工具
 extern uint8_t tool_flag;
@@ -45,11 +65,10 @@ extern uint8_t tooluse_flag;
 
 
 
-//��������
-static void USB_RX_task(void);             //usb���մ���
-
-static void Mecanum_task(void);             //�����ķ�ֵ��̿��ƴ���
 static void Arm_task(void);    //��е�ۿ��ƴ���
+static void R2_Control_1msStep(void);
+
+static TaskHandle_t s_control_task_handle = NULL;
 
 void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, WheelSpeed_t *speed_user);    //ķֵ̿ƴרŸUSBݽõĽӿ
 void Arm_task_USB(float x,float y,float z);    //еۿƴרŸUSBݽõĽӿ
@@ -62,35 +81,49 @@ void Control_Task(void const * argument){
 
     MCU_Init();
 
+    /* R2 底盘运动控制器初始化 */
+    R2_Move_Init(&g_r2_ctrl_usart, &mecParam, 0.001f);
+    R2_Move_Init(&g_r2_ctrl_usb,   &mecParam, 0.001f);   /* 1ms 控制周期 */
+    R2_Climb_Init(&g_r2_climb_usart);
+    R2_Climb_Init(&g_r2_climb_usb);
+
+
+
 	// ArmEchoUart10_Init();
 	ArmIK_ComponentInit();
 
-    clamp_init(&clamp);
-    chuck_init(&chuck);
+    Tool_InitAll();
+
+    s_control_task_handle = xTaskGetCurrentTaskHandle();
+
+    /* 启动 TIM3 1ms 中断：ISR 只负责通知本任务执行控制步进 */
+    HAL_TIM_Base_Start_IT(&htim3);
 
 
   for(;;)
   {
-    // USB_RX_task();
+    uint32_t pending_ticks = ulTaskNotifyTake(pdTRUE, pdMS_TO_TICKS(1));
+
+    if (pending_ticks == 0U) {
+        pending_ticks = 1U;
+    }
+
+    while (pending_ticks != 0U) {
+        R2_Control_1msStep();
+        pending_ticks--;
+    }
+
     BT_Data_MAC_Process(&total_vel.vx,&total_vel.vy,&total_vel.vw,NULL); 
     
     // USB_Task_flag = 1U;
     // USART_Task_flag = 0U;
 
+    Tool_RunActiveStateMachine();
+
     if(USART_Task_flag == 1U)
     {
-
-        chuck_state_machine_run(&chuck);
-        clamp_state_machine_run(&clamp);
-
-        Mecanum_task();
-        osDelay(1);
-
         Arm_task();
-        osDelay(1);
     }
-
-    osDelay(1);
   }
 
 	
@@ -98,11 +131,6 @@ void Control_Task(void const * argument){
 
 
 
-
-static void Mecanum_task(void) 
-{
-    Mecanum_Calc(&total_vel, &mecParam, &total_speed);
-}
 
 static void Arm_task()
 {
@@ -163,12 +191,33 @@ void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, Wh
     Mecanum_Calc(chassis_user, param_user, speed_user);
 }
 
+void Arm_HoldCurrentPosition(uint8_t source)
+{
+    float hold_j1;
+    float hold_j2;
+    float hold_j3;
+    float *ctrl_target;
+
+    hold_j1 = -(float)motor_fdcan3[0].total_angle * ARM_HOLD_TNUM1;
+    hold_j2 =  (float)motor_fdcan3[1].total_angle * ARM_HOLD_TNUM23;
+    hold_j3 =  (float)motor_fdcan3[2].total_angle * ARM_HOLD_TNUM23;
+
+    ctrl_target = (source == TOOL_USB_SOURCE) ? ctrl_J_USB : ctrl_J_USART;
+
+    taskENTER_CRITICAL();
+    ctrl_target[0] = hold_j1;
+    ctrl_target[1] = hold_j2;
+    ctrl_target[2] = hold_j3;
+    taskEXIT_CRITICAL();
+}
+
 void Arm_task_USB(float x,float y,float z)
 {
     const ArmIK_AppState_t *app;
 
     if(start_X_USB == x && start_Y_USB == y && start_Z_USB == z)
     {
+        taskENTER_CRITICAL();
 		model_J_USB[0] = 0.0f;
 		model_J_USB[1] = 0.0f;
 		model_J_USB[2] = 0.0f;
@@ -176,6 +225,7 @@ void Arm_task_USB(float x,float y,float z)
 		ctrl_J_USB[0] = 0.0f;
 		ctrl_J_USB[1] = 0.0f;
 		ctrl_J_USB[2] = 0.0f;
+        taskEXIT_CRITICAL();
     }
     else
     {
@@ -187,6 +237,7 @@ void Arm_task_USB(float x,float y,float z)
         if (app->has_last_valid != 0U)
         {
 
+            taskENTER_CRITICAL();
             model_J_USB[0] = app->active_model.theta1;
             model_J_USB[1] = app->active_model.theta2;
             model_J_USB[2] = app->active_model.theta3;
@@ -194,7 +245,183 @@ void Arm_task_USB(float x,float y,float z)
             ctrl_J_USB[0] = app->active_motor_deg.j1_deg;
             ctrl_J_USB[1] = app->active_motor_deg.j2_deg;
             ctrl_J_USB[2] = app->active_motor_deg.j3_deg;
+            taskEXIT_CRITICAL();
 		    
         }
+    }
+}
+
+/*
+ * TIM3 1ms 定时器 ISR 回调。
+ *
+ * 在中断上下文中执行，不得调用阻塞或 RTOS API。
+ * 每 1ms 精确触发一次，完成：
+ *   1. 里程计更新（编码器增量 → 正向运动学 → 世界系位姿）
+ *   2. 运动控制更新（VEL 速度平滑 / POS S 曲线 + P 环）
+ *   3. 输出轮速到全局 total_speed，供 CAN_Task 主循环下发电机
+ */
+static void R2_Control_1msStep(void)
+{
+    float now_sec;
+    float w_delta[4];
+    float robot_dx, robot_dy, robot_dyaw;
+    int32_t cur_enc[4];
+    int32_t delta;
+    uint8_t i;
+    float imu_yaw_rad;
+    float odom_vx_mps = 0.0f;
+    float odom_vy_mps = 0.0f;
+    float odom_wz_radps = 0.0f;
+    R2_Move_Ctrl_t *active_ctrl;
+    INS_NavState_t ins_state;
+    uint8_t imu_yaw_valid;
+    uint8_t climb_debug_source = R2_CLIMB_DEBUG_SOURCE_NONE;
+
+    /* 自增计数器代替 HAL_GetTick，避免 HAL 调用且更精确 */
+    now_sec = (float)g_r2_tick_ms * 0.001f;
+    g_r2_debug_odom.tick_ms = g_r2_tick_ms;
+    g_r2_tick_ms++;
+
+    /*
+     * 先用 IMU 绝对 yaw 修正朝向，再用该 yaw 做 robot->world 里程计积分。
+     * R2_Move_UpdateOdom() 的接口约定要求调用方先更新 yaw。
+     */
+    INS_GetState(&ins_state);
+    imu_yaw_rad = ins_state.yaw_total_rad;
+    imu_yaw_valid = ins_state.imu_online;
+    g_r2_debug_odom.imu_yaw_rad = imu_yaw_rad;
+    g_r2_debug_odom.imu_yaw_valid = imu_yaw_valid;
+    if (imu_yaw_valid != 0U) {
+        R2_Move_UpdateYaw(&g_r2_ctrl_usart, imu_yaw_rad);
+        R2_Move_UpdateYaw(&g_r2_ctrl_usb,   imu_yaw_rad);
+    }
+
+    /* 读取 4 路编码器当前累积值 */
+    for (i = 0U; i < 4U; i++) {
+        cur_enc[i] = motor_fdcan1[i].total_angle;
+        g_r2_debug_odom.current_enc[i] = cur_enc[i];
+        g_r2_debug_odom.last_enc[i] = g_r2_last_enc[i];
+    }
+
+    /* ── 里程计更新 ── */
+    if (g_r2_enc_inited != 0U) {
+
+        /* 编码器增量 → 线位移 (m) */
+        for (i = 0U; i < 4U; i++) {
+            delta = cur_enc[i] - g_r2_last_enc[i];
+            w_delta[i] = EncoderDeltaToWheelMeter(delta);
+            g_r2_debug_odom.enc_delta[i] = delta;
+            g_r2_debug_odom.wheel_delta_m[i] = w_delta[i];
+        }
+
+        /*
+         * 正向运动学：编码器增量 → 底盘位移（机器人系，x=右 y=前 yaw=CCW）
+         *
+         * O 型麦克纳姆 + 电机 1(FR)/2(BR) 物理安装反向:
+         *   编码器读的是电机轴旋转，不是轮子旋转。
+         *   FR/BR 安装反向 → fr_wheel = -encoder[0], br_wheel = -encoder[1]
+         *   代入标准 FK: vx = (fl - fr - bl + br)/4 等, 得到以下公式。
+         */
+        robot_dx   = (+w_delta[0] - w_delta[1] - w_delta[2] + w_delta[3]) * 0.25f;
+        robot_dy   = (-w_delta[0] - w_delta[1] + w_delta[2] + w_delta[3]) * 0.25f;
+        robot_dyaw = (+w_delta[0] + w_delta[1] + w_delta[2] + w_delta[3])
+                   * 0.25f / (mecParam.L + mecParam.W);
+
+        odom_vx_mps = robot_dx * 1000.0f;
+        odom_vy_mps = robot_dy * 1000.0f;
+        odom_wz_radps = robot_dyaw * 1000.0f;
+        g_r2_debug_odom.robot_dx_m = robot_dx;
+        g_r2_debug_odom.robot_dy_m = robot_dy;
+        g_r2_debug_odom.robot_dyaw_rad = robot_dyaw;
+        g_r2_debug_odom.odom_vx_mps = odom_vx_mps;
+        g_r2_debug_odom.odom_vy_mps = odom_vy_mps;
+        g_r2_debug_odom.odom_wz_radps = odom_wz_radps;
+
+        /* 累加到世界系里程计（内部做 robot→world 旋转） */
+        R2_Move_UpdateOdom(&g_r2_ctrl_usart, robot_dx, robot_dy, robot_dyaw);
+        R2_Move_UpdateOdom(&g_r2_ctrl_usb,   robot_dx, robot_dy, robot_dyaw);
+
+        /*
+         * R2_Move_UpdateOdom() keeps encoder-yaw integration for IMU-offline
+         * fallback. When IMU is online, restore the absolute heading before
+         * yaw-hold and POS feedback read ctrl->odom_yaw.
+         */
+        if (imu_yaw_valid != 0U) {
+            R2_Move_UpdateYaw(&g_r2_ctrl_usart, imu_yaw_rad);
+            R2_Move_UpdateYaw(&g_r2_ctrl_usb,   imu_yaw_rad);
+        }
+
+    } else {
+        /* 首次调用：仅快照编码器基准值 */
+        g_r2_enc_inited = 1U;
+        for (i = 0U; i < 4U; i++) {
+            g_r2_debug_odom.enc_delta[i] = 0;
+            g_r2_debug_odom.wheel_delta_m[i] = 0.0f;
+        }
+        g_r2_debug_odom.robot_dx_m = 0.0f;
+        g_r2_debug_odom.robot_dy_m = 0.0f;
+        g_r2_debug_odom.robot_dyaw_rad = 0.0f;
+        g_r2_debug_odom.odom_vx_mps = 0.0f;
+        g_r2_debug_odom.odom_vy_mps = 0.0f;
+        g_r2_debug_odom.odom_wz_radps = 0.0f;
+    }
+    g_r2_debug_odom.enc_inited = g_r2_enc_inited;
+
+    /* 保存本轮编码器值，供下一周期算增量 */
+    for (i = 0U; i < 4U; i++) {
+        g_r2_last_enc[i] = cur_enc[i];
+    }
+
+    /* ── 运动控制更新（浮点运算，H7 FPU 可胜任） ── */
+    USB_ControlWatchdog_Check();
+    USART_ControlWatchdog_Check();
+
+    R2_Move_Update(&g_r2_ctrl_usart, now_sec);
+    R2_Move_Update(&g_r2_ctrl_usb,   now_sec);
+    R2_Climb_Update(&g_r2_climb_usart, g_r2_tick_ms);
+    R2_Climb_Update(&g_r2_climb_usb,   g_r2_tick_ms);
+
+    /* 同步到全局变量，方便调试观测 */
+    if (USART_Task_flag == 1U) {
+        total_speed = g_r2_ctrl_usart.wheel_speed;
+        total_vel   = g_r2_ctrl_usart.robot_vel;
+        active_ctrl = &g_r2_ctrl_usart;
+        g_r2_debug_odom.active_source = TOOL_USART_SOURCE;
+        climb_debug_source = R2_CLIMB_DEBUG_SOURCE_USART;
+    } else if (USB_Task_flag == 1U) {
+        total_speed = g_r2_ctrl_usb.wheel_speed;
+        total_vel   = g_r2_ctrl_usb.robot_vel;
+        active_ctrl = &g_r2_ctrl_usb;
+        g_r2_debug_odom.active_source = TOOL_USB_SOURCE;
+        climb_debug_source = R2_CLIMB_DEBUG_SOURCE_USB;
+    } else {
+        active_ctrl = &g_r2_ctrl_usart;
+        g_r2_debug_odom.active_source = TOOL_USART_SOURCE;
+        climb_debug_source = R2_CLIMB_DEBUG_SOURCE_NONE;
+    }
+
+    R2_Climb_UpdateDebugViews(&g_r2_climb_usart,
+                              &g_r2_climb_usb,
+                              climb_debug_source);
+
+    g_r2_debug_odom.active_odom_x = active_ctrl->odom_x;
+    g_r2_debug_odom.active_odom_y = active_ctrl->odom_y;
+    g_r2_debug_odom.active_odom_yaw = active_ctrl->odom_yaw;
+
+    INS_SetOdometry(active_ctrl->odom_x,
+                    active_ctrl->odom_y,
+                    odom_vx_mps,
+                    odom_vy_mps,
+                    odom_wz_radps);
+
+}
+
+void control_tim1mscallback(void)
+{
+    BaseType_t higher_priority_task_woken = pdFALSE;
+
+    if (s_control_task_handle != NULL) {
+        vTaskNotifyGiveFromISR(s_control_task_handle, &higher_priority_task_woken);
+        portYIELD_FROM_ISR(higher_priority_task_woken);
     }
 }

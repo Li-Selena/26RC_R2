@@ -27,6 +27,7 @@ set(DIRS
 set(OUTPUTS_1
   "${SOLUTION_ROOT}/out/26_RC_02/26_RC_02/26_RC_02.axf"
   "${SOLUTION_ROOT}/out/26_RC_02/26_RC_02/compile_commands.json"
+  "${SOLUTION_ROOT}/out/26_RC_02/26_RC_02/compile_macros.h"
 )
 
 set(ARGS

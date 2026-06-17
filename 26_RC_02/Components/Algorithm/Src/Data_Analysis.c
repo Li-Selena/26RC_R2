@@ -1,374 +1,704 @@
 #include "Data_Analysis.h"
-#include "fdcan.h"
 #include "mecanum_classic.h"
-#include <string.h>
-#include <stddef.h>
-#include "pid_user.h"
+#include "R2_move.h"
+#include "arm_tools.h"
+#include "fdcan_receive.h"
+#include "PC_TX_Task.h"
+#include "CRC.h"
+#include "FreeRTOS.h"
+#include "task.h"
 
-static float USB_BytesToFloatLE(const uint8_t *buf);
-static uint8_t USB_Decode4Float(const uint8_t *datas, uint8_t len,
-                                float *d1, float *d2, float *d3, float *d4);
-static float Remote_Clamp(float num, float min_val, float max_val);
+extern R2_Move_Ctrl_t g_r2_ctrl_usb;
 
-extern void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, WheelSpeed_t *speed_user);    //麦克纳姆轮底盘控制处理，专门给USB数据解析调用的接口
-extern void Arm_task_USB(float x,float y,float z);
+static void   USB_Read4Floats(const uint8_t *d, float *f);
+static uint8_t USB_Read4FloatsChecked(const uint8_t *d, uint8_t len, float *f);
+static uint8_t USB_AllowEmptyOrFloatPayload(uint8_t len);
+static void USB_ChassisWatchdog_Feed(void);
+static void USB_ChassisWatchdog_Disarm(void);
+static void USB_ArmWatchdog_Feed(void);
+static void USB_ArmWatchdog_Disarm(void);
+static void USB_ToolWatchdog_Feed(void);
+static void USB_ToolWatchdog_Disarm(void);
+static void USB_ArmWatchdog_Check(uint32_t now_tick);
+static void USB_ToolWatchdog_Check(uint32_t now_tick);
+static void USB_CommandRx_Record(uint8_t cmd, uint8_t len);
+static float  Clamp(float x, float lo, float hi);
 
-//模式选择
-extern uint8_t USB_Task_flag;
-extern uint8_t USART_Task_flag ;
+extern void    Arm_task_USB(float x, float y, float z);
+extern volatile uint8_t USB_Task_flag;
+extern volatile uint8_t USART_Task_flag;
+extern float   ctrl_J_USB[4];
 
-//使能标志位
+/* ── 各模块使能标志 ── */
 uint8_t Mecanum_control_flag = 0U;
-uint8_t Arm_control_flag = 0U;
+uint8_t Arm_control_flag     = 0U;
+uint8_t Tool_control_flag    = 0U;
 
-//麦克纳姆底盘参数
-extern MecanumParam_t mecParam;
-ChassisVel_t total_vel_USB = {0};
+ChassisVel_t total_vel_USB   = {0};
 WheelSpeed_t total_speed_USB = {0};
 
+static volatile uint32_t s_usb_chassis_last_tick = 0U;
+static volatile uint8_t  s_usb_chassis_watchdog_armed = 0U;
+static volatile uint8_t  s_usb_chassis_timeout = 0U;
+static volatile uint32_t s_usb_arm_last_tick = 0U;
+static volatile uint8_t  s_usb_arm_watchdog_armed = 0U;
+static volatile uint8_t  s_usb_arm_timeout = 0U;
+static volatile uint32_t s_usb_tool_last_tick = 0U;
+static volatile uint8_t  s_usb_tool_watchdog_armed = 0U;
+static volatile uint8_t  s_usb_tool_timeout = 0U;
+static volatile uint32_t s_usb_cmd_last_tick = 0U;
+static volatile uint32_t s_usb_cmd_count = 0U;
+static volatile uint8_t  s_usb_cmd_last_cmd = 0U;
+static volatile uint8_t  s_usb_cmd_last_len = 0U;
 
-//机械臂位置参数
-float ARM_setX_USB = 0.0f;
-float ARM_setY_USB = 0.0f;
-float ARM_setZ_USB = 0.0f;
+#define USB_ARM_TARGET_TOL_DEG  2.0f
+#define USB_ARM_TNUM1           0.0002464f
+#define USB_ARM_TNUM23          0.0004577f
+
+uint8_t tool_dev = 0U;  /* 0=吸盘 1=夹爪 */
 
 
+/* ═══════════════════════════════════════════════════════
+ *  命令路由器 — 统一解析 4 个 float，各命令按需取用
+ * ═══════════════════════════════════════════════════════ */
 
-static void USB_ALL_ENABLE(const uint8_t *datas, uint8_t len);
-static void USB_ALL_DISABLE(const uint8_t *datas, uint8_t len);
-static void USB_ALL_MODE_SWITCH(const uint8_t *datas, uint8_t len);
-static void USB_ALL_STOP(const uint8_t *datas, uint8_t len);
-static void USB_ALL_GET_STATUS(const uint8_t *datas, uint8_t len);
-
-static void USB_MEC_ENABLE(const uint8_t *datas, uint8_t len);
-static void USB_MEC_DISABLE(const uint8_t *datas, uint8_t len);
-static void USB_MEC_SET_TARGET1(const uint8_t *datas, uint8_t len);
-static void USB_MEC_SET_TARGET2(const uint8_t *datas, uint8_t len);
-static void USB_MEC_STOP(const uint8_t *datas, uint8_t len);
-static void USB_MEC_GET_STATUS(const uint8_t *datas, uint8_t len);
-
-static void USB_ARM_ENABLE(const uint8_t *datas, uint8_t len);
-static void USB_ARM_DISABLE(const uint8_t *datas, uint8_t len);
-static void USB_ARM_SET_TARGET(const uint8_t *datas, uint8_t len);
-static void USB_ARM_STOP(const uint8_t *datas, uint8_t len);
-static void USB_ARM_GET_STATUS(const uint8_t *datas, uint8_t len);
-
-void Data_Analysis(uint8_t cmd, const uint8_t* datas, uint8_t len)
+/*
+ * Data_Analysis — USB 命令解析
+ *
+ * 约定：上位机每次发送 16 字节数据区（4 个 float，小端），
+ * 不同命令根据自身需求选择性取用 f[0]~f[3]，忽略不需要的。
+ *
+ *   f[0]  f[1]  f[2]  f[3]
+ *   vx    vy    vw    lock_yaw   ← CHS_SET_VEL
+ *   dx    dy    dyaw  (reserved) ← CHS_SET_POS
+ *   x     y     z     (reserved) ← ARM_SET_TARGET
+ *   dev   act   —     —          ← TOOL_SET_MODE / TOOL_ACTION
+ *   src   —     —     —          ← SYS_SWITCH_SOURCE
+ *   mode  —     —     —          ← CHS_SET_MODE
+ */
+void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
 {
+    float f[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    switch (cmd)
-    {
-        case USB_CMD_ALL_ENABLE:
-            USB_ALL_ENABLE(datas, len);
+    USB_CommandRx_Record(cmd, len);
+
+    switch (cmd) {
+
+    /* ── System ── */
+    case USB_CMD_SYS_DISABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ChassisWatchdog_Disarm();
+        USB_ArmWatchdog_Disarm();
+        USB_ToolWatchdog_Disarm();
+        taskENTER_CRITICAL();
+        R2_Move_Stop(&g_r2_ctrl_usb);
+        R2_Climb_Stop(&g_r2_climb_usb);
+        taskEXIT_CRITICAL();
+        Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
+        taskENTER_CRITICAL();
+        Tool_HoldSource(TOOL_USB_SOURCE);
+        taskEXIT_CRITICAL();
+        Mecanum_control_flag = 0U;
+        Arm_control_flag     = 0U;
+        Tool_control_flag    = 0U;
+        break;
+    case USB_CMD_SYS_ENABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        Mecanum_control_flag = 1U;
+        Arm_control_flag     = 1U;
+        Tool_control_flag    = 1U;
+        break;
+    case USB_CMD_SYS_SWITCH_SOURCE:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        Control_SetSource(((uint8_t)f[0]) ? TOOL_USB_SOURCE : TOOL_USART_SOURCE);
+        if (((uint8_t)f[0]) == 0U) {
+            USB_ChassisWatchdog_Disarm();
+            USB_ArmWatchdog_Disarm();
+            USB_ToolWatchdog_Disarm();
+            taskENTER_CRITICAL();
+            R2_Climb_Stop(&g_r2_climb_usb);
+            taskEXIT_CRITICAL();
+            Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
+        }
+        break;
+    case USB_CMD_SYS_GET_STATUS:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        PC_TX_ReqSysStatus();
+        break;
+    case USB_CMD_SYS_STOP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ChassisWatchdog_Disarm();
+        USB_ArmWatchdog_Disarm();
+        USB_ToolWatchdog_Disarm();
+        taskENTER_CRITICAL();
+        R2_Move_Stop(&g_r2_ctrl_usb);
+        R2_Climb_Stop(&g_r2_climb_usb);
+        Tool_StopSource(TOOL_USB_SOURCE);
+        taskEXIT_CRITICAL();
+        Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
         break;
 
-        case USB_CMD_ALL_DISABLE:
-            USB_ALL_DISABLE(datas, len);
+    /* ── Chassis ── */
+    case USB_CMD_CHS_DISABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ChassisWatchdog_Disarm();
+        taskENTER_CRITICAL();
+        R2_Move_Stop(&g_r2_ctrl_usb);
+        taskEXIT_CRITICAL();
+        Mecanum_control_flag = 0U;
+        break;
+    case USB_CMD_CHS_ENABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        Mecanum_control_flag = 1U;
         break;
 
-        case USB_CMD_ALL_MODE_SWITCH:
-            USB_ALL_MODE_SWITCH(datas, len);
+    case USB_CMD_CHS_SET_MODE:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        {
+            uint8_t mode = (uint8_t)f[0];
+            if (mode <= 7U && USB_Task_flag && Mecanum_control_flag) {
+                taskENTER_CRITICAL();
+                R2_Move_SetMode(&g_r2_ctrl_usb, (R2_MoveMode_t)mode);
+                taskEXIT_CRITICAL();
+            }
+        }
         break;
 
-        case USB_CMD_ALL_STOP:
-            USB_ALL_STOP(datas, len);
+    case USB_CMD_CHS_SET_VEL:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        /* f[0]=vx  f[1]=vy  f[2]=vw  f[3]=lock_yaw(deg) */
+        f[0] = Clamp(f[0], MEC_REMOTE_VX_MIN_RPM, MEC_REMOTE_VX_MAX_RPM);
+        f[1] = Clamp(f[1], MEC_REMOTE_VY_MIN_RPM, MEC_REMOTE_VY_MAX_RPM);
+        f[2] = Clamp(f[2], MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
+        total_vel_USB.vx = f[0]; total_vel_USB.vy = f[1]; total_vel_USB.vw = f[2];
+        if (USB_Task_flag && Mecanum_control_flag) {
+            taskENTER_CRITICAL();
+            if (g_r2_ctrl_usb.mode == R2_MODE_WORLD_NO_YAW_VEL ||
+                g_r2_ctrl_usb.mode == R2_MODE_WORLD_NO_YAW_POS)
+                R2_Move_SetWorldLockYaw(&g_r2_ctrl_usb, f[3] * 0.0174533f);
+            R2_Move_SetVel(&g_r2_ctrl_usb, f[0], f[1], f[2]);
+            taskEXIT_CRITICAL();
+            USB_ChassisWatchdog_Feed();
+        }
         break;
 
-        case USB_CMD_ALL_GET_STATUS:
-            USB_ALL_GET_STATUS(datas, len);
+    case USB_CMD_CHS_SET_POS:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        /* f[0]=dx  f[1]=dy  f[2]=dyaw */
+        total_vel_USB.vx = f[0]; total_vel_USB.vy = f[1]; total_vel_USB.vw = f[2];
+        if (USB_Task_flag && Mecanum_control_flag) {
+            int8_t set_result;
+
+            taskENTER_CRITICAL();
+            set_result = R2_Move_SetDist(&g_r2_ctrl_usb, f[0], f[1], f[2]);
+            taskEXIT_CRITICAL();
+            if (set_result == 0) {
+                USB_ChassisWatchdog_Disarm();
+            }
+        }
         break;
 
-        case USB_CMD_MEC_ENABLE:
-            USB_MEC_ENABLE(datas, len); 
-        break;  
-
-        case USB_CMD_MEC_DISABLE:
-            USB_MEC_DISABLE(datas, len);
+    case USB_CMD_CHS_STOP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ChassisWatchdog_Disarm();
+        taskENTER_CRITICAL();
+        R2_Move_Stop(&g_r2_ctrl_usb);
+        taskEXIT_CRITICAL();
+        break;
+    case USB_CMD_CHS_GET_STATUS:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        PC_TX_ReqChsStatus();
         break;
 
-        case USB_CMD_MEC_SET_TARGET1:
-            USB_MEC_SET_TARGET1(datas, len);
+    /* ── Arm ── */
+    case USB_CMD_ARM_DISABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ArmWatchdog_Disarm();
+        Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
+        Arm_control_flag = 0U;
+        break;
+    case USB_CMD_ARM_ENABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        Arm_control_flag = 1U;
+        break;
+    case USB_CMD_ARM_SET_TARGET:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        /* f[0]=x  f[1]=y  f[2]=z (mm) */
+        f[0] = Clamp(f[0], ARM_REMOTE_X_MIN_MM, ARM_REMOTE_X_MAX_MM);
+        f[1] = Clamp(f[1], ARM_REMOTE_Y_MIN_MM, ARM_REMOTE_Y_MAX_MM);
+        f[2] = Clamp(f[2], ARM_REMOTE_Z_MIN_MM, ARM_REMOTE_Z_MAX_MM);
+        if (USB_Task_flag && Arm_control_flag) {
+            Arm_task_USB(f[0], f[1], f[2]);
+            USB_ArmWatchdog_Feed();
+        } else {
+            USB_ArmWatchdog_Disarm();
+            Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
+        }
+        break;
+    case USB_CMD_ARM_STOP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ArmWatchdog_Disarm();
+        Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
+        break;
+    case USB_CMD_ARM_GET_STATUS:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        PC_TX_ReqArmStatus();
         break;
 
-        case USB_CMD_MEC_SET_TARGET2:
-            USB_MEC_SET_TARGET2(datas, len);
+    /* ── Tool ── */
+    case USB_CMD_TOOL_DISABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ToolWatchdog_Disarm();
+        taskENTER_CRITICAL();
+        Tool_HoldSource(TOOL_USB_SOURCE);
+        taskEXIT_CRITICAL();
+        Tool_control_flag = 0U;
+        break;
+    case USB_CMD_TOOL_ENABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        Tool_control_flag = 1U;
+        break;
+    case USB_CMD_TOOL_SET_MODE:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        if (!USB_Task_flag || !Tool_control_flag) break;
+        taskENTER_CRITICAL();
+        Tool_SetSelectedDev(TOOL_USB_SOURCE, (uint8_t)f[0]);  /* 0=吸盘 1=夹爪 */
+        tool_dev = Tool_GetSelectedDev(TOOL_USB_SOURCE);
+        taskEXIT_CRITICAL();
+        USB_ToolWatchdog_Disarm();
+        break;
+    case USB_CMD_TOOL_ACTION:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        {
+            uint8_t act = (uint8_t)f[0];  /* 0=闭合 1=张开 */
+            if (!USB_Task_flag || !Tool_control_flag) break;
+            taskENTER_CRITICAL();
+            if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == 0U) {
+                chuck_Handle_t *usb_chuck = Tool_GetChuck(TOOL_USB_SOURCE);
+                if (act==0U && usb_chuck->state!=CHUCK_CLOSE) trigger_chuck_action(usb_chuck, CHUCK_CLOSE);
+                if (act==1U && usb_chuck->state!=CHUCK_OPEN)  trigger_chuck_action(usb_chuck, CHUCK_OPEN);
+            } else {
+                clamp_Handle_t *usb_clamp = Tool_GetClamp(TOOL_USB_SOURCE);
+                if (act==0U && usb_clamp->state!=CLAMP_CLOSE) trigger_clamp_action(usb_clamp, CLAMP_CLOSE);
+                if (act==1U && usb_clamp->state!=CLAMP_OPEN)  trigger_clamp_action(usb_clamp, CLAMP_OPEN);
+            }
+            taskEXIT_CRITICAL();
+            USB_ToolWatchdog_Feed();
+        }
+        break;
+    case USB_CMD_TOOL_STOP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ToolWatchdog_Disarm();
+        taskENTER_CRITICAL();
+        Tool_StopSource(TOOL_USB_SOURCE);
+        taskEXIT_CRITICAL();
+        break;
+    case USB_CMD_TOOL_GET_STATUS:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        PC_TX_ReqToolStatus();
         break;
 
-        case USB_CMD_MEC_STOP:
-            USB_MEC_STOP(datas, len);
+    case USB_CMD_ROBOT_GET_STATUS:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        PC_TX_ReqRobotStatus();
         break;
 
-        case USB_CMD_MEC_GET_STATUS:
-            USB_MEC_GET_STATUS(datas, len); 
+    /* ── Climb ── */
+    case USB_CMD_CLIMB_DISABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        taskENTER_CRITICAL();
+        R2_Climb_Stop(&g_r2_climb_usb);
+        taskEXIT_CRITICAL();
         break;
 
-        case USB_CMD_ARM_ENABLE:
-            USB_ARM_ENABLE(datas, len); 
+    case USB_CMD_CLIMB_ENABLE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            R2_Climb_SetInput(&g_r2_climb_usb, 1U, 0U, 0U);
+            taskEXIT_CRITICAL();
+        }
         break;
 
-        case USB_CMD_ARM_DISABLE:
-            USB_ARM_DISABLE(datas, len);    
-        break;  
-
-        case USB_CMD_ARM_SET_TARGET:
-            USB_ARM_SET_TARGET(datas, len);
+    case USB_CMD_CLIMB_SET_CTRL:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            R2_Climb_SetInput(&g_r2_climb_usb,
+                              ((uint8_t)f[0]) ? 1U : 0U,
+                              ((uint8_t)f[1]) ? 1U : 0U,
+                              ((uint8_t)f[2]) ? 1U : 0U);
+            taskEXIT_CRITICAL();
+        }
         break;
 
-        case USB_CMD_ARM_STOP:
-            USB_ARM_STOP(datas, len);
+    case USB_CMD_CLIMB_STEP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            R2_Climb_RequestStep(&g_r2_climb_usb);
+            taskEXIT_CRITICAL();
+        }
         break;
 
-        case USB_CMD_ARM_GET_STATUS:
-            USB_ARM_GET_STATUS(datas, len); 
+    case USB_CMD_CLIMB_AUTO:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            R2_Climb_RequestAuto(&g_r2_climb_usb);
+            taskEXIT_CRITICAL();
+        }
         break;
-        
-        default:
-            /* δ֪������� */
+
+    case USB_CMD_CLIMB_STOP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        taskENTER_CRITICAL();
+        R2_Climb_Stop(&g_r2_climb_usb);
+        taskEXIT_CRITICAL();
         break;
+
+    case USB_CMD_CLIMB_GET_STATUS:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        PC_TX_ReqClimbStatus();
+        break;
+
+    default: break;
     }
 }
 
 
-static void USB_ALL_ENABLE(const uint8_t *datas, uint8_t len)
-{
-    Mecanum_control_flag = 1U;
-    Arm_control_flag = 1U;
-    USB_MEC_ENABLE(datas, len);
-    USB_ARM_ENABLE(datas, len);
-}
-static void USB_ALL_DISABLE(const uint8_t *datas, uint8_t len)
-{
-    Mecanum_control_flag = 0U;
-    Arm_control_flag = 0U;
-    USB_MEC_DISABLE(datas, len);
-    USB_ARM_DISABLE(datas, len);
-}
-static void USB_ALL_MODE_SWITCH(const uint8_t *datas, uint8_t len)
-{
-    USB_Task_flag = 1U;
-    USART_Task_flag  = 0U;
-}
-static void USB_ALL_STOP(const uint8_t *datas, uint8_t len)
-{
-    USB_MEC_STOP(datas, len);
-    USB_ARM_STOP(datas, len);
-}
-static void USB_ALL_GET_STATUS(const uint8_t *datas, uint8_t len)
-{
+/* ═══════════════════════════════════════════════════════
+ *  工具函数
+ * ═══════════════════════════════════════════════════════ */
 
-}
-static void USB_MEC_ENABLE(const uint8_t *datas, uint8_t len)
+static void USB_CommandRx_Record(uint8_t cmd, uint8_t len)
 {
-    Mecanum_control_flag = 1U;
+    taskENTER_CRITICAL();
+    s_usb_cmd_last_tick = HAL_GetTick();
+    s_usb_cmd_count++;
+    s_usb_cmd_last_cmd = cmd;
+    s_usb_cmd_last_len = len;
+    taskEXIT_CRITICAL();
 }
-static void USB_MEC_DISABLE(const uint8_t *datas, uint8_t len)
-{
-    Mecanum_control_flag = 0U;
-}
-static void USB_MEC_SET_TARGET1(const uint8_t *datas, uint8_t len)
-{
-    Chassis_Yaw_PID_Clear();
-    float vx, vy, vw, angle;
 
-    if (USB_Decode4Float(datas, len, &vx, &vy, &vw, &angle) == 0U)
-    {
-        /* 这里可以换成底盘自己的错误回传命令 */
+void USB_GetCommandRxState(USB_CommandRxState_t *out)
+{
+    if (out == NULL) {
         return;
     }
 
-    /* 根据你的底盘约束修改范围 */
-    vx = Remote_Clamp(vx, MEC_REMOTE_VX_MIN_RPM, MEC_REMOTE_VX_MAX_RPM);
-    vy = Remote_Clamp(vy, MEC_REMOTE_VY_MIN_RPM, MEC_REMOTE_VY_MAX_RPM);
-    vw = Remote_Clamp(vw + Chassis_Yaw_Robot_Frame_Ctrl(angle)/180.0f*3.14f, MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
-
-    /* 保存最近一次USB底盘目标 */
-    total_vel_USB.vx = vx;
-    total_vel_USB.vy = vy;
-    total_vel_USB.vw = vw;
-
-    if (USB_Task_flag == 1U)
-    {
-        if (Mecanum_control_flag == 1U)
-        {
-            Mecanum_task_USB(&total_vel_USB, &mecParam, &total_speed_USB);
-        }
-        else 
-        {
-            total_speed_USB.fl = 0.0f;
-            total_speed_USB.fr = 0.0f;
-            total_speed_USB.bl = 0.0f;
-            total_speed_USB.br = 0.0f;
-        }
-    }
+    taskENTER_CRITICAL();
+    out->last_tick = s_usb_cmd_last_tick;
+    out->count = s_usb_cmd_count;
+    out->last_cmd = s_usb_cmd_last_cmd;
+    out->last_len = s_usb_cmd_last_len;
+    taskEXIT_CRITICAL();
 }
-static void USB_MEC_SET_TARGET2(const uint8_t *datas, uint8_t len)
-{
-    Chassis_Yaw_PID_Clear();
-    float vx, vy, vw, angle;
 
-    if (USB_Decode4Float(datas, len, &vx, &vy, &vw, &angle) == 0U)
+static void USB_ChassisWatchdog_Feed(void)
+{
+    taskENTER_CRITICAL();
+    s_usb_chassis_last_tick = HAL_GetTick();
+    s_usb_chassis_watchdog_armed = 1U;
+    s_usb_chassis_timeout = 0U;
+    taskEXIT_CRITICAL();
+}
+
+static void USB_ChassisWatchdog_Disarm(void)
+{
+    taskENTER_CRITICAL();
+    s_usb_chassis_watchdog_armed = 0U;
+    s_usb_chassis_timeout = 0U;
+    s_usb_chassis_last_tick = 0U;
+    taskEXIT_CRITICAL();
+}
+
+void USB_ChassisWatchdog_Check(void)
+{
+    uint32_t now_tick;
+
+    now_tick = HAL_GetTick();
+
+    taskENTER_CRITICAL();
+    if ((USB_Task_flag != 0U) &&
+        (Mecanum_control_flag != 0U) &&
+        (s_usb_chassis_watchdog_armed != 0U) &&
+        (g_r2_ctrl_usb.emergency_stop == 0U) &&
+        (R2_Move_IsVelMode(g_r2_ctrl_usb.mode) != 0U) &&
+        ((now_tick - s_usb_chassis_last_tick) > USB_CHASSIS_TIMEOUT_MS))
     {
-        /* 这里可以换成底盘自己的错误回传命令 */
+        R2_Move_Stop(&g_r2_ctrl_usb);
+        total_vel_USB.vx = 0.0f;
+        total_vel_USB.vy = 0.0f;
+        total_vel_USB.vw = 0.0f;
+        total_speed_USB.fl = 0.0f;
+        total_speed_USB.fr = 0.0f;
+        total_speed_USB.bl = 0.0f;
+        total_speed_USB.br = 0.0f;
+        s_usb_chassis_watchdog_armed = 0U;
+        s_usb_chassis_timeout = 1U;
+    }
+    taskEXIT_CRITICAL();
+}
+
+uint8_t USB_ChassisWatchdog_IsTimeout(void)
+{
+    uint8_t timeout;
+
+    taskENTER_CRITICAL();
+    timeout = s_usb_chassis_timeout;
+    taskEXIT_CRITICAL();
+
+    return timeout;
+}
+
+uint32_t USB_ChassisWatchdog_LastTick(void)
+{
+    uint32_t tick;
+
+    taskENTER_CRITICAL();
+    tick = s_usb_chassis_last_tick;
+    taskEXIT_CRITICAL();
+
+    return tick;
+}
+
+static void USB_ArmWatchdog_Feed(void)
+{
+    taskENTER_CRITICAL();
+    s_usb_arm_last_tick = HAL_GetTick();
+    s_usb_arm_watchdog_armed = 1U;
+    s_usb_arm_timeout = 0U;
+    taskEXIT_CRITICAL();
+}
+
+static void USB_ArmWatchdog_Disarm(void)
+{
+    taskENTER_CRITICAL();
+    s_usb_arm_watchdog_armed = 0U;
+    s_usb_arm_timeout = 0U;
+    s_usb_arm_last_tick = 0U;
+    taskEXIT_CRITICAL();
+}
+
+static void USB_ToolWatchdog_Feed(void)
+{
+    taskENTER_CRITICAL();
+    s_usb_tool_last_tick = HAL_GetTick();
+    s_usb_tool_watchdog_armed = 1U;
+    s_usb_tool_timeout = 0U;
+    taskEXIT_CRITICAL();
+}
+
+static void USB_ToolWatchdog_Disarm(void)
+{
+    taskENTER_CRITICAL();
+    s_usb_tool_watchdog_armed = 0U;
+    s_usb_tool_timeout = 0U;
+    s_usb_tool_last_tick = 0U;
+    taskEXIT_CRITICAL();
+}
+
+static uint8_t USB_ArmTargetReached(void)
+{
+    float target_j1;
+    float target_j2;
+    float target_j3;
+    float actual_j1;
+    float actual_j2;
+    float actual_j3;
+    float err_j1;
+    float err_j2;
+    float err_j3;
+
+    taskENTER_CRITICAL();
+    target_j1 = Clamp(ctrl_J_USB[0], -60.0f, 60.0f);
+    target_j2 = ctrl_J_USB[1];
+    target_j3 = ctrl_J_USB[2];
+    actual_j1 = -(float)motor_fdcan3[0].total_angle * USB_ARM_TNUM1;
+    actual_j2 =  (float)motor_fdcan3[1].total_angle * USB_ARM_TNUM23;
+    actual_j3 =  (float)motor_fdcan3[2].total_angle * USB_ARM_TNUM23;
+    taskEXIT_CRITICAL();
+
+    err_j1 = actual_j1 - target_j1;
+    err_j2 = actual_j2 - target_j2;
+    err_j3 = actual_j3 - target_j3;
+
+    if (err_j1 < 0.0f) err_j1 = -err_j1;
+    if (err_j2 < 0.0f) err_j2 = -err_j2;
+    if (err_j3 < 0.0f) err_j3 = -err_j3;
+
+    return ((err_j1 <= USB_ARM_TARGET_TOL_DEG) &&
+            (err_j2 <= USB_ARM_TARGET_TOL_DEG) &&
+            (err_j3 <= USB_ARM_TARGET_TOL_DEG)) ? 1U : 0U;
+}
+
+static void USB_ArmWatchdog_Check(uint32_t now_tick)
+{
+    uint8_t need_check = 0U;
+
+    taskENTER_CRITICAL();
+    if ((USB_Task_flag != 0U) &&
+        (Arm_control_flag != 0U) &&
+        (s_usb_arm_watchdog_armed != 0U) &&
+        ((now_tick - s_usb_arm_last_tick) > USB_ARM_TIMEOUT_MS))
+    {
+        need_check = 1U;
+    }
+    taskEXIT_CRITICAL();
+
+    if (need_check == 0U) {
         return;
     }
 
-    /* 根据你的底盘约束修改范围 */
-    vx = Remote_Clamp(vx, MEC_REMOTE_VX_MIN_RPM, MEC_REMOTE_VX_MAX_RPM);
-    vy = Remote_Clamp(vy, MEC_REMOTE_VY_MIN_RPM, MEC_REMOTE_VY_MAX_RPM);
-    vw = Remote_Clamp(vw + Chassis_Yaw_World_Frame_Ctrl(angle)/180.0f*3.14f, MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
-
-    /* 保存最近一次USB底盘目标 */
-    total_vel_USB.vx = vx;
-    total_vel_USB.vy = vy;
-    total_vel_USB.vw = vw;
-
-    if (USB_Task_flag == 1U)
-    {
-        if (Mecanum_control_flag == 1U)
-        {
-            Mecanum_task_USB(&total_vel_USB, &mecParam, &total_speed_USB);
-        }
-        else 
-        {
-            total_speed_USB.fl = 0.0f;
-            total_speed_USB.fr = 0.0f;
-            total_speed_USB.bl = 0.0f;
-            total_speed_USB.br = 0.0f;
-        }
-    }}
-static void USB_MEC_STOP(const uint8_t *datas, uint8_t len)
-{
-    total_speed_USB.fl = 0.0f;
-    total_speed_USB.fr = 0.0f;
-    total_speed_USB.bl = 0.0f;
-    total_speed_USB.br = 0.0f;
-}
-static void USB_MEC_GET_STATUS(const uint8_t *datas, uint8_t len)
-{
-
-}
-static void USB_ARM_ENABLE(const uint8_t *datas, uint8_t len)
-{
-    Arm_control_flag = 1U;
-}
-static void USB_ARM_DISABLE(const uint8_t *datas, uint8_t len)
-{
-    Arm_control_flag = 0U;
-}
-static void USB_ARM_SET_TARGET(const uint8_t *datas, uint8_t len)
-{
-    float x, y, z;
-
-    if (USB_Decode4Float(datas, len, &x, &y, &z, NULL) == 0U)
-    {
-        uint8_t tx_data[2];
-        tx_data[0] = ARM_IK_RESULT_PARAM_ERR;
-        tx_data[1] = 0U;
-        (void)Send_Cmd_Data(USB_CMD_ARM_IK_RESULT, tx_data, 2U);
+    if (USB_ArmTargetReached() != 0U) {
+        taskENTER_CRITICAL();
+        s_usb_arm_watchdog_armed = 0U;
+        taskEXIT_CRITICAL();
         return;
     }
 
-    x = Remote_Clamp(x, ARM_REMOTE_X_MIN_MM, ARM_REMOTE_X_MAX_MM);
-    y = Remote_Clamp(y, ARM_REMOTE_Y_MIN_MM, ARM_REMOTE_Y_MAX_MM);
-    z = Remote_Clamp(z, ARM_REMOTE_Z_MIN_MM, ARM_REMOTE_Z_MAX_MM);
+    Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
 
-    ARM_setX_USB = x;
-    ARM_setY_USB = y;
-    ARM_setZ_USB = z;
+    taskENTER_CRITICAL();
+    s_usb_arm_watchdog_armed = 0U;
+    s_usb_arm_timeout = 1U;
+    taskEXIT_CRITICAL();
+}
 
-    if (USB_Task_flag == 1U)
+static void USB_ToolWatchdog_Check(uint32_t now_tick)
+{
+    uint8_t moving = 0U;
+    uint8_t timeout = 0U;
+
+    taskENTER_CRITICAL();
+    if ((USB_Task_flag != 0U) &&
+        (Tool_control_flag != 0U) &&
+        (s_usb_tool_watchdog_armed != 0U))
     {
-        if(Arm_control_flag == 1U)
-        {
-            Arm_task_USB(x, y, z);
+        if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == 0U) {
+            moving = (Tool_GetChuck(TOOL_USB_SOURCE)->run_status == TOOL_STATUS_MOVING) ? 1U : 0U;
+        } else {
+            moving = (Tool_GetClamp(TOOL_USB_SOURCE)->run_status == TOOL_STATUS_MOVING) ? 1U : 0U;
         }
-        else 
-        {
-            ctrl_J_USB[0] = 0.0f;
-	        ctrl_J_USB[1] = 0.0f;
-	        ctrl_J_USB[2] = 0.0f;
-        }
-        // if(state_arm_flag_num != Arm_control_flag)
-        // {
-        //     state_arm_flag_num = Arm_control_flag;
-        //     state_arm_flag_count ++;
-        // }
 
+        if (moving == 0U) {
+            s_usb_tool_watchdog_armed = 0U;
+        } else if ((now_tick - s_usb_tool_last_tick) > USB_TOOL_TIMEOUT_MS) {
+            s_usb_tool_watchdog_armed = 0U;
+            s_usb_tool_timeout = 1U;
+            timeout = 1U;
+        }
+    }
+    taskEXIT_CRITICAL();
+
+    if (timeout != 0U) {
+        taskENTER_CRITICAL();
+        Tool_HoldSource(TOOL_USB_SOURCE);
+        if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == 0U) {
+            Tool_GetChuck(TOOL_USB_SOURCE)->run_status = TOOL_STATUS_ERROR;
+        } else {
+            Tool_GetClamp(TOOL_USB_SOURCE)->run_status = TOOL_STATUS_ERROR;
+        }
+        taskEXIT_CRITICAL();
     }
 }
-static void USB_ARM_STOP(const uint8_t *datas, uint8_t len)
+
+void USB_ControlWatchdog_Check(void)
 {
-    ctrl_J_USB[0] = 0.0f;
-	ctrl_J_USB[1] = 0.0f;
-	ctrl_J_USB[2] = 0.0f;
-}
-static void USB_ARM_GET_STATUS(const uint8_t *datas, uint8_t len)
-{
+    uint32_t now_tick;
 
-}
+    now_tick = HAL_GetTick();
 
-
-
-/* С���ֽ���ת float */
-static float USB_BytesToFloatLE(const uint8_t *buf)
-{
-    union
-    {
-        uint8_t b[4];
-        float   f;
-    } u;
-
-    u.b[0] = buf[0];
-    u.b[1] = buf[1];
-    u.b[2] = buf[2];
-    u.b[3] = buf[3];
-
-    return u.f;
+    USB_ChassisWatchdog_Check();
+    USB_ArmWatchdog_Check(now_tick);
+    USB_ToolWatchdog_Check(now_tick);
 }
 
-static uint8_t USB_Decode4Float(const uint8_t *datas, uint8_t len,
-                                float *d1, float *d2, float *d3, float *d4)
+uint8_t USB_ArmWatchdog_IsTimeout(void)
 {
-    /* 前3个参数是刚需，必须非空 */
-    if ((datas == NULL) || (d1 == NULL) || (d2 == NULL) || (d3 == NULL))
-    {
+    uint8_t timeout;
+
+    taskENTER_CRITICAL();
+    timeout = s_usb_arm_timeout;
+    taskEXIT_CRITICAL();
+
+    return timeout;
+}
+
+uint32_t USB_ArmWatchdog_LastTick(void)
+{
+    uint32_t tick;
+
+    taskENTER_CRITICAL();
+    tick = s_usb_arm_last_tick;
+    taskEXIT_CRITICAL();
+
+    return tick;
+}
+
+uint8_t USB_ToolWatchdog_IsTimeout(void)
+{
+    uint8_t timeout;
+
+    taskENTER_CRITICAL();
+    timeout = s_usb_tool_timeout;
+    taskEXIT_CRITICAL();
+
+    return timeout;
+}
+
+uint32_t USB_ToolWatchdog_LastTick(void)
+{
+    uint32_t tick;
+
+    taskENTER_CRITICAL();
+    tick = s_usb_tool_last_tick;
+    taskEXIT_CRITICAL();
+
+    return tick;
+}
+
+uint8_t USB_ControlWatchdog_TimeoutFlags(void)
+{
+    uint8_t flags = 0U;
+
+    taskENTER_CRITICAL();
+    if (s_usb_chassis_timeout != 0U) flags |= 0x01U;
+    if (s_usb_arm_timeout != 0U)     flags |= 0x02U;
+    if (s_usb_tool_timeout != 0U)    flags |= 0x04U;
+    taskEXIT_CRITICAL();
+
+    return flags;
+}
+
+static void USB_Read4Floats(const uint8_t *d, float *f)
+{
+    union { uint8_t b[4]; float v; } u;
+    u.b[0]=d[0]; u.b[1]=d[1]; u.b[2]=d[2]; u.b[3]=d[3]; f[0]=u.v;
+    u.b[0]=d[4]; u.b[1]=d[5]; u.b[2]=d[6]; u.b[3]=d[7]; f[1]=u.v;
+    u.b[0]=d[8]; u.b[1]=d[9]; u.b[2]=d[10];u.b[3]=d[11];f[2]=u.v;
+    u.b[0]=d[12];u.b[1]=d[13];u.b[2]=d[14];u.b[3]=d[15];f[3]=u.v;
+}
+
+static uint8_t USB_Read4FloatsChecked(const uint8_t *d, uint8_t len, float *f)
+{
+    if ((d == NULL) || (f == NULL) || (len != 16U)) {
         return 0U;
     }
 
-    /* 兼容 16 字节 (4个float) */
-    if (len == 16U && d4 != NULL)
-    {
-        *d1 = USB_BytesToFloatLE(&datas[0]);
-        *d2 = USB_BytesToFloatLE(&datas[4]);
-        *d3 = USB_BytesToFloatLE(&datas[8]);
-        *d4 = USB_BytesToFloatLE(&datas[12]);
-        return 1U;
-    }
-    /* 兼容 12 字节 (3个float) */
-    else if (len == 12U)
-    {
-        *d1 = USB_BytesToFloatLE(&datas[0]);
-        *d2 = USB_BytesToFloatLE(&datas[4]);
-        *d3 = USB_BytesToFloatLE(&datas[8]);
-        /* 如果外部依然传入了 d4 的地址，保险起见清零 */
-        if (d4 != NULL) *d4 = 0.0f; 
-        return 1U;
-    }
-
-    return 0U; // 长度不符合预期
+    USB_Read4Floats(d, f);
+    return 1U;
 }
-static float Remote_Clamp(float num, float min_val, float max_val)
+
+static uint8_t USB_AllowEmptyOrFloatPayload(uint8_t len)
 {
-    if (num < min_val)
-    {
-        return min_val;
-    }
-
-    if (num  > max_val)
-    {
-        return max_val;
-    }
-
-    return num;
+    return ((len == 0U) || (len == 16U)) ? 1U : 0U;
 }
 
+static float Clamp(float x, float lo, float hi)
+{
+    if (x < lo) return lo;
+    if (x > hi) return hi;
+    return x;
+}

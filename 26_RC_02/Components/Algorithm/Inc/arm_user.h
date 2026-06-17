@@ -114,6 +114,11 @@ typedef struct
     ArmIK_MotorDeg_t active_motor_deg;    /* 当前实际维持输出的目标（deg） */
 
     uint8_t has_last_valid;               /* 是否已经存在历史安全目标 */
+
+    /* ── 最近一次 IK 求解结果（防假阳性） ── */
+    uint8_t last_status_code;             /* 0=OK, 1=UNREACHABLE, 2=UNSAFE, 3=PARAM_ERR */
+    uint8_t last_action_code;             /* 0=APPLY_NEW, 1=HOLD_LAST, 2=KEEP_CURRENT */
+
 } ArmIK_AppState_t;
 
 /* ========================= 全局句柄 ========================= */
