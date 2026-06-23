@@ -3,6 +3,7 @@
 
 	
 extern void MCU_Init(void);
+extern void H7_power(void);
 
 	
 #endif //BSP_MCU_H

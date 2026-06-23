@@ -14,7 +14,7 @@ extern float model_J_USART[4];
 
 extern WheelSpeed_t total_speed;
 
-static float AngleClamp60(float deg);
+static float AngleClampJ1(float deg);
 
 
 void CAN_Task(void const * argument){
@@ -120,10 +120,10 @@ void CAN_Task(void const * argument){
          * FDCAN3: 机械臂四电机
          *
          * pid_call_3 = 位置外环 + 速度内环 (级联 PID)
-         * J1 带 60 deg 限幅
+         * J1 +/-180 deg limit
          */
         FDCAN3_CMD_1(
-            pid_call_3(-AngleClamp60(arm_cmd[0]) / Tnum1, 1),
+            pid_call_3(-AngleClampJ1(arm_cmd[0]) / Tnum1, 1),
             pid_call_3( arm_cmd[1] / Tnum23, 2),
             pid_call_3( arm_cmd[2] / Tnum23, 3),
             pid_call_3( tool_target, 4)
@@ -134,9 +134,9 @@ void CAN_Task(void const * argument){
 }
 
 
-float AngleClamp60(float deg)
+static float AngleClampJ1(float deg)
 {
-    if (deg > 60.0f)      return 60.0f;
-    else if (deg < -60.0f) return -60.0f;
+    if (deg > ARM_IK_J1_LIMIT_DEG)       return ARM_IK_J1_LIMIT_DEG;
+    else if (deg < -ARM_IK_J1_LIMIT_DEG) return -ARM_IK_J1_LIMIT_DEG;
     else                   return deg;
 }

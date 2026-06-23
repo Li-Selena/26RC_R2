@@ -63,9 +63,9 @@
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
   ..\Core\Inc\gpio.h ..\BSP\Inc\include.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Components\Controller\Inc\pid.h \
+  ..\BSP\Inc\bsp_l1_usart.h ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
-  ..\Applications\Task\Inc\Control_Task.h ..\BSP\Inc\bsp_mcu.h \
+  ..\BSP\Inc\bsp_mcu.h ..\Applications\Task\Inc\Control_Task.h \
   ..\Components\Algorithm\Inc\mecanum_classic.h \
   ..\Components\Algorithm\Inc\CRC.h \
   ..\Applications\App_user\Inc\R2_move.h \

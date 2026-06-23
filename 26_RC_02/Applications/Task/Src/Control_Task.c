@@ -1,6 +1,7 @@
 #include "cmsis_os.h"
 #include "Control_Task.h"
 #include "Data_Analysis.h"
+#include "R2_yaw_autotune.h"
 #include "CRC.h"
 #include "FreeRTOS.h"
 #include "task.h"
@@ -86,6 +87,7 @@ void Control_Task(void const * argument){
     R2_Move_Init(&g_r2_ctrl_usb,   &mecParam, 0.001f);   /* 1ms 控制周期 */
     R2_Climb_Init(&g_r2_climb_usart);
     R2_Climb_Init(&g_r2_climb_usb);
+    R2_YawAutoTune_Init();
 
 
 
@@ -136,6 +138,31 @@ static void Arm_task()
 {
     const ArmIK_AppState_t *app;
 
+    if (arm_flag != 1)
+    {
+        model_theta1 = 0.0f;
+        model_theta2 = 0.0f;
+        model_theta3 = 0.0f;
+
+        ctrl_j1 = 0.0f;
+        ctrl_j2 = 0.0f;
+        ctrl_j3 = 0.0f;
+
+        model_J_USART[0] = 0.0f;
+        model_J_USART[1] = 0.0f;
+        model_J_USART[2] = 0.0f;
+
+        ctrl_J_USART[0] = 0.0f;
+        ctrl_J_USART[1] = 0.0f;
+        ctrl_J_USART[2] = 0.0f;
+        return;
+    }
+
+    if (arm_input_valid == 0U)
+    {
+        return;
+    }
+
     if(start_X == arm_X && start_Y == arm_Y && start_Z == arm_Z)
     {
 		model_theta1 = 0.0f;
@@ -145,6 +172,14 @@ static void Arm_task()
 		ctrl_j1 = 0.0f;
 		ctrl_j2 = 0.0f;
 		ctrl_j3 = 0.0f;
+
+        model_J_USART[0] = 0.0f;
+        model_J_USART[1] = 0.0f;
+        model_J_USART[2] = 0.0f;
+
+        ctrl_J_USART[0] = 0.0f;
+        ctrl_J_USART[1] = 0.0f;
+        ctrl_J_USART[2] = 0.0f;
     }
     else
     {
@@ -201,6 +236,12 @@ void Arm_HoldCurrentPosition(uint8_t source)
     hold_j1 = -(float)motor_fdcan3[0].total_angle * ARM_HOLD_TNUM1;
     hold_j2 =  (float)motor_fdcan3[1].total_angle * ARM_HOLD_TNUM23;
     hold_j3 =  (float)motor_fdcan3[2].total_angle * ARM_HOLD_TNUM23;
+
+    if (hold_j1 > ARM_IK_J1_LIMIT_DEG) {
+        hold_j1 = ARM_IK_J1_LIMIT_DEG;
+    } else if (hold_j1 < -ARM_IK_J1_LIMIT_DEG) {
+        hold_j1 = -ARM_IK_J1_LIMIT_DEG;
+    }
 
     ctrl_target = (source == TOOL_USB_SOURCE) ? ctrl_J_USB : ctrl_J_USART;
 
@@ -322,10 +363,11 @@ static void R2_Control_1msStep(void)
          *   FR/BR 安装反向 → fr_wheel = -encoder[0], br_wheel = -encoder[1]
          *   代入标准 FK: vx = (fl - fr - bl + br)/4 等, 得到以下公式。
          */
-        robot_dx   = (+w_delta[0] - w_delta[1] - w_delta[2] + w_delta[3]) * 0.25f;
-        robot_dy   = (-w_delta[0] - w_delta[1] + w_delta[2] + w_delta[3]) * 0.25f;
-        robot_dyaw = (+w_delta[0] + w_delta[1] + w_delta[2] + w_delta[3])
-                   * 0.25f / (mecParam.L + mecParam.W);
+        /* New chassis front is the original rear: rotate robot XY by 180 deg. */
+        robot_dx   = -((+w_delta[0] - w_delta[1] - w_delta[2] + w_delta[3]) * 0.25f);
+        robot_dy   = -((-w_delta[0] - w_delta[1] + w_delta[2] + w_delta[3]) * 0.25f);
+        robot_dyaw = -(+w_delta[0] + w_delta[1] + w_delta[2] + w_delta[3])
+                    * 0.25f / (mecParam.L + mecParam.W);
 
         odom_vx_mps = robot_dx * 1000.0f;
         odom_vy_mps = robot_dy * 1000.0f;
@@ -376,10 +418,12 @@ static void R2_Control_1msStep(void)
     USB_ControlWatchdog_Check();
     USART_ControlWatchdog_Check();
 
+    R2_YawAutoTune_Step(&g_r2_ctrl_usb, g_r2_tick_ms);
+
     R2_Move_Update(&g_r2_ctrl_usart, now_sec);
     R2_Move_Update(&g_r2_ctrl_usb,   now_sec);
-    R2_Climb_Update(&g_r2_climb_usart, g_r2_tick_ms);
-    R2_Climb_Update(&g_r2_climb_usb,   g_r2_tick_ms);
+    R2_Climb_Update(&g_r2_climb_usart, &g_r2_ctrl_usart, g_r2_tick_ms);
+    R2_Climb_Update(&g_r2_climb_usb,   &g_r2_ctrl_usb,   g_r2_tick_ms);
 
     /* 同步到全局变量，方便调试观测 */
     if (USART_Task_flag == 1U) {

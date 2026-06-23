@@ -43,5 +43,5 @@
   ..\Core\Inc\fdcan.h ..\Core\Inc\memorymap.h ..\Core\Inc\usart.h \
   ..\Core\Inc\gpio.h ..\BSP\Inc\include.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Components\Controller\Inc\pid.h \
+  ..\BSP\Inc\bsp_l1_usart.h ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h

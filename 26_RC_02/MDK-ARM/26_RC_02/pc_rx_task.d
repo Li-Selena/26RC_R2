@@ -45,7 +45,8 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd_ex.h \
   ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
+  ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_l1_usart.h \
+  ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
   ..\Components\Algorithm\Inc\mecanum_classic.h \
   ..\Components\Algorithm\Inc\CRC.h \

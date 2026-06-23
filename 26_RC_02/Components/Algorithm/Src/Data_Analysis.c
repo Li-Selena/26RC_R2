@@ -1,7 +1,9 @@
 #include "Data_Analysis.h"
 #include "mecanum_classic.h"
 #include "R2_move.h"
+#include "R2_yaw_autotune.h"
 #include "arm_tools.h"
+#include "arm_user.h"
 #include "fdcan_receive.h"
 #include "PC_TX_Task.h"
 #include "CRC.h"
@@ -21,7 +23,7 @@ static void USB_ToolWatchdog_Feed(void);
 static void USB_ToolWatchdog_Disarm(void);
 static void USB_ArmWatchdog_Check(uint32_t now_tick);
 static void USB_ToolWatchdog_Check(uint32_t now_tick);
-static void USB_CommandRx_Record(uint8_t cmd, uint8_t len);
+static void USB_CommandRx_Record(uint8_t cmd, const uint8_t *d, uint8_t len);
 static float  Clamp(float x, float lo, float hi);
 
 extern void    Arm_task_USB(float x, float y, float z);
@@ -50,12 +52,15 @@ static volatile uint32_t s_usb_cmd_last_tick = 0U;
 static volatile uint32_t s_usb_cmd_count = 0U;
 static volatile uint8_t  s_usb_cmd_last_cmd = 0U;
 static volatile uint8_t  s_usb_cmd_last_len = 0U;
+static volatile uint8_t  s_usb_cmd_last_payload_valid = 0U;
+static volatile uint8_t  s_usb_cmd_last_data[16] = {0U};
+static volatile float    s_usb_cmd_last_f[4] = {0.0f};
 
 #define USB_ARM_TARGET_TOL_DEG  2.0f
 #define USB_ARM_TNUM1           0.0002464f
 #define USB_ARM_TNUM23          0.0004577f
 
-uint8_t tool_dev = 0U;  /* 0=吸盘 1=夹爪 */
+uint8_t tool_dev = TOOL_DEV_CLAMP;  /* 0=夹爪 1=吸盘 */
 
 
 /* ═══════════════════════════════════════════════════════
@@ -80,7 +85,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
 {
     float f[4] = {0.0f, 0.0f, 0.0f, 0.0f};
 
-    USB_CommandRx_Record(cmd, len);
+    USB_CommandRx_Record(cmd, d, len);
 
     switch (cmd) {
 
@@ -91,6 +96,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         USB_ArmWatchdog_Disarm();
         USB_ToolWatchdog_Disarm();
         taskENTER_CRITICAL();
+        R2_YawAutoTune_Stop();
         R2_Move_Stop(&g_r2_ctrl_usb);
         R2_Climb_Stop(&g_r2_climb_usb);
         taskEXIT_CRITICAL();
@@ -116,6 +122,8 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
             USB_ArmWatchdog_Disarm();
             USB_ToolWatchdog_Disarm();
             taskENTER_CRITICAL();
+            R2_YawAutoTune_Stop();
+            R2_Move_Stop(&g_r2_ctrl_usb);
             R2_Climb_Stop(&g_r2_climb_usb);
             taskEXIT_CRITICAL();
             Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
@@ -131,6 +139,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         USB_ArmWatchdog_Disarm();
         USB_ToolWatchdog_Disarm();
         taskENTER_CRITICAL();
+        R2_YawAutoTune_Stop();
         R2_Move_Stop(&g_r2_ctrl_usb);
         R2_Climb_Stop(&g_r2_climb_usb);
         Tool_StopSource(TOOL_USB_SOURCE);
@@ -143,6 +152,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         USB_ChassisWatchdog_Disarm();
         taskENTER_CRITICAL();
+        R2_YawAutoTune_Stop();
         R2_Move_Stop(&g_r2_ctrl_usb);
         taskEXIT_CRITICAL();
         Mecanum_control_flag = 0U;
@@ -158,6 +168,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
             uint8_t mode = (uint8_t)f[0];
             if (mode <= 7U && USB_Task_flag && Mecanum_control_flag) {
                 taskENTER_CRITICAL();
+                R2_YawAutoTune_Stop();
                 R2_Move_SetMode(&g_r2_ctrl_usb, (R2_MoveMode_t)mode);
                 taskEXIT_CRITICAL();
             }
@@ -173,6 +184,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         total_vel_USB.vx = f[0]; total_vel_USB.vy = f[1]; total_vel_USB.vw = f[2];
         if (USB_Task_flag && Mecanum_control_flag) {
             taskENTER_CRITICAL();
+            R2_YawAutoTune_Stop();
             if (g_r2_ctrl_usb.mode == R2_MODE_WORLD_NO_YAW_VEL ||
                 g_r2_ctrl_usb.mode == R2_MODE_WORLD_NO_YAW_POS)
                 R2_Move_SetWorldLockYaw(&g_r2_ctrl_usb, f[3] * 0.0174533f);
@@ -190,6 +202,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
             int8_t set_result;
 
             taskENTER_CRITICAL();
+            R2_YawAutoTune_Stop();
             set_result = R2_Move_SetDist(&g_r2_ctrl_usb, f[0], f[1], f[2]);
             taskEXIT_CRITICAL();
             if (set_result == 0) {
@@ -202,6 +215,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         USB_ChassisWatchdog_Disarm();
         taskENTER_CRITICAL();
+        R2_YawAutoTune_Stop();
         R2_Move_Stop(&g_r2_ctrl_usb);
         taskEXIT_CRITICAL();
         break;
@@ -224,12 +238,14 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
     case USB_CMD_ARM_SET_TARGET:
         if (!USB_Read4FloatsChecked(d, len, f)) break;
         /* f[0]=x  f[1]=y  f[2]=z (mm) */
-        f[0] = Clamp(f[0], ARM_REMOTE_X_MIN_MM, ARM_REMOTE_X_MAX_MM);
-        f[1] = Clamp(f[1], ARM_REMOTE_Y_MIN_MM, ARM_REMOTE_Y_MAX_MM);
-        f[2] = Clamp(f[2], ARM_REMOTE_Z_MIN_MM, ARM_REMOTE_Z_MAX_MM);
         if (USB_Task_flag && Arm_control_flag) {
-            Arm_task_USB(f[0], f[1], f[2]);
-            USB_ArmWatchdog_Feed();
+            if (ArmIK_TargetInputAllowed(f[0], f[1], f[2], 0, 0) != 0U) {
+                Arm_task_USB(f[0], f[1], f[2]);
+                USB_ArmWatchdog_Feed();
+            } else {
+                Arm_task_USB(f[0], f[1], f[2]);
+                USB_ArmWatchdog_Disarm();
+            }
         } else {
             USB_ArmWatchdog_Disarm();
             Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
@@ -262,7 +278,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         if (!USB_Read4FloatsChecked(d, len, f)) break;
         if (!USB_Task_flag || !Tool_control_flag) break;
         taskENTER_CRITICAL();
-        Tool_SetSelectedDev(TOOL_USB_SOURCE, (uint8_t)f[0]);  /* 0=吸盘 1=夹爪 */
+        Tool_SetSelectedDev(TOOL_USB_SOURCE, (uint8_t)f[0]);  /* 0=夹爪 1=吸盘 */
         tool_dev = Tool_GetSelectedDev(TOOL_USB_SOURCE);
         taskEXIT_CRITICAL();
         USB_ToolWatchdog_Disarm();
@@ -273,7 +289,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
             uint8_t act = (uint8_t)f[0];  /* 0=闭合 1=张开 */
             if (!USB_Task_flag || !Tool_control_flag) break;
             taskENTER_CRITICAL();
-            if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == 0U) {
+            if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == TOOL_DEV_CHUCK) {
                 chuck_Handle_t *usb_chuck = Tool_GetChuck(TOOL_USB_SOURCE);
                 if (act==0U && usb_chuck->state!=CHUCK_CLOSE) trigger_chuck_action(usb_chuck, CHUCK_CLOSE);
                 if (act==1U && usb_chuck->state!=CHUCK_OPEN)  trigger_chuck_action(usb_chuck, CHUCK_OPEN);
@@ -304,9 +320,40 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         break;
 
     /* ── Climb ── */
+    case USB_CMD_YAW_TUNE_START:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (len == 16U) {
+            USB_Read4Floats(d, f);
+        }
+        if (USB_Task_flag && Mecanum_control_flag) {
+            uint8_t pass_count = (uint8_t)f[0];
+            USB_ChassisWatchdog_Disarm();
+            taskENTER_CRITICAL();
+            (void)R2_YawAutoTune_Start(&g_r2_ctrl_usb, pass_count);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
+    case USB_CMD_YAW_TUNE_STOP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        USB_ChassisWatchdog_Disarm();
+        taskENTER_CRITICAL();
+        R2_YawAutoTune_Stop();
+        R2_Move_Stop(&g_r2_ctrl_usb);
+        taskEXIT_CRITICAL();
+        break;
+
+    case USB_CMD_YAW_TUNE_GET_STATUS:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        PC_TX_ReqYawTuneStatus();
+        break;
+
     case USB_CMD_CLIMB_DISABLE:
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         taskENTER_CRITICAL();
+        if (g_r2_climb_usb.test_chassis_active != 0U) {
+            R2_Move_Stop(&g_r2_ctrl_usb);
+        }
         R2_Climb_Stop(&g_r2_climb_usb);
         taskEXIT_CRITICAL();
         break;
@@ -324,6 +371,10 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         if (!USB_Read4FloatsChecked(d, len, f)) break;
         if (USB_Task_flag) {
             taskENTER_CRITICAL();
+            if ((((uint8_t)f[0]) == 0U) &&
+                (g_r2_climb_usb.test_chassis_active != 0U)) {
+                R2_Move_Stop(&g_r2_ctrl_usb);
+            }
             R2_Climb_SetInput(&g_r2_climb_usb,
                               ((uint8_t)f[0]) ? 1U : 0U,
                               ((uint8_t)f[1]) ? 1U : 0U,
@@ -353,8 +404,23 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
     case USB_CMD_CLIMB_STOP:
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         taskENTER_CRITICAL();
+        if (g_r2_climb_usb.test_chassis_active != 0U) {
+            R2_Move_Stop(&g_r2_ctrl_usb);
+        }
         R2_Climb_Stop(&g_r2_climb_usb);
         taskEXIT_CRITICAL();
+        break;
+
+    case USB_CMD_CLIMB_TEST_ACTION:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            if (g_r2_climb_usb.test_chassis_active != 0U) {
+                R2_Move_Stop(&g_r2_ctrl_usb);
+            }
+            R2_Climb_RequestTestAction(&g_r2_climb_usb, (uint8_t)f[0]);
+            taskEXIT_CRITICAL();
+        }
         break;
 
     case USB_CMD_CLIMB_GET_STATUS:
@@ -371,18 +437,40 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
  *  工具函数
  * ═══════════════════════════════════════════════════════ */
 
-static void USB_CommandRx_Record(uint8_t cmd, uint8_t len)
+static void USB_CommandRx_Record(uint8_t cmd, const uint8_t *d, uint8_t len)
 {
+    uint8_t i;
+    uint8_t payload_valid;
+    uint8_t copy_len = 0U;
+    float f[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+
+    payload_valid = ((d != NULL) && (len == 16U)) ? 1U : 0U;
+    if (d != NULL) {
+        copy_len = (len <= 16U) ? len : 16U;
+    }
+    if (payload_valid != 0U) {
+        USB_Read4Floats(d, f);
+    }
+
     taskENTER_CRITICAL();
     s_usb_cmd_last_tick = HAL_GetTick();
     s_usb_cmd_count++;
     s_usb_cmd_last_cmd = cmd;
     s_usb_cmd_last_len = len;
+    s_usb_cmd_last_payload_valid = payload_valid;
+    for (i = 0U; i < 16U; i++) {
+        s_usb_cmd_last_data[i] = (i < copy_len) ? d[i] : 0U;
+    }
+    for (i = 0U; i < 4U; i++) {
+        s_usb_cmd_last_f[i] = (payload_valid != 0U) ? f[i] : 0.0f;
+    }
     taskEXIT_CRITICAL();
 }
 
 void USB_GetCommandRxState(USB_CommandRxState_t *out)
 {
+    uint8_t i;
+
     if (out == NULL) {
         return;
     }
@@ -392,6 +480,16 @@ void USB_GetCommandRxState(USB_CommandRxState_t *out)
     out->count = s_usb_cmd_count;
     out->last_cmd = s_usb_cmd_last_cmd;
     out->last_len = s_usb_cmd_last_len;
+    out->last_payload_valid = s_usb_cmd_last_payload_valid;
+    out->reserved[0] = 0U;
+    out->reserved[1] = 0U;
+    out->reserved[2] = 0U;
+    for (i = 0U; i < 16U; i++) {
+        out->last_data[i] = s_usb_cmd_last_data[i];
+    }
+    for (i = 0U; i < 4U; i++) {
+        out->last_f[i] = s_usb_cmd_last_f[i];
+    }
     taskEXIT_CRITICAL();
 }
 
@@ -512,7 +610,7 @@ static uint8_t USB_ArmTargetReached(void)
     float err_j3;
 
     taskENTER_CRITICAL();
-    target_j1 = Clamp(ctrl_J_USB[0], -60.0f, 60.0f);
+    target_j1 = Clamp(ctrl_J_USB[0], -ARM_IK_J1_LIMIT_DEG, ARM_IK_J1_LIMIT_DEG);
     target_j2 = ctrl_J_USB[1];
     target_j3 = ctrl_J_USB[2];
     actual_j1 = -(float)motor_fdcan3[0].total_angle * USB_ARM_TNUM1;
@@ -576,7 +674,7 @@ static void USB_ToolWatchdog_Check(uint32_t now_tick)
         (Tool_control_flag != 0U) &&
         (s_usb_tool_watchdog_armed != 0U))
     {
-        if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == 0U) {
+        if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == TOOL_DEV_CHUCK) {
             moving = (Tool_GetChuck(TOOL_USB_SOURCE)->run_status == TOOL_STATUS_MOVING) ? 1U : 0U;
         } else {
             moving = (Tool_GetClamp(TOOL_USB_SOURCE)->run_status == TOOL_STATUS_MOVING) ? 1U : 0U;
@@ -595,7 +693,7 @@ static void USB_ToolWatchdog_Check(uint32_t now_tick)
     if (timeout != 0U) {
         taskENTER_CRITICAL();
         Tool_HoldSource(TOOL_USB_SOURCE);
-        if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == 0U) {
+        if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == TOOL_DEV_CHUCK) {
             Tool_GetChuck(TOOL_USB_SOURCE)->run_status = TOOL_STATUS_ERROR;
         } else {
             Tool_GetClamp(TOOL_USB_SOURCE)->run_status = TOOL_STATUS_ERROR;

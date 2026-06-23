@@ -1,7 +1,11 @@
 26_rc_02/r2_climb.o: ..\Applications\R2_user\Src\R2_climb.c \
   ..\Applications\R2_user\Inc\R2_climb.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdint.h \
-  ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\include.h \
+  ..\Applications\App_user\Inc\R2_move.h \
+  ..\Components\Algorithm\Inc\chassis_move.h \
+  ..\Components\Algorithm\Inc\speedPlanner.h \
+  ..\Components\Algorithm\Inc\s_curve.h \
+  ..\Components\Algorithm\Inc\mecanum_classic.h ..\BSP\Inc\include.h \
   ..\Core\Inc\main.h ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal.h \
   ..\Core\Inc\stm32h7xx_hal_conf.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_rcc.h \
@@ -42,7 +46,9 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_ll_usb.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd_ex.h \
-  ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
+  ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h \
+  ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
+  ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_l1_usart.h \
+  ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h

@@ -43,7 +43,8 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd_ex.h \
   ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
+  ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_l1_usart.h \
+  ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
   ..\Components\Algorithm\Inc\arm_user.h ..\BSP\Inc\bsp_usb.h \
   ..\USB_DEVICE\App\usb_device.h \
@@ -57,7 +58,7 @@
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ioreq.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
-  ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h \
+  ..\Components\Algorithm\Inc\arm_ik_3r_safe_stm32h7.h ..\Core\Inc\tim.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\FreeRTOS.h \
   ..\Core\Inc\FreeRTOSConfig.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\projdefs.h \

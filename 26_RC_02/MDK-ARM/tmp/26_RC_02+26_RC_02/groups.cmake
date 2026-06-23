@@ -92,6 +92,8 @@ target_link_libraries(Group_Applications_Task PUBLIC
 add_library(Group_Applications_R2_user OBJECT
   "${SOLUTION_ROOT}/../Applications/App_user/Src/R2_move.c"
   "${SOLUTION_ROOT}/../Applications/R2_user/Src/R2_climb.c"
+  "${SOLUTION_ROOT}/../Applications/R2_user/Src/R2_laser_user.c"
+  "${SOLUTION_ROOT}/../Applications/AutoTune/Src/R2_yaw_autotune.c"
 )
 target_include_directories(Group_Applications_R2_user PUBLIC
   $<TARGET_PROPERTY:${CONTEXT},INTERFACE_INCLUDE_DIRECTORIES>
@@ -167,6 +169,7 @@ add_library(Group_Components_Device OBJECT
   "${SOLUTION_ROOT}/../Components/Device/Src/arm_tools.c"
   "${SOLUTION_ROOT}/../Components/Device/Src/fdcan_receive.c"
   "${SOLUTION_ROOT}/../Components/Device/Src/imu.c"
+  "${SOLUTION_ROOT}/../Components/Device/Src/l1_laser.c"
   "${SOLUTION_ROOT}/../Components/Device/Src/wit_c_sdk.c"
 )
 target_include_directories(Group_Components_Device PUBLIC
@@ -192,6 +195,7 @@ add_library(Group_BSP OBJECT
   "${SOLUTION_ROOT}/../BSP/Src/bsp_mcu.c"
   "${SOLUTION_ROOT}/../BSP/Src/bsp_tick.c"
   "${SOLUTION_ROOT}/../BSP/Src/bsp_uart.c"
+  "${SOLUTION_ROOT}/../BSP/Src/bsp_l1_usart.c"
   "${SOLUTION_ROOT}/../BSP/Src/bsp_usb.c"
 )
 target_include_directories(Group_BSP PUBLIC

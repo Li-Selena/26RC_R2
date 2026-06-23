@@ -5,6 +5,7 @@
 
 #define INS_TASK_PERIOD_MS          1U
 #define INS_IMU_OFFLINE_TIMEOUT_MS  100U
+#define INS_CHASSIS_FRONT_OFFSET_DEG 180.0f
 
 INS_Info_Typedef INS_Info = {0};
 INS_NavState_t g_ins_nav_state = {0};
@@ -96,6 +97,8 @@ void INS_Update_NavState(void)
     INS_NavState_t next_state;
     INS_OdometryState_t odom_snapshot;
     uint32_t primask;
+    float chassis_yaw_deg;
+    float chassis_yaw_total_deg;
 
     primask = __get_PRIMASK();
     __disable_irq();
@@ -107,6 +110,9 @@ void INS_Update_NavState(void)
 
     memset(&next_state, 0, sizeof(next_state));
 
+    chassis_yaw_deg = INS_NavMath_WrapDeg(INS_Info.Yaw_Angle + INS_CHASSIS_FRONT_OFFSET_DEG);
+    chassis_yaw_total_deg = INS_Info.Yaw_TolAngle + INS_CHASSIS_FRONT_OFFSET_DEG;
+
     next_state.x_m = odom_snapshot.x_m;
     next_state.y_m = odom_snapshot.y_m;
     next_state.vx_mps = odom_snapshot.vx_mps;
@@ -115,11 +121,11 @@ void INS_Update_NavState(void)
 
     next_state.roll_deg = INS_Info.Roll_Angle;
     next_state.pitch_deg = INS_Info.Pitch_Angle;
-    next_state.yaw_deg = INS_Info.Yaw_Angle;
-    next_state.yaw_total_deg = INS_Info.Yaw_TolAngle;
+    next_state.yaw_deg = chassis_yaw_deg;
+    next_state.yaw_total_deg = chassis_yaw_total_deg;
 
-    next_state.yaw_rad = INS_NavMath_WrapDeg(INS_Info.Yaw_Angle) * INS_NAV_DEG2RAD_F;
-    next_state.yaw_total_rad = INS_Info.Yaw_TolAngle * INS_NAV_DEG2RAD_F;
+    next_state.yaw_rad = chassis_yaw_deg * INS_NAV_DEG2RAD_F;
+    next_state.yaw_total_rad = chassis_yaw_total_deg * INS_NAV_DEG2RAD_F;
 
     next_state.gyro_x_dps = INS_Info.Roll_Gyro;
     next_state.gyro_y_dps = INS_Info.Pitch_Gyro;

@@ -26,6 +26,8 @@ extern "C" {
 #define ARM_IK_ACTION_HOLD_LAST     1U  /* 本次目标无效，保持上一组安全目标 */
 #define ARM_IK_ACTION_KEEP_CURRENT  2U  /* 本次目标无效，且无历史安全目标，保持当前不动 */
 
+#define ARM_IK_J1_LIMIT_DEG         180.0f
+
 /* ========================= 输入负载长度 ========================= */
 /*
  * 目标点数据格式：
@@ -48,6 +50,8 @@ extern "C" {
  *   0: 无
  *   1: theta2 超总范围
  *   2: j3 联动保护超范围
+ *   3: 目标点超出内缩后的工作空间
+ *   4: 低位目标不在模型 XZ 平面内
  *
  * tx_data[2] = action_code
  *   0: 已采用新目标
@@ -88,6 +92,14 @@ typedef struct
     uint8_t valid;
 } ArmIK_MotorDeg_t;
 
+typedef struct
+{
+    float theta1_deg;
+    float theta2_deg;
+    float theta3_deg;
+    uint8_t valid;
+} ArmIK_ModelDeg_t;
+
 /* ========================= 应用层运行状态 ========================= */
 /*
  * 这个结构体用于保存：
@@ -121,9 +133,56 @@ typedef struct
 
 } ArmIK_AppState_t;
 
+/*
+ * Complete arm runtime snapshot.
+ * rad fields keep solver units; deg fields are for debug and motor views.
+ */
+typedef struct
+{
+    Arm3R_Config_t cfg;
+
+    uint8_t inited;
+    uint8_t has_last_valid;
+    uint8_t reachable;
+    uint8_t safe;
+    uint8_t base_singular;
+    uint8_t last_status_code;
+    uint8_t last_action_code;
+    uint8_t actual_motor_valid;
+
+    Arm3R_Status_t solve_status;
+    Arm3R_UnsafeReason_t unsafe_reason;
+
+    Arm3R_Point_t requested_pt;
+    Arm3R_Point_t solved_req_pt;
+    Arm3R_Point_t last_valid_pt;
+
+    Arm3R_ModelAngles_t solved_model_rad;
+    ArmIK_ModelDeg_t solved_model_deg;
+    Arm3R_CtrlAngles_t solved_geom_rad;
+    ArmIK_MotorDeg_t solved_geom_deg;
+
+    Arm3R_ModelAngles_t active_model_rad;
+    ArmIK_ModelDeg_t active_model_deg;
+    Arm3R_CtrlAngles_t active_geom_rad;
+    ArmIK_MotorDeg_t active_geom_deg;
+    Arm3R_CtrlAngles_t active_motor_rad;
+    ArmIK_MotorDeg_t active_motor_deg;
+
+    Arm3R_ModelAngles_t last_valid_model_rad;
+    ArmIK_ModelDeg_t last_valid_model_deg;
+    Arm3R_CtrlAngles_t last_valid_geom_rad;
+    ArmIK_MotorDeg_t last_valid_geom_deg;
+    Arm3R_CtrlAngles_t last_valid_motor_rad;
+    ArmIK_MotorDeg_t last_valid_motor_deg;
+
+    ArmIK_MotorDeg_t actual_motor_deg;
+} ArmIK_FullState_t;
+
 /* ========================= 全局句柄 ========================= */
 extern Arm3R_Handle_t g_arm_ik;
 extern ArmIK_AppState_t g_arm_ik_app;
+extern ArmIK_FullState_t g_arm_ik_full_state;
 
 /* ========================= 对外接口 ========================= */
 /*
@@ -141,6 +200,12 @@ void ArmIK_ComponentInit(void);
  */
 void ArmIK_ComponentStep(float x, float y, float z);
 
+uint8_t ArmIK_TargetInputAllowed(float x,
+                                 float y,
+                                 float z,
+                                 Arm3R_Status_t *status,
+                                 Arm3R_UnsafeReason_t *unsafe_reason);
+
 /*
  * 处理外部收到的 XYZ 负载数据
  * payload 格式固定为 3 个 float：x, y, z
@@ -152,6 +217,13 @@ void ArmIK_ComponentHandleXYZPayload(const uint8_t *payload, uint16_t len);
  * 你自己的电机控制层可以直接读取这个结果
  */
 const ArmIK_MotorDeg_t *ArmIK_GetActiveMotorDeg(void);
+
+void ArmIK_SetActualMotorDeg(float j1_deg,
+                             float j2_deg,
+                             float j3_deg,
+                             uint8_t valid);
+
+const ArmIK_FullState_t *ArmIK_GetFullState(void);
 
 /*
  * 获取整个应用层状态

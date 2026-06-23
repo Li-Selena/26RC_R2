@@ -1,5 +1,6 @@
 #include "bsp_uart.h"
 #include "imu.h"
+#include "l1_laser.h"
 #include "CRC.h"
 #include "arm_echo_uart10.h"
 #include "usart.h"
@@ -25,6 +26,12 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
     {
         IMU_RxDmaEventCallback(Size);
     }
+    else if ((huart->Instance == USART1) ||
+             (huart->Instance == UART8) ||
+             (huart->Instance == UART9))
+    {
+        L1_Laser_RxEventCallback(huart, Size);
+    }
 }
 
 void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
@@ -38,6 +45,13 @@ void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart)
     {
         HAL_UART_Receive_IT(&huart10, &btReceiveData, 1);
         ArmEchoUart10_ErrorHandler();
+    }
+
+    if ((huart->Instance == USART1) ||
+        (huart->Instance == UART8) ||
+        (huart->Instance == UART9))
+    {
+        L1_Laser_ErrorCallback(huart);
     }
 }
 

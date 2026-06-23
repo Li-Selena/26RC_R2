@@ -1,5 +1,6 @@
 26_rc_02/arm_user.o: ..\Components\Algorithm\Src\arm_user.c \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\math.h \
   ..\Components\Algorithm\Inc\arm_user.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdint.h \
   ..\BSP\Inc\bsp_usb.h ..\USB_DEVICE\App\usb_device.h \
@@ -19,7 +20,6 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_def.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\Legacy\stm32_hal_legacy.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stddef.h \
-  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\math.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_rcc_ex.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_gpio.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_gpio_ex.h \

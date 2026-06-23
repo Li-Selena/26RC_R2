@@ -4,6 +4,7 @@
 #include "math.h"
 #include <string.h>
 #include "arm_tools.h"
+#include "arm_user.h"
 #include "R2_move.h"
 
 
@@ -30,15 +31,15 @@ int8_t arm_flag = 0;
 float arm_X = 0.0f;
 float arm_Y = 0.0f;
 float arm_Z = 0.0f;
+uint8_t arm_input_valid = 0U;
 
-uint8_t tool_flag = 0;
+uint8_t tool_flag = TOOL_DEV_CLAMP;
 uint8_t tooluse_flag = 0;
 uint8_t climb_enable_flag = 0U;
 uint8_t climb_step_flag = 0U;
 uint8_t climb_auto_flag = 0U;
 
 
-static float clamp_float(float x, float min_val, float max_val);
 extern void Arm_HoldCurrentPosition(uint8_t source);
 
 static volatile uint8_t s_usart_control_timeout = 0U;
@@ -60,8 +61,8 @@ void Control_SetSource(uint8_t source)
 /*
  * UART10 单字节接收状态机
  *
- * 帧格式：0xA5 + 36 字节数据区 + 1 字节校验和 + 0x5A
- * 校验和 = data[0] + ... + data[35] 取低 8 位
+ * 帧格式：0xA5 + 39 字节数据区 + 1 字节校验和 + 0x5A
+ * 校验和 = data[0] + ... + data[38] 取低 8 位
  */
 void UART10_Receive(uint8_t receiveData)
 {
@@ -189,7 +190,8 @@ void R2_Chassis_Process(R2_Move_Ctrl_t *ctrl, uint8_t mode,
  *
  * 帧布局：
  *   byte 0~11  : 控制字段（mode, arm, UU, tool...）
- *   byte 12~35 : 6 个 float（chassis×3 + arm×3）
+ *   byte 12~14 : climb_enable, climb_step, climb_auto
+ *   byte 15~38 : 6 个 float（chassis×3 + arm×3）
  */
 void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
 {
@@ -257,23 +259,18 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
     crc_dbg.control_timeout = 0U;
     s_usart_control_timeout = 0U;
 
-    /* ── R2 底盘控制（UART 遥控器 → USART 控制器） ── */
-    R2_Chassis_Process(&g_r2_ctrl_usart, mode, chs_p1, chs_p2, chs_p3);
-    R2_Climb_SetInput(&g_r2_climb_usart,
-                      climb_enable_flag,
-                      climb_step_flag,
-                      climb_auto_flag);
-
     /* ── 机械臂控制 ── */
-    ax = clamp_float(ax, ARM_REMOTE_X_MIN_MM, ARM_REMOTE_X_MAX_MM);
-    ay = clamp_float(ay, ARM_REMOTE_Y_MIN_MM, ARM_REMOTE_Y_MAX_MM);
-    az = clamp_float(az, ARM_REMOTE_Z_MIN_MM, ARM_REMOTE_Z_MAX_MM);
-
-    if (arm_flag == 1) {
-        arm_X = ax;
-        arm_Y = ay;
-        arm_Z = az;
-    } else {
+    arm_input_valid = 0U;
+    if ((arm_flag == 1) && (UU_flag == 0U)) {
+        if (ArmIK_TargetInputAllowed(ax, ay, az, 0, 0) != 0U) {
+            arm_X = ax;
+            arm_Y = ay;
+            arm_Z = az;
+            arm_input_valid = 1U;
+        } else {
+            ArmIK_ComponentStep(ax, ay, az);
+        }
+    } else if (arm_flag != 1) {
         arm_X = 0.0f;
         arm_Y = 0.0f;
         arm_Z = 0.0f;
@@ -282,18 +279,30 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
     /* ── USART/USB 控制源切换 ── */
     Control_SetSource((UU_flag == 1U) ? TOOL_USB_SOURCE : TOOL_USART_SOURCE);
 
+    /* ── R2 底盘/上台阶控制（仅 USART 源写入 USART 控制器） ── */
+    if (USART_Task_flag == 1U) {
+        R2_Chassis_Process(&g_r2_ctrl_usart, mode, chs_p1, chs_p2, chs_p3);
+        R2_Climb_SetInput(&g_r2_climb_usart,
+                          climb_enable_flag,
+                          climb_step_flag,
+                          climb_auto_flag);
+    } else {
+        R2_Move_Stop(&g_r2_ctrl_usart);
+        R2_Climb_Stop(&g_r2_climb_usart);
+    }
+
     /* ── 工具控制 ── */
     if (USART_Task_flag == 1U) {
         Tool_SetSelectedDev(TOOL_USART_SOURCE, tool_flag);
 
-        if (tool_flag == 0U) {
+        if (tool_flag == TOOL_DEV_CHUCK) {
             chuck_Handle_t *usart_chuck = Tool_GetChuck(TOOL_USART_SOURCE);
             if (tooluse_flag == 0U && usart_chuck->state != CHUCK_CLOSE) {
                 trigger_chuck_action(usart_chuck, CHUCK_CLOSE);
             } else if (tooluse_flag == 1U && usart_chuck->state != CHUCK_OPEN) {
                 trigger_chuck_action(usart_chuck, CHUCK_OPEN);
             }
-        } else if (tool_flag == 1U) {
+        } else if (tool_flag == TOOL_DEV_CLAMP) {
             clamp_Handle_t *usart_clamp = Tool_GetClamp(TOOL_USART_SOURCE);
             if (tooluse_flag == 0U && usart_clamp->state != CLAMP_CLOSE) {
                 trigger_clamp_action(usart_clamp, CLAMP_CLOSE);
@@ -304,13 +313,6 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
     }
 }
 
-
-static float clamp_float(float x, float min_val, float max_val)
-{
-    if (x < min_val) return min_val;
-    if (x > max_val) return max_val;
-    return x;
-}
 
 void USART_ControlWatchdog_Check(void)
 {

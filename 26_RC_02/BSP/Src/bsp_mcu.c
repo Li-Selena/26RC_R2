@@ -8,7 +8,7 @@
 #include "bsp_tick.h"
 
 static void DJI_Moter_Init(void);
-static void H7_power(void); 
+void H7_power(void); 
 
 
 void MCU_Init(void)
@@ -28,7 +28,7 @@ static void DJI_Moter_Init(void)
 	FDCAN_Motor_Start_All();
 }
 
-static void H7_power(void)
+void H7_power(void)
 {
 	 HAL_GPIO_WritePin(GPIOC, GPIO_PIN_13|GPIO_PIN_14|GPIO_PIN_15, GPIO_PIN_SET);
 }

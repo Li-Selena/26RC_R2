@@ -340,7 +340,7 @@
               <MiscControls></MiscControls>
               <Define>USE_PWR_LDO_SUPPLY,USE_HAL_DRIVER,STM32H723xx</Define>
               <Undefine></Undefine>
-              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Applications/Task/Inc;../Applications/App_user/Inc;../Applications/R2_user/Inc;../Components/Algorithm/Inc;../Components/Controller/Inc;../Components/Device/Inc;../BSP/Inc</IncludePath>
+              <IncludePath>../Core/Inc;../USB_DEVICE/App;../USB_DEVICE/Target;../Drivers/STM32H7xx_HAL_Driver/Inc;../Drivers/STM32H7xx_HAL_Driver/Inc/Legacy;../Middlewares/Third_Party/FreeRTOS/Source/include;../Middlewares/Third_Party/FreeRTOS/Source/CMSIS_RTOS;../Middlewares/Third_Party/FreeRTOS/Source/portable/RVDS/ARM_CM4F;../Middlewares/ST/STM32_USB_Device_Library/Core/Inc;../Middlewares/ST/STM32_USB_Device_Library/Class/CDC/Inc;../Drivers/CMSIS/Device/ST/STM32H7xx/Include;../Drivers/CMSIS/Include;../Applications/Task/Inc;../Applications/App_user/Inc;../Applications/R2_user/Inc;../Applications/AutoTune/Inc;../Components/Algorithm/Inc;../Components/Controller/Inc;../Components/Device/Inc;../BSP/Inc</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -545,6 +545,16 @@
               <FileType>1</FileType>
               <FilePath>..\Applications\R2_user\Src\R2_climb.c</FilePath>
             </File>
+            <File>
+              <FileName>R2_laser_user.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Applications\R2_user\Src\R2_laser_user.c</FilePath>
+            </File>
+            <File>
+              <FileName>R2_yaw_autotune.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Applications\AutoTune\Src\R2_yaw_autotune.c</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -636,6 +646,11 @@
               <FilePath>..\Components\Device\Src\imu.c</FilePath>
             </File>
             <File>
+              <FileName>l1_laser.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\Components\Device\Src\l1_laser.c</FilePath>
+            </File>
+            <File>
               <FileName>wit_c_sdk.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\Components\Device\Src\wit_c_sdk.c</FilePath>
@@ -664,6 +679,11 @@
               <FileName>bsp_uart.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\BSP\Src\bsp_uart.c</FilePath>
+            </File>
+            <File>
+              <FileName>bsp_l1_usart.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\BSP\Src\bsp_l1_usart.c</FilePath>
             </File>
             <File>
               <FileName>bsp_usb.c</FileName>

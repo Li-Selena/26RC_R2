@@ -2,6 +2,22 @@
 #include <math.h>
 #include <string.h>
 
+#define ARM3R_WORKSPACE_MARGIN_MM        50.0f
+#define ARM3R_WORKSPACE_EPS_MM           1.0e-3f
+#define ARM3R_J1_LOCK_PLANE_TOL_MM       5.0f
+#define ARM3R_J1_ROTATE_MIN_Z_MM         250.0f
+
+/* 50 mm inward Cartesian envelope, J1 +/-180 deg output clamp ignored. */
+#define ARM3R_WS_NEG_RHO_MIN_MM          218.485805f
+#define ARM3R_WS_NEG_RHO_MAX_MM          552.543230f
+#define ARM3R_WS_NEG_Z_MIN_MM            (-71.821546f)
+#define ARM3R_WS_NEG_Z_MAX_MM            352.822094f
+
+#define ARM3R_WS_POS_RHO_MIN_MM          50.0f
+#define ARM3R_WS_POS_RHO_MAX_MM          268.782303f
+#define ARM3R_WS_POS_Z_MIN_MM            133.457255f
+#define ARM3R_WS_POS_Z_MAX_MM            535.889697f
+
 static float arm3r_clamp(float x, float min_val, float max_val)
 {
     if (x < min_val)
@@ -15,6 +31,97 @@ static float arm3r_clamp(float x, float min_val, float max_val)
     }
 
     return x;
+}
+
+static uint8_t arm3r_in_range_mm(float value, float min_val, float max_val)
+{
+    return ((value >= (min_val - ARM3R_WORKSPACE_EPS_MM)) &&
+            (value <= (max_val + ARM3R_WORKSPACE_EPS_MM))) ? 1U : 0U;
+}
+
+static uint8_t arm3r_in_workspace_box(float rho,
+                                      float z,
+                                      float min_rho,
+                                      float max_rho,
+                                      float min_z,
+                                      float max_z)
+{
+    return (arm3r_in_range_mm(rho, min_rho, max_rho) &&
+            arm3r_in_range_mm(z, min_z, max_z)) ? 1U : 0U;
+}
+
+static uint8_t Arm3R_CheckWorkspaceMargin(float x,
+                                          float y,
+                                          float z,
+                                          float theta2_model,
+                                          Arm3R_UnsafeReason_t *reason)
+{
+    float rho;
+    float t2_deg;
+    uint8_t ok;
+    uint8_t pos_ok;
+    uint8_t neg_ok;
+
+    if (reason != 0)
+    {
+        *reason = ARM3R_UNSAFE_NONE;
+    }
+
+    if (z <= ARM3R_J1_ROTATE_MIN_Z_MM)
+    {
+        rho = fabsf(x);
+    }
+    else
+    {
+        rho = sqrtf((x * x) + (y * y));
+    }
+    t2_deg = Arm3R_RadToDeg(theta2_model);
+
+    if (t2_deg > 0.0f)
+    {
+        ok = arm3r_in_workspace_box(rho,
+                                    z,
+                                    ARM3R_WS_POS_RHO_MIN_MM,
+                                    ARM3R_WS_POS_RHO_MAX_MM,
+                                    ARM3R_WS_POS_Z_MIN_MM,
+                                    ARM3R_WS_POS_Z_MAX_MM);
+    }
+    else if (t2_deg < 0.0f)
+    {
+        ok = arm3r_in_workspace_box(rho,
+                                    z,
+                                    ARM3R_WS_NEG_RHO_MIN_MM,
+                                    ARM3R_WS_NEG_RHO_MAX_MM,
+                                    ARM3R_WS_NEG_Z_MIN_MM,
+                                    ARM3R_WS_NEG_Z_MAX_MM);
+    }
+    else
+    {
+        pos_ok = arm3r_in_workspace_box(rho,
+                                        z,
+                                        ARM3R_WS_POS_RHO_MIN_MM,
+                                        ARM3R_WS_POS_RHO_MAX_MM,
+                                        ARM3R_WS_POS_Z_MIN_MM,
+                                        ARM3R_WS_POS_Z_MAX_MM);
+        neg_ok = arm3r_in_workspace_box(rho,
+                                        z,
+                                        ARM3R_WS_NEG_RHO_MIN_MM,
+                                        ARM3R_WS_NEG_RHO_MAX_MM,
+                                        ARM3R_WS_NEG_Z_MIN_MM,
+                                        ARM3R_WS_NEG_Z_MAX_MM);
+        ok = ((pos_ok != 0U) && (neg_ok != 0U)) ? 1U : 0U;
+    }
+
+    if (ok == 0U)
+    {
+        if (reason != 0)
+        {
+            *reason = ARM3R_UNSAFE_WORKSPACE_MARGIN;
+        }
+        return 0U;
+    }
+
+    return 1U;
 }
 
 float Arm3R_DegToRad(float deg)
@@ -169,9 +276,9 @@ uint8_t Arm3R_GetJ3SafeRange(float theta2_model,
 
     /*
      * joint2 模型角总安全范围：
-     *   -62 deg <= theta2 <= 70 deg
+     *   -62 deg <= theta2 <= 80 deg
      */
-    if ((t2_deg < -62.0f) || (t2_deg > 70.0f))
+    if ((t2_deg < -62.0f) || (t2_deg > 80.0f))
     {
         return 0;
     }
@@ -179,34 +286,35 @@ uint8_t Arm3R_GetJ3SafeRange(float theta2_model,
     /*
      * 分段联动保护：
      *
-     * 1) 0 < theta2 <= 70:
-     *    0 <= j3 <= 41.191847
+     * 1) 0 < theta2 <= 80:
+     *    0 <= j3 <= 51.191847
      *
      * 2) -62 <= theta2 < 0:
-     *    -73.22950 <= j3 <= 0
+     *    -63.22950 <= j3 <= 10
      *
      * 3) theta2 == 0:
      *    当前按“特殊分水岭”处理，允许正负两侧整个范围。
      *
      * 注意：
-     * 你原始代码中的注释写过“theta2 == 0 时 j3 == 0”，
-     * 但实际实现并不是这样。这里保持和原始实现一致，
-     * 即 theta2 == 0 时允许 [-73.22950, 41.191847]。
+     * 新参数保持原物理规则不变，因此 theta2 分段位置仍为 0。
+     * theta2 上界包含新的 80 deg 上电姿态；该上电姿态对应 j3_ctrl = 0 deg。
+     * 因此正半区下界保持 0 deg，其余 j3_ctrl 边界按新参考角换算。
+     * theta2 == 0 时允许 [-63.22950, 51.191847]。
      */
     if (t2_deg > 0.0f)
     {
         *min_j3 = Arm3R_DegToRad(0.0f);
-        *max_j3 = Arm3R_DegToRad(41.191847f);
+        *max_j3 = Arm3R_DegToRad(51.191847f);
     }
     else if (t2_deg < 0.0f)
     {
-        *min_j3 = Arm3R_DegToRad(-73.22950f);
-        *max_j3 = Arm3R_DegToRad(0.0f);
+        *min_j3 = Arm3R_DegToRad(-63.22950f);
+        *max_j3 = Arm3R_DegToRad(10.0f);
     }
     else
     {
-        *min_j3 = Arm3R_DegToRad(-73.22950f);
-        *max_j3 = Arm3R_DegToRad(41.191847f);
+        *min_j3 = Arm3R_DegToRad(-63.22950f);
+        *max_j3 = Arm3R_DegToRad(51.191847f);
     }
 
     return 1;
@@ -256,6 +364,7 @@ Arm3R_Status_t Arm3R_Solve(Arm3R_Handle_t *arm,
     float theta1;
     float theta2;
     float theta3;
+    float plane_err;
 
     float r;
     float u;
@@ -290,13 +399,42 @@ Arm3R_Status_t Arm3R_Solve(Arm3R_Handle_t *arm,
     }
 
     /* 1. 求 theta1 */
-    if ((fabsf(x) < ARM3R_EPS) && (fabsf(y) < ARM3R_EPS))
+    /*
+     * The large arm is mechanically offset 20 deg from the model vertical.
+     * At z <= 250 mm, keep motion in the model XZ plane instead of rotating J1.
+     */
+    if (z <= ARM3R_J1_ROTATE_MIN_Z_MM)
+    {
+        theta1 = 0.0f;
+        plane_err = y;
+
+        if (fabsf(plane_err) > ARM3R_J1_LOCK_PLANE_TOL_MM)
+        {
+            arm->result.status = ARM3R_ERR_UNSAFE;
+            arm->result.reachable = 1U;
+            arm->result.safe = 0U;
+            arm->result.unsafe_reason = ARM3R_UNSAFE_J1_LOCK_PLANE;
+            return ARM3R_ERR_UNSAFE;
+        }
+
+        if ((fabsf(x) < ARM3R_EPS) && (fabsf(y) < ARM3R_EPS))
+        {
+            arm->result.base_singular = 1U;
+        }
+    }
+    else if ((fabsf(x) < ARM3R_EPS) && (fabsf(y) < ARM3R_EPS))
     {
         theta1 = theta1_hint;
         arm->result.base_singular = 1U;
     }
     else
     {
+        /*
+         * Coordinate convention:
+         * +X is robot/front, +Y is left, +Z is up.
+         * Rotating from +X toward +Y is positive; rotating from +X toward -Y
+         * is negative. atan2f(y, x) gives the required [-180, +180] J1 angle.
+         */
         theta1 = atan2f(y, x);
     }
     theta1 = Arm3R_NormalizeAngle(theta1);
@@ -360,6 +498,13 @@ Arm3R_Status_t Arm3R_Solve(Arm3R_Handle_t *arm,
 
     /* 8. 安全检查 */
     if (!Arm3R_CheckSafety(theta2, arm->result.ctrl.j3, &arm->result.unsafe_reason))
+    {
+        arm->result.status = ARM3R_ERR_UNSAFE;
+        arm->result.safe = 0U;
+        return ARM3R_ERR_UNSAFE;
+    }
+
+    if (!Arm3R_CheckWorkspaceMargin(x, y, z, theta2, &arm->result.unsafe_reason))
     {
         arm->result.status = ARM3R_ERR_UNSAFE;
         arm->result.safe = 0U;

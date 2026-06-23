@@ -45,7 +45,7 @@
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdio.h \
   E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
   ..\Components\Device\Inc\REG.h ..\BSP\Inc\bsp_tick.h \
-  ..\Components\Algorithm\Inc\CRC.h \
+  ..\Components\Device\Inc\l1_laser.h ..\Components\Algorithm\Inc\CRC.h \
   ..\Applications\App_user\Inc\R2_move.h \
   ..\Components\Algorithm\Inc\chassis_move.h \
   ..\Components\Algorithm\Inc\speedPlanner.h \
@@ -53,7 +53,8 @@
   ..\Components\Algorithm\Inc\mecanum_classic.h ..\BSP\Inc\include.h \
   ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
+  ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_l1_usart.h \
+  ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h \
   ..\Applications\R2_user\Inc\R2_climb.h \
   ..\Components\Algorithm\Inc\arm_echo_uart10.h ..\Core\Inc\usart.h

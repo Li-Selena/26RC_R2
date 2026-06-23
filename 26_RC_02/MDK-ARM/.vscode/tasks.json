@@ -2,6 +2,35 @@
     "version": "2.0.0",
     "tasks": [
         {
+            "label": "CMSIS Build (cbuild)",
+            "type": "shell",
+            "command": "cbuild",
+            "options": {
+                "cwd": "${workspaceFolder}/",
+                "shell": {
+                    "executable": "cmd.exe",
+                    "args": [
+                        "/d",
+                        "/c"
+                    ]
+                }
+            },
+            "args": [
+                "26_RC_02.csolution.yml"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "presentation": {
+                "reveal": "always",
+                "panel": "shared"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ]
+        },
+        {
             "label": "CMSIS Erase",
             "type": "shell",
             "command": "pyocd",

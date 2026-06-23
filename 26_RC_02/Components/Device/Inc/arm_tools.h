@@ -9,11 +9,32 @@
 #define TOOL_USART_SOURCE 0U
 #define TOOL_USB_SOURCE   1U
 
+#define TOOL_DEV_CLAMP    0U
+#define TOOL_DEV_CHUCK    1U
+
+/* FDCAN3 id4 M2006 switches tools through 18T -> 33T external gears. */
+#define TOOL_MOTOR_ENCODER_CPR       8192.0f
+#define TOOL_MOTOR_REDUCTION         36.0f
+#define TOOL_MOTOR_DEG_TO_COUNT      (TOOL_MOTOR_ENCODER_CPR * TOOL_MOTOR_REDUCTION / 360.0f)
+#define TOOL_CHUCK_OUTPUT_DEG        330.0f
+#define TOOL_SWITCH_TOL_OUTPUT_DEG   2.0f
+#define TOOL_SWITCH_TIMEOUT_MS       2000U
+
 //工具切换角度与电机实际转动角度
 // 真实开合角度未标定前保持 0，先接通控制链路，避免实车突然大动作。
-#define TOOL2MOTOR     0.0f             /* 标定后可改为 8191.0f * 36.0f / 360.0f */
-#define CLAMP_TARGET_ANGLE (  0.0f * TOOL2MOTOR)
-#define CHUCK_TARGET_ANGLE (180.0f * TOOL2MOTOR)
+#define CLAMP_TARGET_ANGLE           0.0f
+#define CHUCK_TARGET_ANGLE           (TOOL_CHUCK_OUTPUT_DEG * TOOL_MOTOR_DEG_TO_COUNT)
+#define TOOL_SWITCH_TOLERANCE        (TOOL_SWITCH_TOL_OUTPUT_DEG * TOOL_MOTOR_DEG_TO_COUNT)
+
+/* TIM1 is configured to 1 MHz, so CCR equals pulse width in microseconds.
+ * Clamp close is the initial 0 deg position. Clamp open is 180 deg clockwise.
+ */
+#define CLAMP_SERVO_MIN_DEG          0.0f
+#define CLAMP_SERVO_MAX_DEG          180.0f
+#define CLAMP_SERVO_0DEG_PULSE_US    2500U
+#define CLAMP_SERVO_180DEG_PULSE_US  500U
+#define CLAMP_SERVO_CLOSE_DEG        0.0f
+#define CLAMP_SERVO_OPEN_DEG         180.0f
 
 //夹爪坐标偏置
 #define CLAMP_X_OFFEST 0.0f

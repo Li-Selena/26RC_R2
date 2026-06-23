@@ -67,6 +67,7 @@ target_include_directories(${CONTEXT} PUBLIC
     "${SOLUTION_ROOT}/../Applications/Task/Inc"
     "${SOLUTION_ROOT}/../Applications/App_user/Inc"
     "${SOLUTION_ROOT}/../Applications/R2_user/Inc"
+    "${SOLUTION_ROOT}/../Applications/AutoTune/Inc"
     "${SOLUTION_ROOT}/../Components/Algorithm/Inc"
     "${SOLUTION_ROOT}/../Components/Controller/Inc"
     "${SOLUTION_ROOT}/../Components/Device/Inc"

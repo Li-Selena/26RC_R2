@@ -24,6 +24,7 @@ project:
         - ../Applications/Task/Inc
         - ../Applications/App_user/Inc
         - ../Applications/R2_user/Inc
+        - ../Applications/AutoTune/Inc
         - ../Components/Algorithm/Inc
         - ../Components/Controller/Inc
         - ../Components/Device/Inc
@@ -106,6 +107,8 @@ project:
       files:
         - file: ../Applications/App_user/Src/R2_move.c
         - file: ../Applications/R2_user/Src/R2_climb.c
+        - file: ../Applications/R2_user/Src/R2_laser_user.c
+        - file: ../Applications/AutoTune/Src/R2_yaw_autotune.c
     - group: Components/Algorithm
       files:
         - file: ../Components/Algorithm/Src/arm_echo_uart10.c
@@ -127,6 +130,7 @@ project:
         - file: ../Components/Device/Src/arm_tools.c
         - file: ../Components/Device/Src/fdcan_receive.c
         - file: ../Components/Device/Src/imu.c
+        - file: ../Components/Device/Src/l1_laser.c
         - file: ../Components/Device/Src/wit_c_sdk.c
     - group: BSP
       files:
@@ -134,6 +138,7 @@ project:
         - file: ../BSP/Src/bsp_mcu.c
         - file: ../BSP/Src/bsp_tick.c
         - file: ../BSP/Src/bsp_uart.c
+        - file: ../BSP/Src/bsp_l1_usart.c
         - file: ../BSP/Src/bsp_usb.c
     - group: Application/User/USB_DEVICE/App
       files:

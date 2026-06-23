@@ -58,7 +58,8 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd_ex.h \
   ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
+  ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_l1_usart.h \
+  ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
   ..\Components\Algorithm\Inc\mecanum_classic.h \
   ..\Components\Algorithm\Inc\CRC.h \
@@ -85,4 +86,5 @@
   ..\Applications\Task\Inc\INS_Task.h ..\Components\Device\Inc\imu.h \
   ..\Components\Device\Inc\wit_c_sdk.h ..\Components\Device\Inc\REG.h \
   ..\Components\Algorithm\Inc\Data_Analysis.h \
-  ..\Applications\Task\Inc\CAN_Task.h
+  ..\Applications\Task\Inc\CAN_Task.h \
+  ..\Applications\AutoTune\Inc\R2_yaw_autotune.h

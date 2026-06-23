@@ -30,7 +30,9 @@ typedef enum
 {
     ARM3R_UNSAFE_NONE = 0,
     ARM3R_UNSAFE_THETA2_RANGE = 1, /* theta2 超出总范围 */
-    ARM3R_UNSAFE_J3_RANGE = 2      /* j3 超出联动保护范围 */
+    ARM3R_UNSAFE_J3_RANGE = 2,     /* j3 超出联动保护范围 */
+    ARM3R_UNSAFE_WORKSPACE_MARGIN = 3, /* 目标点超出内缩后的工作空间 */
+    ARM3R_UNSAFE_J1_LOCK_PLANE = 4     /* 低位目标不在模型 XZ 平面内 */
 } Arm3R_UnsafeReason_t;
 
 /* ==================== 基本数据结构 ==================== */

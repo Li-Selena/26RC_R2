@@ -31,6 +31,7 @@
 /* USER CODE BEGIN Includes */
 #include "include.h"
 #include "bsp_tick.h"
+#include "bsp_mcu.h"
 #include "Control_Task.h"
 /* USER CODE END Includes */
 
@@ -108,8 +109,11 @@ int main(void)
   MX_TIM3_Init();
   MX_UART7_Init();
   MX_USART10_UART_Init();
+  MX_USART1_UART_Init();
+  MX_UART8_Init();
+  MX_UART9_Init();
   /* USER CODE BEGIN 2 */
-
+  H7_power();
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */

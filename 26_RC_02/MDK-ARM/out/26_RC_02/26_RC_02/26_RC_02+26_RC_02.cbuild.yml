@@ -111,6 +111,7 @@ build:
     - ../../../../Applications/Task/Inc
     - ../../../../Applications/App_user/Inc
     - ../../../../Applications/R2_user/Inc
+    - ../../../../Applications/AutoTune/Inc
     - ../../../../Components/Algorithm/Inc
     - ../../../../Components/Controller/Inc
     - ../../../../Components/Device/Inc
@@ -331,6 +332,10 @@ build:
           category: sourceC
         - file: ../../../../Applications/R2_user/Src/R2_climb.c
           category: sourceC
+        - file: ../../../../Applications/R2_user/Src/R2_laser_user.c
+          category: sourceC
+        - file: ../../../../Applications/AutoTune/Src/R2_yaw_autotune.c
+          category: sourceC
     - group: Components/Algorithm
       files:
         - file: ../../../../Components/Algorithm/Src/arm_echo_uart10.c
@@ -367,6 +372,8 @@ build:
           category: sourceC
         - file: ../../../../Components/Device/Src/imu.c
           category: sourceC
+        - file: ../../../../Components/Device/Src/l1_laser.c
+          category: sourceC
         - file: ../../../../Components/Device/Src/wit_c_sdk.c
           category: sourceC
     - group: BSP
@@ -378,6 +385,8 @@ build:
         - file: ../../../../BSP/Src/bsp_tick.c
           category: sourceC
         - file: ../../../../BSP/Src/bsp_uart.c
+          category: sourceC
+        - file: ../../../../BSP/Src/bsp_l1_usart.c
           category: sourceC
         - file: ../../../../BSP/Src/bsp_usb.c
           category: sourceC

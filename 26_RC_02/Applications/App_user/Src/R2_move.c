@@ -108,7 +108,7 @@ void R2_Move_Init(R2_Move_Ctrl_t *ctrl, const MecanumParam_t *param, float dt_s)
     ctrl->a_max = 2.0f;
     ctrl->j_max = 10.0f;
     ctrl->pos_kp     = 3.0f;
-    ctrl->pos_kp_yaw = 2.0f;   /* yaw 惯量小，增益通常低于平移 */
+    ctrl->pos_kp_yaw = 1.8f;   /* yaw position P from auto tune */
 }
 
 /* ─── 参数设定 ──────────────────────────────────────── */

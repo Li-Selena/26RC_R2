@@ -46,13 +46,16 @@
 /* ── Tool (0x3_) — 吸盘/夹爪 ── */
 #define USB_CMD_TOOL_DISABLE        0x30U
 #define USB_CMD_TOOL_ENABLE         0x31U
-#define USB_CMD_TOOL_SET_MODE       0x32U  /* datas[0]: 0=吸盘 1=夹爪 */
+#define USB_CMD_TOOL_SET_MODE       0x32U  /* datas[0]: 0=夹爪 1=吸盘 */
 #define USB_CMD_TOOL_ACTION         0x33U  /* datas[0]: 0=闭合 1=张开 */
 #define USB_CMD_TOOL_STOP           0x35U  /* 同松开 */
 #define USB_CMD_TOOL_GET_STATUS     0x36U
 
 /* Robot total status (0x4_) */
 #define USB_CMD_ROBOT_GET_STATUS    0x46U
+#define USB_CMD_YAW_TUNE_START      0x47U  /* optional f0=pass_count, default 1 */
+#define USB_CMD_YAW_TUNE_STOP       0x48U
+#define USB_CMD_YAW_TUNE_GET_STATUS 0x49U
 
 /* Climb step state machine (0x5_) */
 #define USB_CMD_CLIMB_DISABLE       0x50U
@@ -62,10 +65,11 @@
 #define USB_CMD_CLIMB_AUTO          0x54U
 #define USB_CMD_CLIMB_STOP          0x55U
 #define USB_CMD_CLIMB_GET_STATUS    0x56U
+#define USB_CMD_CLIMB_TEST_ACTION   0x57U  /* f0=R2_ClimbTestAction_t */
 
 #define USB_CHASSIS_TIMEOUT_MS      100U
 #define USB_ARM_TIMEOUT_MS          300U
-#define USB_TOOL_TIMEOUT_MS         1000U
+#define USB_TOOL_TIMEOUT_MS         2000U
 
 typedef struct
 {
@@ -73,6 +77,10 @@ typedef struct
     uint32_t count;
     uint8_t last_cmd;
     uint8_t last_len;
+    uint8_t last_payload_valid;
+    uint8_t reserved[3];
+    uint8_t last_data[16];
+    float last_f[4];
 } USB_CommandRxState_t;
 
 /* ── 各模块使能标志 ── */

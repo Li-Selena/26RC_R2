@@ -1,5 +1,6 @@
 26_rc_02/pc_tx_task.o: ..\Applications\Task\Src\PC_TX_Task.c \
   ..\Applications\Task\Inc\PC_TX_Task.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdint.h \
   ..\Applications\Task\Inc\Control_Task.h ..\BSP\Inc\bsp_mcu.h \
   ..\BSP\Inc\include.h ..\Core\Inc\main.h \
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal.h \
@@ -9,7 +10,6 @@
   ..\Drivers\CMSIS\Device\ST\STM32H7xx\Include\stm32h7xx.h \
   ..\Drivers\CMSIS\Device\ST\STM32H7xx\Include\stm32h723xx.h \
   ..\Drivers\CMSIS\Include\core_cm7.h \
-  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdint.h \
   F:\spareE\Vinci_Robocon_2026\26_RC_Projects\26_RC_02\Drivers\CMSIS\Include\cmsis_version.h \
   F:\spareE\Vinci_Robocon_2026\26_RC_Projects\26_RC_02\Drivers\CMSIS\Include\cmsis_compiler.h \
   F:\spareE\Vinci_Robocon_2026\26_RC_Projects\26_RC_02\Drivers\CMSIS\Include\cmsis_armclang.h \
@@ -45,7 +45,8 @@
   ..\Drivers\STM32H7xx_HAL_Driver\Inc\stm32h7xx_hal_pcd_ex.h \
   ..\Core\Inc\gpio.h ..\BSP\Inc\struct_typedef.h \
   ..\Components\Device\Inc\fdcan_receive.h ..\BSP\Inc\bsp_fdcan.h \
-  ..\Core\Inc\fdcan.h ..\Components\Controller\Inc\pid.h \
+  ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_l1_usart.h \
+  ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
   ..\Components\Algorithm\Inc\mecanum_classic.h \
   ..\Components\Algorithm\Inc\CRC.h \
@@ -86,4 +87,7 @@
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\timers.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\queue.h \
   ..\Middlewares\Third_Party\FreeRTOS\Source\include\semphr.h \
-  ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h
+  ..\Middlewares\Third_Party\FreeRTOS\Source\include\event_groups.h \
+  ..\Applications\R2_user\Inc\R2_laser_user.h \
+  ..\Components\Device\Inc\l1_laser.h \
+  ..\Applications\AutoTune\Inc\R2_yaw_autotune.h

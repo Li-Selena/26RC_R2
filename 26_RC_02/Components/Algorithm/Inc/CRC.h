@@ -6,15 +6,6 @@
 #include "R2_move.h"
 #include "R2_climb.h"
 
-#define ARM_REMOTE_X_MIN_MM   (-500.0f)
-#define ARM_REMOTE_X_MAX_MM   ( 500.0f)
-
-#define ARM_REMOTE_Y_MIN_MM   (-500.0f)
-#define ARM_REMOTE_Y_MAX_MM   ( 500.0f)
-
-#define ARM_REMOTE_Z_MIN_MM   ( 50.0f )
-#define ARM_REMOTE_Z_MAX_MM   ( 500.0f)
-
 /* 遥控器接收状态 */
 typedef enum
 {
@@ -25,37 +16,17 @@ typedef enum
 } ParseState;
 
 /*
- * 数据区 = 36 字节。
+ * 数据区 = 39 字节。
  *
- * ── byte 0~7: 8 个模式标志位，每个对应一种 R2 模式 ──
- * 同时只有一个为 1，全 0 = 底盘静止。
- *   byte 0 : RNYV  (ROBOT_NO_YAW_VEL)
- *   byte 1 : RV    (ROBOT_VEL)
- *   byte 2 : WNYV  (WORLD_NO_YAW_VEL)
- *   byte 3 : WV    (WORLD_VEL)
- *   byte 4 : RNYVP (ROBOT_NO_YAW_POS)
- *   byte 5 : RVP   (ROBOT_POS)
- *   byte 6 : WNYVP (WORLD_NO_YAW_POS)
- *   byte 7 : WVP   (WORLD_POS)
- *
- * ── byte 8~11: 4 控制字节 ──
- *   byte 8  : arm_flag       (int8_t,  0=归零 1=使能)
- *   byte 9  : UU_flag        (uint8_t, 0=USART源 1=USB源)
- *   byte 10 : tool_flag      (uint8_t, 0=吸盘 1=夹爪)
- *   byte 11 : tooluse_flag   (uint8_t, 0=闭合 1=张开)
- *
- * ── byte 12~35: 6 float (little-endian) ──
- *   byte 12~15: chassis param1  (VEL:vx(m/s)  / POS:dx(m))
- *   byte 16~19: chassis param2  (VEL:vy(m/s)  / POS:dy(m))
- *   byte 20~23: chassis param3  (VEL:vw(rad/s)/ POS:dyaw(rad))
- *   byte 24~27: arm_x  (mm)
- *   byte 28~31: arm_y  (mm)
- *   byte 32~35: arm_z  (mm)
- */
-/* Current USART payload:
- *   byte 0..11  : existing control bytes
- *   byte 12..14 : climb_enable, climb_step, climb_auto
- *   byte 15..38 : 6 little-endian floats
+ *   byte 0..7   : 8 个模式标志位，同时只有一个为 1，全 0 = 底盘静止
+ *   byte 8      : arm_flag       (int8_t, 0=归零 1=使能)
+ *   byte 9      : UU_flag        (uint8_t, 0=USART源 1=USB源)
+ *   byte 10     : tool_flag      (uint8_t, 0=夹爪 1=吸盘)
+ *   byte 11     : tooluse_flag   (uint8_t, 0=闭合 1=张开)
+ *   byte 12     : climb_enable   (uint8_t, 0=停止/复位 1=允许上台阶)
+ *   byte 13     : climb_step     (uint8_t, 0->1 边沿手动推进一步)
+ *   byte 14     : climb_auto     (uint8_t, 0->1 边沿启动/继续自动)
+ *   byte 15..38 : 6 个 little-endian float
  */
 #define BT_FRAME_DATA_LEN   39U
 
@@ -81,6 +52,7 @@ extern int8_t arm_flag;
 extern float arm_X;
 extern float arm_Y;
 extern float arm_Z;
+extern uint8_t arm_input_valid;
 
 extern uint8_t tool_flag;
 extern uint8_t tooluse_flag;

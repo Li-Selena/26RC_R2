@@ -10,7 +10,7 @@ MecanumParam_t mecParam = {
     .L = 0.190f,                  // 前后轴到中心的距离：380mm / 2 = 190mm = 0.190m
     .W = 0.200f,                  // 左右半轮距：(!!! 请根据你实际的长方形底盘轮距修改此值 !!!)
     
-    .max_wheel_speed = 0.68f      // 最大轮速：5000 rpm 转换为 rad/s 约等于 523.6
+    .max_wheel_speed = 1.00f      // 最大轮速：3.68
 };
 static float abs_f(float x)
 {
@@ -30,9 +30,10 @@ void Mecanum_Calc(
     const MecanumParam_t *param,
     WheelSpeed_t *wheel)
 {
-    float chassis_vx = chassis->vx;  
-    float chassis_vy = chassis->vy;  
-    float chassis_vw = -chassis->vw; // 保持原有坐标系习惯
+    /* New chassis front is the original rear: rotate robot XY by 180 deg. */
+    float chassis_vx = -chassis->vx;
+    float chassis_vy = -chassis->vy;
+    float chassis_vw = chassis->vw;  // +vw follows the project yaw convention: CCW is positive.
 
     // 1. 由于长方形底盘对称，旋转切向速度的系数 4 个轮子完全相同
     float k = (param->L + param->W) * chassis_vw;

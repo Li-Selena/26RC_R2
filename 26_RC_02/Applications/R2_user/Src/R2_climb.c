@@ -10,6 +10,11 @@ extern motor_measure_t motor_fdcan2[8];
 #define LEG_REAR_LEFT_IDX   2U
 #define LEG_FRONT_LEFT_IDX  3U
 
+#define R2_CLIMB_FRONT_LEG_MASK \
+    ((uint8_t)((1U << LEG_FRONT_RIGHT_IDX) | (1U << LEG_FRONT_LEFT_IDX)))
+#define R2_CLIMB_REAR_LEG_MASK \
+    ((uint8_t)((1U << LEG_REAR_RIGHT_IDX) | (1U << LEG_REAR_LEFT_IDX)))
+
 #define DRIVE_LEFT_IDX      0U
 #define DRIVE_RIGHT_IDX     1U
 
@@ -25,6 +30,47 @@ static const float s_drive_dir[2] = {
     R2_CLIMB_DRIVE_RIGHT_DIR,
 };
 
+typedef enum
+{
+    R2_CLIMB_MAIN_STEP_LEG_TARGET = 0,
+    R2_CLIMB_MAIN_STEP_DRIVE_DELTA,
+    R2_CLIMB_MAIN_STEP_CHASSIS_DELTA,
+} R2_ClimbMainStepKind_t;
+
+typedef struct
+{
+    const char *name;
+    R2_ClimbMainStepKind_t kind;
+    uint8_t leg_mask;
+    float leg_target_mm[4];
+    float delta;
+    uint32_t timeout_ms;
+} R2_ClimbMainStep_t;
+
+static const R2_ClimbMainStep_t s_main_steps[R2_CLIMB_MAIN_STEP_COUNT] = {
+    {"STEP_01_ALL_LEGS_220", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {220.0f, 220.0f, 220.0f, 220.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"STEP_02_DRIVE_FORWARD_120", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {220.0f, 220.0f, 220.0f, 220.0f}, 120.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(120.0f)},
+    {"STEP_03_ALL_LEGS_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {210.0f, 210.0f, 210.0f, 210.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_04_ALL_LEGS_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {200.0f, 200.0f, 200.0f, 200.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_05_ALL_LEGS_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {190.0f, 190.0f, 190.0f, 190.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_06_FRONT_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {0.0f, 190.0f, 190.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_FRONT_ZERO_TIMEOUT_MS},
+    {"STEP_07_FRONT_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {-10.0f, 190.0f, 190.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_08_DRIVE_FORWARD_360", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 190.0f, 190.0f, -10.0f}, 360.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(360.0f)},
+    {"STEP_09_ALL_LEGS_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 200.0f, 200.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_10_DRIVE_FORWARD_30", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {0.0f, 200.0f, 200.0f, 0.0f}, 30.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(30.0f)},
+    {"STEP_11_ALL_LEGS_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {10.0f, 210.0f, 210.0f, 10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_12_DRIVE_FORWARD_90", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {10.0f, 210.0f, 210.0f, 10.0f}, 90.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(90.0f)},
+    {"STEP_13_ALL_LEGS_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {20.0f, 220.0f, 220.0f, 20.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_14_DRIVE_FORWARD_1410", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, 1410.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(1410.0f)},
+    {"STEP_15_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"STEP_16_REAR_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {0.0f, -10.0f, -10.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_17_REAR_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {0.0f, -10.0f, -10.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_18_REAR_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {0.0f, -10.0f, -10.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_19_REAR_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {0.0f, -10.0f, -10.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_20_CHASSIS_FORWARD_100", R2_CLIMB_MAIN_STEP_CHASSIS_DELTA, 0x00U, {0.0f, -10.0f, -10.0f, 0.0f}, R2_CLIMB_TEST_CHASSIS_100_M, R2_CLIMB_STEP_CHASSIS_100_TIMEOUT_MS},
+    {"STEP_21_CHASSIS_FORWARD_100", R2_CLIMB_MAIN_STEP_CHASSIS_DELTA, 0x00U, {0.0f, -10.0f, -10.0f, 0.0f}, R2_CLIMB_TEST_CHASSIS_100_M, R2_CLIMB_STEP_CHASSIS_100_TIMEOUT_MS},
+};
+
 volatile R2_ClimbDebug_t g_r2_climb_debug_usart;
 volatile R2_ClimbDebug_t g_r2_climb_debug_usb;
 volatile R2_ClimbDebug_t g_r2_climb_debug_active;
@@ -37,6 +83,9 @@ static void BuildDebugView(const R2_Climb_Ctrl_t *ctrl,
                            R2_ClimbDebug_t *view);
 static void StoreDebugCurrent(volatile R2_ClimbDebug_t *view,
                               const R2_ClimbMotorCmd_t *cmd);
+static uint8_t LegsReached(const R2_Climb_Ctrl_t *ctrl, uint8_t mask);
+static uint8_t DrivesReached(const R2_Climb_Ctrl_t *ctrl);
+static uint8_t StateUsesChassis(R2_ClimbState_t state);
 
 static float AbsF(float x)
 {
@@ -67,68 +116,50 @@ static uint8_t ParamsReady(void)
 
 static uint32_t StateTimeoutMs(R2_ClimbState_t state)
 {
-    switch (state) {
-    case R2_CLIMB_STATE_RAISE_ALL:
-        return R2_CLIMB_RAISE_TIMEOUT_MS;
-    case R2_CLIMB_STATE_FIRST_PUSH:
-        return R2_CLIMB_FIRST_PUSH_TIMEOUT_MS;
-    case R2_CLIMB_STATE_LOWER_ALL_TO_STEP:
-        return R2_CLIMB_LOWER_TIMEOUT_MS;
-    case R2_CLIMB_STATE_RETRACT_FRONT_LEGS:
-        return R2_CLIMB_FRONT_RETRACT_TIMEOUT_MS;
-    case R2_CLIMB_STATE_SECOND_PUSH:
-        return R2_CLIMB_SECOND_PUSH_TIMEOUT_MS;
-    case R2_CLIMB_STATE_RETRACT_REAR_LEGS:
-        return R2_CLIMB_REAR_RETRACT_TIMEOUT_MS;
-    default:
-        return 0U;
+    uint32_t step = (uint32_t)state;
+
+    if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
+        (step <= R2_CLIMB_MAIN_STEP_COUNT)) {
+        return s_main_steps[step - 1U].timeout_ms;
     }
+
+    return 0U;
 }
 
 static R2_ClimbState_t NextState(R2_ClimbState_t state)
 {
-    switch (state) {
-    case R2_CLIMB_STATE_RAISE_ALL:
-        return R2_CLIMB_STATE_FIRST_PUSH;
-    case R2_CLIMB_STATE_FIRST_PUSH:
-        return R2_CLIMB_STATE_LOWER_ALL_TO_STEP;
-    case R2_CLIMB_STATE_LOWER_ALL_TO_STEP:
-        return R2_CLIMB_STATE_RETRACT_FRONT_LEGS;
-    case R2_CLIMB_STATE_RETRACT_FRONT_LEGS:
-        return R2_CLIMB_STATE_SECOND_PUSH;
-    case R2_CLIMB_STATE_SECOND_PUSH:
-        return R2_CLIMB_STATE_RETRACT_REAR_LEGS;
-    case R2_CLIMB_STATE_RETRACT_REAR_LEGS:
-        return R2_CLIMB_STATE_DONE;
-    default:
-        return R2_CLIMB_STATE_DONE;
+    uint32_t step = (uint32_t)state;
+
+    if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
+        (step < R2_CLIMB_MAIN_STEP_COUNT)) {
+        return (R2_ClimbState_t)(step + 1U);
     }
+
+    return R2_CLIMB_STATE_DONE;
 }
 
 static const char *StateName(R2_ClimbState_t state)
 {
-    switch (state) {
-    case R2_CLIMB_STATE_IDLE:
+    uint32_t step = (uint32_t)state;
+
+    if (state == R2_CLIMB_STATE_IDLE) {
         return "IDLE";
-    case R2_CLIMB_STATE_RAISE_ALL:
-        return "RAISE_ALL";
-    case R2_CLIMB_STATE_FIRST_PUSH:
-        return "FIRST_PUSH";
-    case R2_CLIMB_STATE_LOWER_ALL_TO_STEP:
-        return "LOWER_ALL_TO_STEP";
-    case R2_CLIMB_STATE_RETRACT_FRONT_LEGS:
-        return "RETRACT_FRONT_LEGS";
-    case R2_CLIMB_STATE_SECOND_PUSH:
-        return "SECOND_PUSH";
-    case R2_CLIMB_STATE_RETRACT_REAR_LEGS:
-        return "RETRACT_REAR_LEGS";
-    case R2_CLIMB_STATE_DONE:
-        return "DONE";
-    case R2_CLIMB_STATE_ERROR:
-        return "ERROR";
-    default:
-        return "UNKNOWN";
     }
+
+    if (state == R2_CLIMB_STATE_DONE) {
+        return "DONE";
+    }
+
+    if (state == R2_CLIMB_STATE_ERROR) {
+        return "ERROR";
+    }
+
+    if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
+        (step <= R2_CLIMB_MAIN_STEP_COUNT)) {
+        return s_main_steps[step - 1U].name;
+    }
+
+    return "UNKNOWN";
 }
 
 static void CaptureLegZero(R2_Climb_Ctrl_t *ctrl)
@@ -148,25 +179,59 @@ static void CaptureDriveSegmentStart(R2_Climb_Ctrl_t *ctrl)
         motor_fdcan2[5U].total_angle;
 }
 
+static float ClampLegTarget(float target_mm)
+{
+    if (target_mm < R2_CLIMB_LEG_MIN_MM) {
+        return R2_CLIMB_LEG_MIN_MM;
+    }
+
+    if (target_mm > R2_CLIMB_LEG_MAX_MM) {
+        return R2_CLIMB_LEG_MAX_MM;
+    }
+
+    return target_mm;
+}
+
 static void SetAllLegTarget(R2_Climb_Ctrl_t *ctrl, float target_mm)
 {
     uint8_t i;
+    float limited_target_mm = ClampLegTarget(target_mm);
 
     for (i = 0U; i < 4U; i++) {
-        ctrl->leg_target_mm[i] = target_mm;
+        ctrl->leg_target_mm[i] = limited_target_mm;
     }
 }
 
 static void SetFrontLegTarget(R2_Climb_Ctrl_t *ctrl, float target_mm)
 {
-    ctrl->leg_target_mm[LEG_FRONT_RIGHT_IDX] = target_mm;
-    ctrl->leg_target_mm[LEG_FRONT_LEFT_IDX] = target_mm;
+    float limited_target_mm = ClampLegTarget(target_mm);
+
+    ctrl->leg_target_mm[LEG_FRONT_RIGHT_IDX] = limited_target_mm;
+    ctrl->leg_target_mm[LEG_FRONT_LEFT_IDX] = limited_target_mm;
 }
 
 static void SetRearLegTarget(R2_Climb_Ctrl_t *ctrl, float target_mm)
 {
-    ctrl->leg_target_mm[LEG_REAR_RIGHT_IDX] = target_mm;
-    ctrl->leg_target_mm[LEG_REAR_LEFT_IDX] = target_mm;
+    float limited_target_mm = ClampLegTarget(target_mm);
+
+    ctrl->leg_target_mm[LEG_REAR_RIGHT_IDX] = limited_target_mm;
+    ctrl->leg_target_mm[LEG_REAR_LEFT_IDX] = limited_target_mm;
+}
+
+static void SetLegTargets(R2_Climb_Ctrl_t *ctrl,
+                          float front_right_mm,
+                          float rear_right_mm,
+                          float rear_left_mm,
+                          float front_left_mm)
+{
+    ctrl->leg_target_mm[LEG_FRONT_RIGHT_IDX] =
+        ClampLegTarget(front_right_mm);
+    ctrl->leg_target_mm[LEG_REAR_RIGHT_IDX] =
+        ClampLegTarget(rear_right_mm);
+    ctrl->leg_target_mm[LEG_REAR_LEFT_IDX] =
+        ClampLegTarget(rear_left_mm);
+    ctrl->leg_target_mm[LEG_FRONT_LEFT_IDX] =
+        ClampLegTarget(front_left_mm);
 }
 
 static void SetDriveTarget(R2_Climb_Ctrl_t *ctrl, float target_mm)
@@ -175,7 +240,87 @@ static void SetDriveTarget(R2_Climb_Ctrl_t *ctrl, float target_mm)
     ctrl->drive_target_mm[DRIVE_RIGHT_IDX] = target_mm;
 }
 
+static void AddLegTargetDelta(R2_Climb_Ctrl_t *ctrl, uint8_t mask, float delta_mm)
+{
+    uint8_t i;
+
+    for (i = 0U; i < 4U; i++) {
+        if ((mask & (uint8_t)(1U << i)) == 0U) {
+            continue;
+        }
+        ctrl->leg_target_mm[i] = ClampLegTarget(ctrl->leg_pos_mm[i] + delta_mm);
+    }
+}
+
+static void ClearLegPidByMask(uint8_t mask)
+{
+    uint8_t i;
+
+    for (i = 0U; i < 4U; i++) {
+        if ((mask & (uint8_t)(1U << i)) != 0U) {
+            PID_FDCAN2_Clear(i + 1U);
+        }
+    }
+}
+
+static void ClearDrivePid(void)
+{
+    PID_FDCAN2_Clear(5U);
+    PID_FDCAN2_Clear(6U);
+}
+
+static uint8_t IsTestDriveAction(uint8_t action)
+{
+    switch ((R2_ClimbTestAction_t)action) {
+    case R2_CLIMB_TEST_DRIVE_FORWARD_30:
+    case R2_CLIMB_TEST_DRIVE_FORWARD_10:
+    case R2_CLIMB_TEST_DRIVE_BACKWARD_10:
+        return 1U;
+    default:
+        return 0U;
+    }
+}
+
+uint8_t R2_Climb_TestActionUsesChassis(uint8_t action)
+{
+    switch ((R2_ClimbTestAction_t)action) {
+    case R2_CLIMB_TEST_CHASSIS_FORWARD_100:
+    case R2_CLIMB_TEST_CHASSIS_FORWARD_50:
+    case R2_CLIMB_TEST_CHASSIS_BACKWARD_50:
+        return 1U;
+    default:
+        return 0U;
+    }
+}
+
+static uint32_t TestActionTimeoutMs(uint8_t action)
+{
+    if (R2_Climb_TestActionUsesChassis(action) != 0U) {
+        return R2_CLIMB_TEST_CHASSIS_TIMEOUT_MS;
+    }
+
+    if (IsTestDriveAction(action) != 0U) {
+        return R2_CLIMB_TEST_DRIVE_TIMEOUT_MS;
+    }
+
+    return R2_CLIMB_TEST_LEG_TIMEOUT_MS;
+}
+
+static uint8_t StateUsesChassis(R2_ClimbState_t state)
+{
+    uint32_t step = (uint32_t)state;
+
+    if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
+        (step <= R2_CLIMB_MAIN_STEP_COUNT) &&
+        (s_main_steps[step - 1U].kind == R2_CLIMB_MAIN_STEP_CHASSIS_DELTA)) {
+        return 1U;
+    }
+
+    return 0U;
+}
+
 static void BeginState(R2_Climb_Ctrl_t *ctrl,
+                       R2_Move_Ctrl_t *move_ctrl,
                        R2_ClimbState_t state,
                        uint32_t now_ms)
 {
@@ -183,56 +328,281 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
         return;
     }
 
+    if ((ctrl->test_chassis_active != 0U) &&
+        (StateUsesChassis(state) == 0U)) {
+        if (move_ctrl != 0) {
+            R2_Move_Stop(move_ctrl);
+        }
+        ctrl->test_chassis_active = 0U;
+    }
+
     ctrl->state = state;
     ctrl->state_done = 0U;
     ctrl->state_start_ms = now_ms;
+    ctrl->test_active = 0U;
+    ctrl->test_action = R2_CLIMB_TEST_NONE;
+    ctrl->test_chassis_active = 0U;
 
-    switch (state) {
-    case R2_CLIMB_STATE_RAISE_ALL:
-        CaptureLegZero(ctrl);
-        CaptureDriveSegmentStart(ctrl);
-        SetAllLegTarget(ctrl, R2_CLIMB_LIFT_SAFE_MM);
-        SetDriveTarget(ctrl, 0.0f);
-        break;
+    if (((uint32_t)state >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
+        ((uint32_t)state <= R2_CLIMB_MAIN_STEP_COUNT)) {
+        const R2_ClimbMainStep_t *step =
+            &s_main_steps[(uint32_t)state - 1U];
 
-    case R2_CLIMB_STATE_FIRST_PUSH:
-        CaptureDriveSegmentStart(ctrl);
-        SetAllLegTarget(ctrl, R2_CLIMB_LIFT_SAFE_MM);
-        SetDriveTarget(ctrl, R2_CLIMB_FIRST_PUSH_MM);
-        break;
+        SetLegTargets(ctrl,
+                      step->leg_target_mm[LEG_FRONT_RIGHT_IDX],
+                      step->leg_target_mm[LEG_REAR_RIGHT_IDX],
+                      step->leg_target_mm[LEG_REAR_LEFT_IDX],
+                      step->leg_target_mm[LEG_FRONT_LEFT_IDX]);
 
-    case R2_CLIMB_STATE_LOWER_ALL_TO_STEP:
-        SetAllLegTarget(ctrl, R2_CLIMB_LIFT_STEP_MM);
-        break;
+        if (step->kind == R2_CLIMB_MAIN_STEP_LEG_TARGET) {
+            ClearLegPidByMask(step->leg_mask);
+        } else if (step->kind == R2_CLIMB_MAIN_STEP_DRIVE_DELTA) {
+            ClearDrivePid();
+            CaptureDriveSegmentStart(ctrl);
+            SetDriveTarget(ctrl, step->delta);
+        } else if (step->kind == R2_CLIMB_MAIN_STEP_CHASSIS_DELTA) {
+            if (move_ctrl == 0) {
+                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+                ctrl->auto_run = 0U;
+                ctrl->state = R2_CLIMB_STATE_ERROR;
+            } else {
+                R2_Move_Stop(move_ctrl);
+                R2_Move_Resume(move_ctrl);
+                R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_POS);
+                if (R2_Move_SetDist(move_ctrl, 0.0f, step->delta, 0.0f) == 0) {
+                    ctrl->test_chassis_active = 1U;
+                } else {
+                    ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+                    ctrl->auto_run = 0U;
+                    ctrl->state = R2_CLIMB_STATE_ERROR;
+                }
+            }
+        }
 
-    case R2_CLIMB_STATE_RETRACT_FRONT_LEGS:
-        SetFrontLegTarget(ctrl, 0.0f);
-        SetRearLegTarget(ctrl, R2_CLIMB_LIFT_STEP_MM);
-        break;
+        UpdatePositions(ctrl);
+        return;
+    }
 
-    case R2_CLIMB_STATE_SECOND_PUSH:
-        CaptureDriveSegmentStart(ctrl);
-        SetFrontLegTarget(ctrl, 0.0f);
-        SetRearLegTarget(ctrl, R2_CLIMB_LIFT_STEP_MM);
-        SetDriveTarget(ctrl, R2_CLIMB_SECOND_PUSH_MM);
-        break;
-
-    case R2_CLIMB_STATE_RETRACT_REAR_LEGS:
-        SetAllLegTarget(ctrl, 0.0f);
-        break;
-
-    case R2_CLIMB_STATE_DONE:
+    if (state == R2_CLIMB_STATE_DONE) {
         ctrl->auto_run = 0U;
         ctrl->state_done = 1U;
-        SetAllLegTarget(ctrl, 0.0f);
+        SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        CaptureDriveSegmentStart(ctrl);
         SetDriveTarget(ctrl, 0.0f);
+        UpdatePositions(ctrl);
+        return;
+    }
+
+    UpdatePositions(ctrl);
+    return;
+
+}
+
+static void BeginTestAction(R2_Climb_Ctrl_t *ctrl,
+                            R2_Move_Ctrl_t *move_ctrl,
+                            uint8_t action,
+                            uint32_t now_ms)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    UpdatePositions(ctrl);
+
+    if (ctrl->test_chassis_active != 0U) {
+        if (move_ctrl != 0) {
+            R2_Move_Stop(move_ctrl);
+        }
+        ctrl->test_chassis_active = 0U;
+    }
+
+    ctrl->enabled = 1U;
+    ctrl->auto_run = 0U;
+    ctrl->pending_step = 0U;
+    ctrl->pending_auto = 0U;
+    ctrl->state = R2_CLIMB_STATE_IDLE;
+    ctrl->state_done = 0U;
+    ctrl->state_start_ms = now_ms;
+    ctrl->test_action = action;
+    ctrl->test_active = 1U;
+    ctrl->test_chassis_active = 0U;
+    ctrl->error_flags = 0U;
+
+    switch ((R2_ClimbTestAction_t)action) {
+    case R2_CLIMB_TEST_ALL_LEGS_220:
+        ClearLegPidByMask(0x0FU);
+        SetAllLegTarget(ctrl, R2_CLIMB_LIFT_HIGH_MM);
+        break;
+
+    case R2_CLIMB_TEST_ALL_LEGS_UP_10:
+        ClearLegPidByMask(0x0FU);
+        AddLegTargetDelta(ctrl, 0x0FU, R2_CLIMB_TEST_LEG_DELTA_MM);
+        break;
+
+    case R2_CLIMB_TEST_ALL_LEGS_DOWN_10:
+        ClearLegPidByMask(0x0FU);
+        AddLegTargetDelta(ctrl, 0x0FU, -R2_CLIMB_TEST_LEG_DELTA_MM);
+        break;
+
+    case R2_CLIMB_TEST_DRIVE_FORWARD_30:
+        ClearDrivePid();
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, R2_CLIMB_TEST_DRIVE_30_MM);
+        break;
+
+    case R2_CLIMB_TEST_DRIVE_FORWARD_10:
+        ClearDrivePid();
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, R2_CLIMB_TEST_DRIVE_10_MM);
+        break;
+
+    case R2_CLIMB_TEST_DRIVE_BACKWARD_10:
+        ClearDrivePid();
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, -R2_CLIMB_TEST_DRIVE_10_MM);
+        break;
+
+    case R2_CLIMB_TEST_FRONT_ZERO:
+        ClearLegPidByMask((uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                    (1U << LEG_FRONT_LEFT_IDX)));
+        SetFrontLegTarget(ctrl, R2_CLIMB_HOME_MM);
+        break;
+
+    case R2_CLIMB_TEST_FRONT_UP_10:
+        ClearLegPidByMask((uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                    (1U << LEG_FRONT_LEFT_IDX)));
+        AddLegTargetDelta(ctrl,
+                          (uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                    (1U << LEG_FRONT_LEFT_IDX)),
+                          R2_CLIMB_TEST_LEG_DELTA_MM);
+        break;
+
+    case R2_CLIMB_TEST_FRONT_DOWN_10:
+        ClearLegPidByMask((uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                    (1U << LEG_FRONT_LEFT_IDX)));
+        AddLegTargetDelta(ctrl,
+                          (uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                    (1U << LEG_FRONT_LEFT_IDX)),
+                          -R2_CLIMB_TEST_LEG_DELTA_MM);
+        break;
+
+    case R2_CLIMB_TEST_CHASSIS_FORWARD_100:
+    case R2_CLIMB_TEST_CHASSIS_FORWARD_50:
+    case R2_CLIMB_TEST_CHASSIS_BACKWARD_50:
+        if (move_ctrl == 0) {
+            ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+            ctrl->test_active = 0U;
+            ctrl->state = R2_CLIMB_STATE_ERROR;
+            break;
+        }
+        R2_Move_Stop(move_ctrl);
+        R2_Move_Resume(move_ctrl);
+        R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_POS);
+        if (action == (uint8_t)R2_CLIMB_TEST_CHASSIS_FORWARD_100) {
+            if (R2_Move_SetDist(move_ctrl, 0.0f,
+                                R2_CLIMB_TEST_CHASSIS_100_M, 0.0f) == 0) {
+                ctrl->test_chassis_active = 1U;
+            }
+        } else if (action == (uint8_t)R2_CLIMB_TEST_CHASSIS_FORWARD_50) {
+            if (R2_Move_SetDist(move_ctrl, 0.0f,
+                                R2_CLIMB_TEST_CHASSIS_50_M, 0.0f) == 0) {
+                ctrl->test_chassis_active = 1U;
+            }
+        } else {
+            if (R2_Move_SetDist(move_ctrl, 0.0f,
+                                -R2_CLIMB_TEST_CHASSIS_50_M, 0.0f) == 0) {
+                ctrl->test_chassis_active = 1U;
+            }
+        }
+        if (ctrl->test_chassis_active == 0U) {
+            ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+            ctrl->test_active = 0U;
+            ctrl->state = R2_CLIMB_STATE_ERROR;
+        }
+        break;
+
+    case R2_CLIMB_TEST_REAR_ZERO:
+        ClearLegPidByMask((uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                    (1U << LEG_REAR_LEFT_IDX)));
+        SetRearLegTarget(ctrl, R2_CLIMB_HOME_MM);
+        break;
+
+    case R2_CLIMB_TEST_REAR_UP_10:
+        ClearLegPidByMask((uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                    (1U << LEG_REAR_LEFT_IDX)));
+        AddLegTargetDelta(ctrl,
+                          (uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                    (1U << LEG_REAR_LEFT_IDX)),
+                          R2_CLIMB_TEST_LEG_DELTA_MM);
+        break;
+
+    case R2_CLIMB_TEST_REAR_DOWN_10:
+        ClearLegPidByMask((uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                    (1U << LEG_REAR_LEFT_IDX)));
+        AddLegTargetDelta(ctrl,
+                          (uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                    (1U << LEG_REAR_LEFT_IDX)),
+                          -R2_CLIMB_TEST_LEG_DELTA_MM);
+        break;
+
+    case R2_CLIMB_TEST_ALL_LEGS_ZERO:
+        ClearLegPidByMask(0x0FU);
+        SetAllLegTarget(ctrl, R2_CLIMB_HOME_MM);
         break;
 
     default:
+        ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+        ctrl->test_active = 0U;
+        ctrl->test_action = R2_CLIMB_TEST_NONE;
+        ctrl->state = R2_CLIMB_STATE_ERROR;
         break;
     }
 
     UpdatePositions(ctrl);
+}
+
+static uint8_t TestActionReached(const R2_Climb_Ctrl_t *ctrl,
+                                 const R2_Move_Ctrl_t *move_ctrl)
+{
+    uint8_t front_mask = (uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                  (1U << LEG_FRONT_LEFT_IDX));
+    uint8_t rear_mask = (uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                 (1U << LEG_REAR_LEFT_IDX));
+
+    switch ((R2_ClimbTestAction_t)ctrl->test_action) {
+    case R2_CLIMB_TEST_ALL_LEGS_220:
+    case R2_CLIMB_TEST_ALL_LEGS_UP_10:
+    case R2_CLIMB_TEST_ALL_LEGS_DOWN_10:
+    case R2_CLIMB_TEST_ALL_LEGS_ZERO:
+        return LegsReached(ctrl, 0x0FU);
+
+    case R2_CLIMB_TEST_DRIVE_FORWARD_30:
+    case R2_CLIMB_TEST_DRIVE_FORWARD_10:
+    case R2_CLIMB_TEST_DRIVE_BACKWARD_10:
+        return DrivesReached(ctrl);
+
+    case R2_CLIMB_TEST_FRONT_ZERO:
+    case R2_CLIMB_TEST_FRONT_UP_10:
+    case R2_CLIMB_TEST_FRONT_DOWN_10:
+        return LegsReached(ctrl, front_mask);
+
+    case R2_CLIMB_TEST_CHASSIS_FORWARD_100:
+    case R2_CLIMB_TEST_CHASSIS_FORWARD_50:
+    case R2_CLIMB_TEST_CHASSIS_BACKWARD_50:
+        if ((move_ctrl != 0) &&
+            (R2_Move_GetPosState(move_ctrl) == R2_POS_DONE)) {
+            return 1U;
+        }
+        return 0U;
+
+    case R2_CLIMB_TEST_REAR_ZERO:
+    case R2_CLIMB_TEST_REAR_UP_10:
+    case R2_CLIMB_TEST_REAR_DOWN_10:
+        return LegsReached(ctrl, rear_mask);
+
+    default:
+        return 0U;
+    }
 }
 
 static void UpdatePositions(R2_Climb_Ctrl_t *ctrl)
@@ -295,41 +665,46 @@ static uint8_t DrivesReached(const R2_Climb_Ctrl_t *ctrl)
     return 1U;
 }
 
-static uint8_t CurrentStateReached(const R2_Climb_Ctrl_t *ctrl)
+static uint8_t CurrentStateReached(const R2_Climb_Ctrl_t *ctrl,
+                                   const R2_Move_Ctrl_t *move_ctrl)
 {
-    switch (ctrl->state) {
-    case R2_CLIMB_STATE_RAISE_ALL:
-        return LegsReached(ctrl, 0x0FU);
-    case R2_CLIMB_STATE_FIRST_PUSH:
-        return DrivesReached(ctrl);
-    case R2_CLIMB_STATE_LOWER_ALL_TO_STEP:
-        return LegsReached(ctrl, 0x0FU);
-    case R2_CLIMB_STATE_RETRACT_FRONT_LEGS:
-        return LegsReached(ctrl,
-                           (uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
-                                     (1U << LEG_FRONT_LEFT_IDX)));
-    case R2_CLIMB_STATE_SECOND_PUSH:
-        return DrivesReached(ctrl);
-    case R2_CLIMB_STATE_RETRACT_REAR_LEGS:
-        return LegsReached(ctrl,
-                           (uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
-                                     (1U << LEG_REAR_LEFT_IDX)));
-    default:
+    uint32_t step_index = (uint32_t)ctrl->state;
+    const R2_ClimbMainStep_t *step;
+
+    if ((step_index < (uint32_t)R2_CLIMB_STATE_STEP_1) ||
+        (step_index > R2_CLIMB_MAIN_STEP_COUNT)) {
         return 0U;
     }
+
+    step = &s_main_steps[step_index - 1U];
+    if (step->kind == R2_CLIMB_MAIN_STEP_LEG_TARGET) {
+        return LegsReached(ctrl, step->leg_mask);
+    }
+
+    if (step->kind == R2_CLIMB_MAIN_STEP_DRIVE_DELTA) {
+        return DrivesReached(ctrl);
+    }
+
+    if (step->kind == R2_CLIMB_MAIN_STEP_CHASSIS_DELTA) {
+        if ((move_ctrl != 0) &&
+            (R2_Move_GetPosState(move_ctrl) == R2_POS_DONE)) {
+            return 1U;
+        }
+        return 0U;
+    }
+
+    return 0U;
 }
 
 static uint8_t DriveHoldActive(R2_ClimbState_t state)
 {
-    switch (state) {
-    case R2_CLIMB_STATE_FIRST_PUSH:
-    case R2_CLIMB_STATE_LOWER_ALL_TO_STEP:
-    case R2_CLIMB_STATE_RETRACT_FRONT_LEGS:
-    case R2_CLIMB_STATE_SECOND_PUSH:
+    uint32_t step_index = (uint32_t)state;
+
+    if ((step_index >= 2U) && (step_index <= R2_CLIMB_MAIN_STEP_COUNT)) {
         return 1U;
-    default:
-        return 0U;
     }
+
+    return 0U;
 }
 
 static int32_t LegTargetCount(const R2_Climb_Ctrl_t *ctrl, uint8_t index)
@@ -399,8 +774,9 @@ static void BuildDebugView(const R2_Climb_Ctrl_t *ctrl,
     view->state_name = StateName(ctrl->state);
     view->is_motor_active = R2_Climb_IsMotorActive(ctrl);
 
-    if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
-        (ctrl->state == R2_CLIMB_STATE_DONE)) {
+    if (((ctrl->state == R2_CLIMB_STATE_IDLE) ||
+         (ctrl->state == R2_CLIMB_STATE_DONE)) &&
+        (ctrl->test_active == 0U)) {
         view->elapsed_ms = 0U;
     } else {
         view->elapsed_ms = ctrl->last_update_ms - ctrl->state_start_ms;
@@ -444,15 +820,37 @@ void R2_Climb_Init(R2_Climb_Ctrl_t *ctrl)
 
     memset(ctrl, 0, sizeof(*ctrl));
     ctrl->state = R2_CLIMB_STATE_IDLE;
+    CaptureLegZero(ctrl);
+    CaptureDriveSegmentStart(ctrl);
+    ctrl->zero_captured = 1U;
+    SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+    SetDriveTarget(ctrl, 0.0f);
+    UpdatePositions(ctrl);
 }
 
 void R2_Climb_Stop(R2_Climb_Ctrl_t *ctrl)
 {
+    int32_t leg_zero[4];
+    uint8_t zero_captured;
+    uint8_t i;
+
     if (ctrl == 0) {
         return;
     }
 
+    zero_captured = ctrl->zero_captured;
+    for (i = 0U; i < 4U; i++) {
+        leg_zero[i] = ctrl->leg_zero[i];
+    }
+
     R2_Climb_Init(ctrl);
+    if (zero_captured != 0U) {
+        for (i = 0U; i < 4U; i++) {
+            ctrl->leg_zero[i] = leg_zero[i];
+        }
+        ctrl->zero_captured = 1U;
+        UpdatePositions(ctrl);
+    }
 }
 
 void R2_Climb_RequestStep(R2_Climb_Ctrl_t *ctrl)
@@ -477,6 +875,18 @@ void R2_Climb_RequestAuto(R2_Climb_Ctrl_t *ctrl)
         ctrl->enabled = 1U;
     }
     ctrl->pending_auto = 1U;
+}
+
+void R2_Climb_RequestTestAction(R2_Climb_Ctrl_t *ctrl, uint8_t action)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    if (ctrl->enabled == 0U) {
+        ctrl->enabled = 1U;
+    }
+    ctrl->pending_test_action = action;
 }
 
 void R2_Climb_SetInput(R2_Climb_Ctrl_t *ctrl,
@@ -519,11 +929,14 @@ void R2_Climb_SetInput(R2_Climb_Ctrl_t *ctrl,
     ctrl->last_auto_level = auto_level;
 }
 
-void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl, uint32_t now_ms)
+void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
+                     R2_Move_Ctrl_t *move_ctrl,
+                     uint32_t now_ms)
 {
     uint8_t reached;
     uint8_t step;
     uint8_t auto_req;
+    uint8_t test_req;
 
     if (ctrl == 0) {
         return;
@@ -542,7 +955,49 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl, uint32_t now_ms)
         ctrl->state_done = 0U;
         ctrl->pending_step = 0U;
         ctrl->pending_auto = 0U;
+        ctrl->pending_test_action = 0U;
+        if (ctrl->test_chassis_active != 0U) {
+            if (move_ctrl != 0) {
+                R2_Move_Stop(move_ctrl);
+            }
+            ctrl->test_chassis_active = 0U;
+        }
+        ctrl->test_active = 0U;
         ctrl->state = R2_CLIMB_STATE_ERROR;
+        return;
+    }
+
+    test_req = ctrl->pending_test_action;
+    ctrl->pending_test_action = 0U;
+    if (test_req != 0U) {
+        BeginTestAction(ctrl, move_ctrl, test_req, now_ms);
+        return;
+    }
+
+    if (ctrl->test_active != 0U) {
+        ctrl->pending_step = 0U;
+        ctrl->pending_auto = 0U;
+
+        if ((now_ms - ctrl->state_start_ms) >
+            TestActionTimeoutMs(ctrl->test_action)) {
+            ctrl->error_flags |= R2_CLIMB_ERR_TIMEOUT;
+            if (ctrl->test_chassis_active != 0U) {
+                if (move_ctrl != 0) {
+                    R2_Move_Stop(move_ctrl);
+                }
+                ctrl->test_chassis_active = 0U;
+            }
+            ctrl->test_active = 0U;
+            ctrl->state_done = 0U;
+            ctrl->state = R2_CLIMB_STATE_ERROR;
+            return;
+        }
+
+        if (TestActionReached(ctrl, move_ctrl) != 0U) {
+            ctrl->test_active = 0U;
+            ctrl->test_chassis_active = 0U;
+            ctrl->state_done = 1U;
+        }
         return;
     }
 
@@ -552,9 +1007,16 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl, uint32_t now_ms)
     ctrl->pending_auto = 0U;
 
     if (auto_req != 0U) {
-        ctrl->auto_run = 1U;
-        if (ctrl->state == R2_CLIMB_STATE_IDLE) {
-            BeginState(ctrl, R2_CLIMB_STATE_RAISE_ALL, now_ms);
+        if (ctrl->state == R2_CLIMB_STATE_ERROR) {
+            ctrl->auto_run = 0U;
+        } else {
+            ctrl->auto_run = 1U;
+            if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
+                (ctrl->state == R2_CLIMB_STATE_DONE)) {
+                BeginState(ctrl, move_ctrl, R2_CLIMB_STATE_STEP_1, now_ms);
+            } else if (ctrl->state_done != 0U) {
+                BeginState(ctrl, move_ctrl, NextState(ctrl->state), now_ms);
+            }
         }
         step = 0U;
     }
@@ -562,10 +1024,10 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl, uint32_t now_ms)
     if (step != 0U) {
         ctrl->auto_run = 0U;
         if (ctrl->state == R2_CLIMB_STATE_IDLE) {
-            BeginState(ctrl, R2_CLIMB_STATE_RAISE_ALL, now_ms);
+            BeginState(ctrl, move_ctrl, R2_CLIMB_STATE_STEP_1, now_ms);
         } else if ((ctrl->state != R2_CLIMB_STATE_DONE) &&
                    (ctrl->state != R2_CLIMB_STATE_ERROR)) {
-            BeginState(ctrl, NextState(ctrl->state), now_ms);
+            BeginState(ctrl, move_ctrl, NextState(ctrl->state), now_ms);
         }
     }
 
@@ -579,6 +1041,13 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl, uint32_t now_ms)
     if (StateTimeoutMs(ctrl->state) != 0U) {
         if ((now_ms - ctrl->state_start_ms) > StateTimeoutMs(ctrl->state)) {
             ctrl->error_flags |= R2_CLIMB_ERR_TIMEOUT;
+            if ((StateUsesChassis(ctrl->state) != 0U) &&
+                (ctrl->test_chassis_active != 0U)) {
+                if (move_ctrl != 0) {
+                    R2_Move_Stop(move_ctrl);
+                }
+                ctrl->test_chassis_active = 0U;
+            }
             ctrl->auto_run = 0U;
             ctrl->state_done = 0U;
             ctrl->state = R2_CLIMB_STATE_ERROR;
@@ -586,13 +1055,21 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl, uint32_t now_ms)
         }
     }
 
-    reached = CurrentStateReached(ctrl);
+    reached = CurrentStateReached(ctrl, move_ctrl);
     if (reached == 0U) {
         return;
     }
 
+    if ((StateUsesChassis(ctrl->state) != 0U) &&
+        (ctrl->test_chassis_active != 0U)) {
+        if (move_ctrl != 0) {
+            R2_Move_Stop(move_ctrl);
+        }
+        ctrl->test_chassis_active = 0U;
+    }
+
     if (ctrl->auto_run != 0U) {
-        BeginState(ctrl, NextState(ctrl->state), now_ms);
+        BeginState(ctrl, move_ctrl, NextState(ctrl->state), now_ms);
     } else {
         ctrl->state_done = 1U;
     }
@@ -604,9 +1081,7 @@ uint8_t R2_Climb_IsMotorActive(const R2_Climb_Ctrl_t *ctrl)
         return 0U;
     }
 
-    if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
-        (ctrl->state == R2_CLIMB_STATE_DONE) ||
-        (ctrl->state == R2_CLIMB_STATE_ERROR)) {
+    if (ctrl->state == R2_CLIMB_STATE_ERROR) {
         return 0U;
     }
 
@@ -644,7 +1119,8 @@ void R2_Climb_GetMotorCurrent(const R2_Climb_Ctrl_t *ctrl,
                                           (int)i + 1);
     }
 
-    if (DriveHoldActive(ctrl->state) != 0U) {
+    if ((DriveHoldActive(ctrl->state) != 0U) ||
+        (IsTestDriveAction(ctrl->test_action) != 0U)) {
         cmd->drive[0] =
             (int16_t)pid_call_2((float)DriveTargetCount(ctrl, DRIVE_LEFT_IDX), 5);
         cmd->drive[1] =

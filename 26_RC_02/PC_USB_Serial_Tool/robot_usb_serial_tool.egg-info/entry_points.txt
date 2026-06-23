@@ -1,0 +1,2 @@
+[console_scripts]
+robot-serial-tool = serial_tool.__main__:main
