@@ -40,6 +40,10 @@ typedef enum
     R2_MODE_WORLD_POS         = 7,  /* 世界系全向，  朝向可变，位置模式 */
 } R2_MoveMode_t;
 
+#define R2_MOVE_XY_V_MAX_MPS        MEC_REMOTE_XY_MAX_MPS
+#define R2_MOVE_XY_A_MAX_MPS2       2.0f
+#define R2_MOVE_XY_J_MAX_MPS3       10.0f
+
 /* ─── 位置控制子状态 ────────────────────────────────── */
 
 typedef enum

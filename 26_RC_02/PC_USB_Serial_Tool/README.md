@@ -50,10 +50,14 @@ tune_status                 # 查询 yaw 自动整定状态
 tune_stop                   # 停止 yaw 自动整定并查询状态
 climb_auto                  # 切到 USB、使能上台阶并自动运行
 climb_step                  # 切到 USB、使能上台阶并步进一步
+climb_downstairs_auto       # 切到 USB、使能下台阶并自动运行
+climb_downstairs_step       # 切到 USB、使能下台阶并步进一步
 climb_wait 20               # 轮询 CLIMB_GET_STATUS，直到就绪或完成
 climb_step_wait 40          # 等当前上台阶动作完成，再步进并等待这一步完成
 climb_auto_wait 180         # 发送自动上台阶，并等待最终 DONE
-climb_wait_then CLIMB_STEP  # 等当前上台阶动作完成，再发送一条 USB 命令
+climb_downstairs_step_wait 40 # 等当前下台阶动作完成，再步进并等待这一步完成
+climb_downstairs_auto_wait 180 # 发送自动下台阶，并等待最终 DONE
+climb_wait_then CLIMB_STEP  # 等当前上/下台阶动作完成，再发送一条 USB 命令
 climb_tests                 # 列出上台阶独立调试动作 ID
 climb_test CHASSIS_FORWARD_100      # 单独发送底盘麦轮前进 100mm，不等待完成
 climb_test_wait FRONT_UP_10 10      # 发送前两根立杆上升 10mm，并等待完成，超时 10s
@@ -62,6 +66,7 @@ flow_confirm lift front     # 询问是否保存刚才发送的 climb_test/climb
 flow_save lift front        # 不询问，直接保存刚才发送的动作
 flow_show                   # 显示已记录的流程步骤
 flow_export upstairs_v1.json # 导出 JSON，后续用于生成状态机
+flow_recover                # 从 .climb_flow_autosave.json 恢复误触 Ctrl+C 前的流程
 send CHS_SET_MODE 3
 send CHS_SET_VEL 0.4 0 0 0
 send YAW_TUNE_START 1
@@ -97,14 +102,20 @@ climb_all_legs_down_10 [timeout_s]    # 四根立柱基于当前位置下降底�
 climb_drive_forward_30 [timeout_s]    # 后驱动轮前进 30mm
 climb_drive_forward_10 [timeout_s]    # 后驱动轮前进 10mm
 climb_drive_backward_10 [timeout_s]   # 后驱动轮后退 10mm
+climb_drive_backward_30 [timeout_s]   # 后驱动轮后退 30mm
+climb_drive_forward_500 [timeout_s]   # 后驱动轮前进 500mm
+climb_drive_backward_500 [timeout_s]  # 后驱动轮后退 500mm
 
 climb_front_zero [timeout_s]          # 前两根立杆回到 0 位
 climb_front_up_10 [timeout_s]         # 前两根立杆基于当前位置上升 10mm
 climb_front_down_10 [timeout_s]       # 前两根立杆基于当前位置下降 10mm
 
 climb_chassis_forward_100 [timeout_s] # 底盘麦轮前进 100mm
+climb_chassis_backward_100 [timeout_s] # 底盘麦轮后退 100mm
 climb_chassis_forward_50 [timeout_s]  # 底盘麦轮前进 50mm
 climb_chassis_backward_50 [timeout_s] # 底盘麦轮后退 50mm
+climb_chassis_forward_300 [timeout_s] # 底盘麦轮前进 300mm
+climb_chassis_backward_300 [timeout_s] # 底盘麦轮后退 300mm
 
 climb_rear_zero [timeout_s]           # 后两根立杆回到 0 位
 climb_rear_up_10 [timeout_s]          # 后两根立杆基于当前位置上升 10mm
@@ -130,6 +141,14 @@ climb_drive_forward_30 10
 flow_confirm 后驱动轮前进 30
 flow_show
 flow_export upstairs_v1.json
+```
+
+每次 `climb_test*` 生成候选动作、`flow_confirm`/`flow_save` 保存动作、`flow_add` 手动补动作后，工具都会自动写入 `.climb_flow_autosave.json`。如果误触 `Ctrl+C` 退出，重新进入 shell 后执行：
+
+```text
+flow_recover
+flow_show
+flow_export downstairs_v1.json
 ```
 
 收到下位机回包后，工具会打印 JSON 形式的解析结果和原始帧 hex。

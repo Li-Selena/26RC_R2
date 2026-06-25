@@ -25,10 +25,10 @@ A5 5A LEN CMD DATA... CRC_H CRC_L FF
 
 | CMD | 名称 | DATA | 作用 |
 |---:|---|---|---|
-| `0x00` | `SYS_DISABLE` | 空或 4float | 停止 USB 底盘、上台阶；机械臂和工具保持；关闭底盘、机械臂、工具使能 |
+| `0x00` | `SYS_DISABLE` | 空或 4float | 停止 USB 底盘、上/下台阶；机械臂和工具保持；关闭底盘、机械臂、工具使能 |
 | `0x01` | `SYS_ENABLE` | 空或 4float | 打开底盘、机械臂、工具使能 |
 | `0x02` | `SYS_SWITCH_SOURCE` | `f0=0/1` | 切换控制源，`0=USART`，`1=USB` |
-| `0x05` | `SYS_STOP` | 空或 4float | 停止 USB 底盘和上台阶；工具停止；机械臂保持当前位置 |
+| `0x05` | `SYS_STOP` | 空或 4float | 停止 USB 底盘和上/下台阶；工具停止；机械臂保持当前位置 |
 | `0x06` | `SYS_GET_STATUS` | 空或 4float | 查询系统状态 |
 
 ```text
@@ -143,18 +143,41 @@ ROBOT_GET_STATUS            A5 5A 00 46 09 83 FF
 
 建议上位机把 `ROBOT_GET_STATUS` 作为主状态查询命令，频率建议 `10..50Hz`。
 
-## Climb 上台阶
+## Yaw Auto Tune 自动调参
 
 | CMD | 名称 | DATA | 作用 |
 |---:|---|---|---|
-| `0x50` | `CLIMB_DISABLE` | 空或 4float | 停止并复位上台阶状态机 |
-| `0x51` | `CLIMB_ENABLE` | 空或 4float | 使能上台阶状态机 |
+| `0x47` | `YAW_TUNE_START` | 空或 `f0=pass_count` | 启动 yaw 自动调参；空 payload 使用默认轮次 |
+| `0x48` | `YAW_TUNE_STOP` | 空或 4float | 停止 yaw 自动调参，并停止 USB 底盘 |
+| `0x49` | `YAW_TUNE_GET_STATUS` | 空或 4float | 查询 yaw 自动调参状态 |
+
+```text
+YAW_TUNE_START default    A5 5A 00 47 C9 42 FF
+YAW_TUNE_START pass=1     A5 5A 10 47 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 BD 69 FF
+YAW_TUNE_STOP             A5 5A 00 48 CD 02 FF
+YAW_TUNE_GET_STATUS       A5 5A 00 49 0D C3 FF
+```
+
+注意：
+
+- `YAW_TUNE_START` 只有当前控制源为 USB、且底盘已使能时生效。
+- 启动调参会解除 USB 底盘速度看门狗；停止调参会同时 `R2_Move_Stop()`。
+- `YAW_TUNE_GET_STATUS` 状态回包为 `CMD=0x49`。
+
+## Climb 上/下台阶
+
+| CMD | 名称 | DATA | 作用 |
+|---:|---|---|---|
+| `0x50` | `CLIMB_DISABLE` | 空或 4float | 停止并复位上/下台阶状态机 |
+| `0x51` | `CLIMB_ENABLE` | 空或 4float | 使能上/下台阶状态机 |
 | `0x52` | `CLIMB_SET_CTRL` | `f0=enable, f1=step, f2=auto, f3=0` | 模拟 USART 三个控制字节 |
-| `0x53` | `CLIMB_STEP` | 空或 4float | 一次性步进请求，每发一次推进一个状态 |
-| `0x54` | `CLIMB_AUTO` | 空或 4float | 一次性自动执行请求，自动跑完整流程 |
-| `0x55` | `CLIMB_STOP` | 空或 4float | 停止并复位上台阶状态机 |
-| `0x56` | `CLIMB_GET_STATUS` | 空或 4float | 查询上台阶状态 |
+| `0x53` | `CLIMB_STEP` | 空或 4float | 上台阶一次性步进请求，每发一次推进一个状态 |
+| `0x54` | `CLIMB_AUTO` | 空或 4float | 上台阶一次性自动执行请求，自动跑完整流程 |
+| `0x55` | `CLIMB_STOP` | 空或 4float | 停止并复位上/下台阶状态机 |
+| `0x56` | `CLIMB_GET_STATUS` | 空或 4float | 查询上/下台阶状态 |
 | `0x57` | `CLIMB_TEST_ACTION` | `f0=动作ID` | 单独执行一个上台阶调试动作 |
+| `0x58` | `CLIMB_DOWNSTAIRS_STEP` | 空或 4float | 下台阶一次性步进请求，每发一次推进一个状态 |
+| `0x59` | `CLIMB_DOWNSTAIRS_AUTO` | 空或 4float | 下台阶一次性自动执行请求，自动跑完整流程 |
 
 ```text
 CLIMB_DISABLE               A5 5A 00 50 C7 02 FF
@@ -163,6 +186,8 @@ CLIMB_STEP                  A5 5A 00 53 C6 42 FF
 CLIMB_AUTO                  A5 5A 00 54 04 03 FF
 CLIMB_STOP                  A5 5A 00 55 C4 C2 FF
 CLIMB_GET_STATUS            A5 5A 00 56 C5 82 FF
+CLIMB_DOWNSTAIRS_STEP       A5 5A 00 58 01 03 FF
+CLIMB_DOWNSTAIRS_AUTO       A5 5A 00 59 C1 C2 FF
 CLIMB_TEST_ACTION 1         A5 5A 10 57 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 78 64 FF
 CLIMB_TEST_ACTION 16        A5 5A 10 57 00 00 80 41 00 00 00 00 00 00 00 00 00 00 00 00 C6 CD FF
 CLIMB_SET_CTRL enable       A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 29 77 FF
@@ -174,11 +199,13 @@ CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 0
 
 - `CLIMB_SET_CTRL` 是电平输入，等价于 USART 的 `climb_enable/climb_step/climb_auto`。
 - `CLIMB_SET_CTRL` 的 `step` 和 `auto` 只识别 `0->1` 上升沿。
-- `CLIMB_STEP` 是一次性命令，适合按钮点动。
-- `CLIMB_AUTO` 是一次性命令；在 `IDLE/DONE` 从头执行，在已完成的中间状态从下一状态继续。
+- `CLIMB_STEP` / `CLIMB_AUTO` 明确选择上台阶流程。
+- `CLIMB_DOWNSTAIRS_STEP` / `CLIMB_DOWNSTAIRS_AUTO` 明确选择下台阶流程。
+- `step` 是一次性命令，适合按钮点动。
+- `auto` 是一次性命令；在 `IDLE/DONE` 从头执行，在已完成的中间状态从下一状态继续。
 - `CLIMB_TEST_ACTION` 不推进完整状态机，只单独执行指定动作；动作完成后看 `CLIMB_GET_STATUS.state_done` 和各目标/当前位置。
 - `IDLE` 和 `DONE` 在上台阶使能后会让四根立杆位置环保持待机位：相对上电零位向上 `10mm`，即目标 `-10mm`。
-- USB 上台阶命令只有当前控制源为 USB 时生效；USART 上台阶命令只有 `UU_flag=0`、当前源为 USART 时写入控制器并输出到电机。
+- USB 上/下台阶命令只有当前控制源为 USB 时生效；USART 上台阶命令只有 `UU_flag=0`、当前源为 USART 时写入控制器并输出到电机。
 - USART 自动执行发出 `climb_auto` 上升沿后，仍需持续发送 `UU_flag=0, climb_enable=1` 的保活帧；超过 `300ms` 无 USART 帧会触发看门狗停止。
 
 ## 单条可复制命令
@@ -287,6 +314,24 @@ A5 5A 00 36 ED 82 FF
 A5 5A 00 46 09 83 FF
 ```
 
+### YAW_TUNE_START
+
+```text
+A5 5A 00 47 C9 42 FF
+```
+
+### YAW_TUNE_STOP
+
+```text
+A5 5A 00 48 CD 02 FF
+```
+
+### YAW_TUNE_GET_STATUS
+
+```text
+A5 5A 00 49 0D C3 FF
+```
+
 ### CLIMB_DISABLE
 
 ```text
@@ -321,6 +366,18 @@ A5 5A 00 55 C4 C2 FF
 
 ```text
 A5 5A 00 56 C5 82 FF
+```
+
+### CLIMB_DOWNSTAIRS_STEP
+
+```text
+A5 5A 00 58 01 03 FF
+```
+
+### CLIMB_DOWNSTAIRS_AUTO
+
+```text
+A5 5A 00 59 C1 C2 FF
 ```
 
 ## 推荐启动顺序

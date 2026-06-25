@@ -85,6 +85,29 @@ static void R2_Move_EnsureYawLock(R2_Move_Ctrl_t *ctrl)
     }
 }
 
+static float R2_Move_ClampFloat(float x, float lo, float hi)
+{
+    if (x < lo) return lo;
+    if (x > hi) return hi;
+    return x;
+}
+
+static void R2_Move_LimitXYVector(float *vx, float *vy, float v_max)
+{
+    float mag;
+
+    if ((vx == NULL) || (vy == NULL) || (v_max <= 0.0f)) {
+        return;
+    }
+
+    mag = sqrtf((*vx * *vx) + (*vy * *vy));
+    if (mag > v_max) {
+        float scale = v_max / mag;
+        *vx *= scale;
+        *vy *= scale;
+    }
+}
+
 /* ─── 生命周期 ──────────────────────────────────────── */
 
 void R2_Move_Init(R2_Move_Ctrl_t *ctrl, const MecanumParam_t *param, float dt_s)
@@ -99,14 +122,14 @@ void R2_Move_Init(R2_Move_Ctrl_t *ctrl, const MecanumParam_t *param, float dt_s)
     ctrl->emergency_stop = 1U;   /* 上电急停，收到第一帧遥控/上位机命令后自动解除 */
 
     /* 速度平滑器：accel 温和加速, decel 快速刹车 */
-    speedPlanner_Init(&ctrl->sp_vx, 3.0f, 10.0f, dt_s);
-    speedPlanner_Init(&ctrl->sp_vy, 3.0f, 10.0f, dt_s);
+    speedPlanner_Init(&ctrl->sp_vx, R2_MOVE_XY_A_MAX_MPS2, R2_MOVE_XY_A_MAX_MPS2, dt_s);
+    speedPlanner_Init(&ctrl->sp_vy, R2_MOVE_XY_A_MAX_MPS2, R2_MOVE_XY_A_MAX_MPS2, dt_s);
     speedPlanner_Init(&ctrl->sp_vw, 6.0f, 20.0f, dt_s);
 
     /* 默认运动参数 */
-    ctrl->v_max = 1.0f;
-    ctrl->a_max = 2.0f;
-    ctrl->j_max = 10.0f;
+    ctrl->v_max = R2_MOVE_XY_V_MAX_MPS;
+    ctrl->a_max = R2_MOVE_XY_A_MAX_MPS2;
+    ctrl->j_max = R2_MOVE_XY_J_MAX_MPS3;
     ctrl->pos_kp     = 3.0f;
     ctrl->pos_kp_yaw = 1.8f;   /* yaw position P from auto tune */
 }
@@ -116,9 +139,19 @@ void R2_Move_Init(R2_Move_Ctrl_t *ctrl, const MecanumParam_t *param, float dt_s)
 void R2_Move_SetLimits(R2_Move_Ctrl_t *ctrl, float v_max, float a_max, float j_max)
 {
     if (ctrl == NULL) return;
+
+    if (v_max <= 0.0f) v_max = R2_MOVE_XY_V_MAX_MPS;
+    if (a_max <= 0.0f) a_max = R2_MOVE_XY_A_MAX_MPS2;
+    if (j_max <= 0.0f) j_max = R2_MOVE_XY_J_MAX_MPS3;
+
     ctrl->v_max = v_max;
     ctrl->a_max = a_max;
     ctrl->j_max = j_max;
+
+    ctrl->sp_vx.accel = a_max;
+    ctrl->sp_vx.decel = a_max;
+    ctrl->sp_vy.accel = a_max;
+    ctrl->sp_vy.decel = a_max;
 }
 
 void R2_Move_SetMode(R2_Move_Ctrl_t *ctrl, R2_MoveMode_t mode)
@@ -149,6 +182,9 @@ void R2_Move_SetMode(R2_Move_Ctrl_t *ctrl, R2_MoveMode_t mode)
 void R2_Move_SetVel(R2_Move_Ctrl_t *ctrl, float vx, float vy, float vw)
 {
     if (ctrl == NULL) return;
+
+    R2_Move_LimitXYVector(&vx, &vy, ctrl->v_max);
+    vw = R2_Move_ClampFloat(vw, MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
 
     /* 如果是 POS 模式，设定速度不会生效，但仍存储以便模式切换后使用 */
     ctrl->target_vx = vx;
@@ -640,6 +676,7 @@ static void R2_Move_Update_Pos(R2_Move_Ctrl_t *ctrl, float now_sec)
     }
 
     /* 写入 + 逆运动学 */
+    R2_Move_LimitXYVector(&cmd_vx, &cmd_vy, ctrl->v_max);
     ctrl->robot_vel.vx = cmd_vx;
     ctrl->robot_vel.vy = cmd_vy;
     ctrl->robot_vel.vw = cmd_vw;

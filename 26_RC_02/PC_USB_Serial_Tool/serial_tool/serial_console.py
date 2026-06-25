@@ -5,6 +5,7 @@ import queue
 import sys
 import threading
 import time
+from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 
 from .commands import build_query_command, build_usb_command, list_commands
@@ -18,6 +19,7 @@ DEFAULT_CLIMB_WAIT_TIMEOUT_S = 40.0
 DEFAULT_CLIMB_FINAL_TIMEOUT_S = 180.0
 DEFAULT_CLIMB_POLL_INTERVAL_S = 0.1
 CLIMB_COMMAND_SETTLE_S = 0.05
+FLOW_AUTOSAVE_FILE = ".climb_flow_autosave.json"
 CLIMB_TEST_ACTION_BY_NAME = {name: action for action, name in CLIMB_TEST_ACTIONS.items()}
 CLIMB_TEST_SHORTCUTS = {
     f"climb_{name.lower()}": action
@@ -132,10 +134,12 @@ class SerialShell:
         self.flow_started_at: Optional[str] = None
         self.flow_steps: List[Dict[str, Any]] = []
         self.last_flow_candidate: Optional[Dict[str, Any]] = None
+        self.flow_autosave_path = Path(FLOW_AUTOSAVE_FILE)
 
     def run(self) -> None:
         self.ser = open_serial(self.port, self.baud)
         print(f"Opened {self.ser.port} @ {self.baud}. Type 'help' for commands.", flush=True)
+        self._print_flow_autosave_hint()
         self.reader_thread = threading.Thread(target=self._reader_loop, daemon=True)
         self.reader_thread.start()
         try:
@@ -210,6 +214,10 @@ class SerialShell:
                 self._flow_export(args)
             elif op == "flow_clear":
                 self._flow_clear()
+            elif op == "flow_recover":
+                self._flow_recover(args)
+            elif op == "flow_autosave":
+                self._flow_autosave_command(args)
             elif op == "pack":
                 self._pack(args)
             elif op == "send":
@@ -301,7 +309,7 @@ class SerialShell:
                         build_usb_command("YAW_TUNE_GET_STATUS"),
                     ]
                 )
-            elif op == "climb_auto":
+            elif op in {"climb_auto", "climb_upstairs_auto"}:
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
@@ -310,7 +318,7 @@ class SerialShell:
                         build_usb_command("CLIMB_GET_STATUS"),
                     ]
                 )
-            elif op == "climb_auto_wait":
+            elif op in {"climb_auto_wait", "climb_upstairs_auto_wait"}:
                 timeout_s = self._optional_timeout(args, DEFAULT_CLIMB_FINAL_TIMEOUT_S)
                 self._write_sequence(
                     [
@@ -321,7 +329,27 @@ class SerialShell:
                 )
                 time.sleep(CLIMB_COMMAND_SETTLE_S)
                 self._wait_for_climb(timeout_s, final_state=True)
-            elif op == "climb_step":
+            elif op == "climb_downstairs_auto":
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_DOWNSTAIRS_AUTO"),
+                        build_usb_command("CLIMB_GET_STATUS"),
+                    ]
+                )
+            elif op == "climb_downstairs_auto_wait":
+                timeout_s = self._optional_timeout(args, DEFAULT_CLIMB_FINAL_TIMEOUT_S)
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_DOWNSTAIRS_AUTO"),
+                    ]
+                )
+                time.sleep(CLIMB_COMMAND_SETTLE_S)
+                self._wait_for_climb(timeout_s, final_state=True)
+            elif op in {"climb_step", "climb_upstairs_step"}:
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
@@ -330,7 +358,16 @@ class SerialShell:
                         build_usb_command("CLIMB_GET_STATUS"),
                     ]
                 )
-            elif op in {"climb_step_wait", "climb_next"}:
+            elif op == "climb_downstairs_step":
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_DOWNSTAIRS_STEP"),
+                        build_usb_command("CLIMB_GET_STATUS"),
+                    ]
+                )
+            elif op in {"climb_step_wait", "climb_next", "climb_upstairs_step_wait", "climb_upstairs_next"}:
                 timeout_s = self._optional_timeout(args)
                 self._wait_for_climb(timeout_s, final_state=False)
                 self._write_sequence(
@@ -338,6 +375,18 @@ class SerialShell:
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
                         build_usb_command("CLIMB_STEP"),
+                    ]
+                )
+                time.sleep(CLIMB_COMMAND_SETTLE_S)
+                self._wait_for_climb(timeout_s, final_state=False)
+            elif op in {"climb_downstairs_step_wait", "climb_downstairs_next"}:
+                timeout_s = self._optional_timeout(args)
+                self._wait_for_climb(timeout_s, final_state=False)
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_DOWNSTAIRS_STEP"),
                     ]
                 )
                 time.sleep(CLIMB_COMMAND_SETTLE_S)
@@ -435,6 +484,7 @@ class SerialShell:
             time.sleep(CLIMB_COMMAND_SETTLE_S)
             result = self._wait_for_climb(timeout_s, final_state=False)
         self.last_flow_candidate = self._build_flow_step(action, wait, timeout_s, result)
+        self._flow_autosave()
         print("Use flow_confirm [note] to choose whether to save this action.", flush=True)
         return result
 
@@ -494,6 +544,7 @@ class SerialShell:
             step["note"] = " ".join(args)
         step["index"] = len(self.flow_steps) + 1
         self.flow_steps.append(step)
+        self._flow_autosave()
         print(f"Saved flow step {step['index']}: {step['action_id']} {step['action_name']}", flush=True)
 
     def _flow_confirm(self, args: List[str]) -> None:
@@ -512,6 +563,7 @@ class SerialShell:
             self._flow_save(args)
         else:
             self.last_flow_candidate = None
+            self._flow_autosave()
             print("Discarded last flow candidate.", flush=True)
 
     def _flow_add(self, args: List[str]) -> None:
@@ -551,6 +603,80 @@ class SerialShell:
             "steps": self.flow_steps,
         }
 
+    def _flow_autosave_data(self) -> Dict[str, Any]:
+        data = self._flow_data()
+        data["autosave"] = True
+        data["autosaved_at"] = time.strftime("%Y-%m-%d %H:%M:%S")
+        if self.last_flow_candidate is not None:
+            data["last_flow_candidate"] = self.last_flow_candidate
+        return data
+
+    def _flow_autosave(self) -> None:
+        if self.flow_name is None and not self.flow_steps and self.last_flow_candidate is None:
+            return
+        text = json.dumps(self._flow_autosave_data(), ensure_ascii=False, indent=2)
+        with self.flow_autosave_path.open("w", encoding="utf-8") as f:
+            f.write(text)
+            f.write("\n")
+
+    def _print_flow_autosave_hint(self) -> None:
+        if not self.flow_autosave_path.exists():
+            return
+        try:
+            data = json.loads(self.flow_autosave_path.read_text(encoding="utf-8"))
+            step_count = int(data.get("step_count", 0))
+            name = str(data.get("name", "climb_flow"))
+        except Exception:
+            step_count = -1
+            name = "unknown"
+        detail = f"{step_count} saved step(s)" if step_count >= 0 else "unreadable"
+        print(
+            f"Flow autosave found: {self.flow_autosave_path} ({name}, {detail}). "
+            "Use flow_recover to restore it.",
+            flush=True,
+        )
+
+    def _flow_recover(self, args: List[str]) -> None:
+        if len(args) > 1:
+            raise ValueError("usage: flow_recover [file.json]")
+        path = Path(args[0]) if args else self.flow_autosave_path
+        data = json.loads(path.read_text(encoding="utf-8"))
+        if data.get("type") != "r2_climb_debug_flow":
+            raise ValueError(f"not an r2 climb flow file: {path}")
+
+        steps = data.get("steps", [])
+        if not isinstance(steps, list):
+            raise ValueError(f"invalid flow steps in {path}")
+
+        restored_steps = json.loads(json.dumps(steps, ensure_ascii=False))
+        for index, step in enumerate(restored_steps, 1):
+            if isinstance(step, dict):
+                step["index"] = index
+
+        candidate = data.get("last_flow_candidate")
+        self.flow_name = str(data.get("name") or "climb_flow")
+        self.flow_started_at = data.get("created_at")
+        self.flow_steps = restored_steps
+        self.last_flow_candidate = candidate if isinstance(candidate, dict) else None
+        self._flow_autosave()
+        print(
+            f"Recovered flow '{self.flow_name}' from {path}: {len(self.flow_steps)} step(s).",
+            flush=True,
+        )
+        if self.last_flow_candidate is not None:
+            print(
+                "Recovered one unsaved candidate. Use flow_confirm [note] or flow_save [note] to keep it.",
+                flush=True,
+            )
+
+    def _flow_autosave_command(self, args: List[str]) -> None:
+        if len(args) > 1:
+            raise ValueError("usage: flow_autosave [file.json]")
+        if args:
+            self.flow_autosave_path = Path(args[0])
+        self._flow_autosave()
+        print(f"Flow autosave file: {self.flow_autosave_path}", flush=True)
+
     def _flow_export(self, args: List[str]) -> None:
         data = self._flow_data()
         text = json.dumps(data, ensure_ascii=False, indent=2)
@@ -559,6 +685,7 @@ class SerialShell:
             with open(path, "w", encoding="utf-8") as f:
                 f.write(text)
                 f.write("\n")
+            self._flow_autosave()
             print(f"Flow exported: {path}", flush=True)
         else:
             print(text, flush=True)
@@ -568,6 +695,10 @@ class SerialShell:
         self.flow_started_at = None
         self.flow_steps = []
         self.last_flow_candidate = None
+        try:
+            self.flow_autosave_path.unlink()
+        except FileNotFoundError:
+            pass
         print("Flow cleared.", flush=True)
 
     @staticmethod
@@ -635,11 +766,12 @@ class SerialShell:
             last_payload = payload
             state = int(payload.get("state", -1))
             state_name = str(payload.get("state_name", "UNKNOWN"))
+            flow_name = str(payload.get("flow_name", "UPSTAIRS"))
             state_done = bool(payload.get("state_done"))
             auto_run = bool(payload.get("auto_run"))
             elapsed = payload.get("elapsed_ms", "?")
             print(
-                f"climb: state={state_name}({state}) done={int(state_done)} auto={int(auto_run)} elapsed={elapsed}ms",
+                f"climb: flow={flow_name} state={state_name}({state}) done={int(state_done)} auto={int(auto_run)} elapsed={elapsed}ms",
                 flush=True,
             )
 
@@ -662,6 +794,7 @@ class SerialShell:
             return "no CLIMB_GET_STATUS reply"
         return (
             f"state={payload.get('state_name', 'UNKNOWN')}({payload.get('state', '?')}), "
+            f"flow={payload.get('flow_name', 'UPSTAIRS')}, "
             f"done={int(bool(payload.get('state_done')))}, "
             f"auto={int(bool(payload.get('auto_run')))}, "
             f"errors={payload.get('error_flags')}"
@@ -694,7 +827,7 @@ class SerialShell:
                     "help",
                     "commands",
                     "flow_start [name] | flow_confirm [note] | flow_save [note] | flow_add ACTION [timeout_s] [note...]",
-                    "flow_show | flow_export [file.json] | flow_clear",
+                    "flow_show | flow_export [file.json] | flow_recover [file.json] | flow_autosave [file.json] | flow_clear",
                     "pack NAME [float...]",
                     "send NAME [float...]",
                     "NAME [float...] also works, for example TOOL_SET_MODE 0",
@@ -706,6 +839,7 @@ class SerialShell:
                     "tool_enable | tool_chuck | tool_clamp | tool_open | tool_close | chuck_open | chuck_close | clamp_open | clamp_close | tool_status",
                     "climb_enable | climb_step | climb_auto | climb_ctrl ENABLE STEP AUTO | climb_stop | climb_status",
                     "climb_wait [timeout_s] | climb_step_wait [timeout_s] | climb_auto_wait [timeout_s] | climb_wait_then NAME [float...]",
+                    "climb_downstairs_step | climb_downstairs_step_wait [timeout_s] | climb_downstairs_auto | climb_downstairs_auto_wait [timeout_s]",
                     "climb_tests | climb_test ACTION | climb_test_wait ACTION [timeout_s]",
                     "climb_<action_name_lower> [timeout_s], for example climb_all_legs_220 or climb_all_legs_zero 10",
                     "tune_start [pass_count] | tune_status | tune_stop",

@@ -178,8 +178,8 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
     case USB_CMD_CHS_SET_VEL:
         if (!USB_Read4FloatsChecked(d, len, f)) break;
         /* f[0]=vx  f[1]=vy  f[2]=vw  f[3]=lock_yaw(deg) */
-        f[0] = Clamp(f[0], MEC_REMOTE_VX_MIN_RPM, MEC_REMOTE_VX_MAX_RPM);
-        f[1] = Clamp(f[1], MEC_REMOTE_VY_MIN_RPM, MEC_REMOTE_VY_MAX_RPM);
+        f[0] = Clamp(f[0], MEC_REMOTE_VX_MIN_MPS, MEC_REMOTE_VX_MAX_MPS);
+        f[1] = Clamp(f[1], MEC_REMOTE_VY_MIN_MPS, MEC_REMOTE_VY_MAX_MPS);
         f[2] = Clamp(f[2], MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
         total_vel_USB.vx = f[0]; total_vel_USB.vy = f[1]; total_vel_USB.vw = f[2];
         if (USB_Task_flag && Mecanum_control_flag) {
@@ -387,7 +387,8 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         if (USB_Task_flag) {
             taskENTER_CRITICAL();
-            R2_Climb_RequestStep(&g_r2_climb_usb);
+            R2_Climb_RequestFlowStep(&g_r2_climb_usb,
+                                     R2_CLIMB_FLOW_UPSTAIRS);
             taskEXIT_CRITICAL();
         }
         break;
@@ -396,7 +397,28 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         if (USB_Task_flag) {
             taskENTER_CRITICAL();
-            R2_Climb_RequestAuto(&g_r2_climb_usb);
+            R2_Climb_RequestFlowAuto(&g_r2_climb_usb,
+                                     R2_CLIMB_FLOW_UPSTAIRS);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
+    case USB_CMD_CLIMB_DOWN_STEP:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            R2_Climb_RequestFlowStep(&g_r2_climb_usb,
+                                     R2_CLIMB_FLOW_DOWNSTAIRS);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
+    case USB_CMD_CLIMB_DOWN_AUTO:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            R2_Climb_RequestFlowAuto(&g_r2_climb_usb,
+                                     R2_CLIMB_FLOW_DOWNSTAIRS);
             taskEXIT_CRITICAL();
         }
         break;

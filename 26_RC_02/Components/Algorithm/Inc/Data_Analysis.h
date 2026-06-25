@@ -66,6 +66,8 @@
 #define USB_CMD_CLIMB_STOP          0x55U
 #define USB_CMD_CLIMB_GET_STATUS    0x56U
 #define USB_CMD_CLIMB_TEST_ACTION   0x57U  /* f0=R2_ClimbTestAction_t */
+#define USB_CMD_CLIMB_DOWN_STEP     0x58U
+#define USB_CMD_CLIMB_DOWN_AUTO     0x59U
 
 #define USB_CHASSIS_TIMEOUT_MS      100U
 #define USB_ARM_TIMEOUT_MS          300U

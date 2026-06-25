@@ -30,23 +30,62 @@ status
 
 ## Climb wait commands
 
-在 shell 里可以让上位机先等待当前上台阶动作完成，再发送下一条 USB 命令：
+在 shell 里可以让上位机先等待当前上/下台阶动作完成，再发送下一条 USB 命令：
 
 ```text
 climb_wait 20
 climb_step_wait 40
 climb_auto_wait 180
+climb_upstairs_step_wait 40
+climb_upstairs_auto_wait 180
+climb_downstairs_step_wait 40
+climb_downstairs_auto_wait 180
 climb_wait_then CLIMB_STEP
+climb_wait_then CLIMB_DOWNSTAIRS_STEP
 climb_tests
 climb_test CHASSIS_FORWARD_100
 climb_test_wait FRONT_UP_10 10
 climb_chassis_forward_100
+climb_chassis_backward_100
+climb_chassis_forward_300
+climb_chassis_backward_300
+climb_drive_backward_30
+climb_drive_forward_500
+climb_drive_backward_500
 climb_all_legs_220 5
+flow_recover
 ```
 
 等待逻辑会轮询 `CLIMB_GET_STATUS`，看到 `state_done=1`、`IDLE` 或 `DONE` 后继续；如果状态变成 `ERROR` 会直接报错。
 
-## 3. 自动调参指令
+## 3. 底层 USB 命令速查
+
+查看工具内置命令表：
+
+```powershell
+.\.venv\Scripts\python usb_cmd_tool.py commands
+```
+
+常用底层命令名：
+
+```text
+send YAW_TUNE_START 1       # 启动 yaw 自动调参，pass_count=1
+send YAW_TUNE_GET_STATUS    # 查询 yaw 自动调参状态
+send YAW_TUNE_STOP          # 停止 yaw 自动调参
+send CLIMB_STEP             # 上台阶手动推进一步
+send CLIMB_AUTO             # 上台阶自动执行/继续
+send CLIMB_DOWNSTAIRS_STEP  # 下台阶手动推进一步
+send CLIMB_DOWNSTAIRS_AUTO  # 下台阶自动执行/继续
+```
+
+只想生成帧、不发送串口时可以用：
+
+```powershell
+.\.venv\Scripts\python usb_cmd_tool.py pack YAW_TUNE_GET_STATUS
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_DOWNSTAIRS_STEP
+```
+
+## 4. 自动调参指令
 
 启动 yaw 自动调参，一般先用 1 轮：
 
@@ -86,7 +125,7 @@ send YAW_TUNE_STOP
 - `score`
 - `pid.angle_kp / pid.angle_kd / pid.rate_kp / pid.rate_ki / pid.rate_kd / pid.pos_kp_yaw`
 
-## 4. 底盘指令示例
+## 5. 底盘指令示例
 
 ```text
 usb
@@ -106,7 +145,7 @@ vx vy vw lock_yaw_deg
 
 速度控制有 100ms 看门狗，持续运动时需要周期发送速度命令。
 
-## 5. 单条命令发送
+## 6. 单条命令发送
 
 不进入交互模式，也可以直接发一条命令并等待回包：
 

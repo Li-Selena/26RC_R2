@@ -5,7 +5,16 @@
 
 #define INS_TASK_PERIOD_MS          1U
 #define INS_IMU_OFFLINE_TIMEOUT_MS  100U
-#define INS_CHASSIS_FRONT_OFFSET_DEG 180.0f
+
+/*
+ * HWT605 mount convention:
+ *   IMU +X = robot +X/right, IMU +Y = robot +Y/front, IMU +Z = up.
+ *   +yaw/+gyro_z is CCW when viewed from above.
+ *
+ * The HWT605 is mounted to match the robot frame, so software must not add
+ * an extra heading offset here.
+ */
+#define INS_IMU_TO_ROBOT_YAW_OFFSET_DEG 0.0f
 
 INS_Info_Typedef INS_Info = {0};
 INS_NavState_t g_ins_nav_state = {0};
@@ -110,8 +119,8 @@ void INS_Update_NavState(void)
 
     memset(&next_state, 0, sizeof(next_state));
 
-    chassis_yaw_deg = INS_NavMath_WrapDeg(INS_Info.Yaw_Angle + INS_CHASSIS_FRONT_OFFSET_DEG);
-    chassis_yaw_total_deg = INS_Info.Yaw_TolAngle + INS_CHASSIS_FRONT_OFFSET_DEG;
+    chassis_yaw_deg = INS_NavMath_WrapDeg(INS_Info.Yaw_Angle + INS_IMU_TO_ROBOT_YAW_OFFSET_DEG);
+    chassis_yaw_total_deg = INS_Info.Yaw_TolAngle + INS_IMU_TO_ROBOT_YAW_OFFSET_DEG;
 
     next_state.x_m = odom_snapshot.x_m;
     next_state.y_m = odom_snapshot.y_m;

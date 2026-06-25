@@ -19,31 +19,54 @@ CHASSIS_MODES = {
     7: "WORLD_POS",
 }
 CHASSIS_POS_STATE = {0: "IDLE", 1: "RUNNING", 2: "DONE"}
-CLIMB_STEP_NAMES = [
+CLIMB_FLOW_NAMES = {0: "UPSTAIRS", 1: "DOWNSTAIRS"}
+CLIMB_UPSTAIRS_STEP_NAMES = [
     "STEP_01_ALL_LEGS_220",
     "STEP_02_DRIVE_FORWARD_120",
-    "STEP_03_ALL_LEGS_DOWN_10",
-    "STEP_04_ALL_LEGS_DOWN_10",
-    "STEP_05_ALL_LEGS_DOWN_10",
-    "STEP_06_FRONT_ZERO",
-    "STEP_07_FRONT_DOWN_10",
-    "STEP_08_DRIVE_FORWARD_360",
-    "STEP_09_ALL_LEGS_UP_10",
-    "STEP_10_DRIVE_FORWARD_30",
-    "STEP_11_ALL_LEGS_UP_10",
-    "STEP_12_DRIVE_FORWARD_90",
-    "STEP_13_ALL_LEGS_UP_10",
-    "STEP_14_DRIVE_FORWARD_1410",
-    "STEP_15_ALL_LEGS_ZERO",
-    "STEP_16_REAR_DOWN_10",
-    "STEP_17_REAR_DOWN_10",
-    "STEP_18_REAR_DOWN_10",
-    "STEP_19_REAR_DOWN_10",
-    "STEP_20_CHASSIS_FORWARD_100",
-    "STEP_21_CHASSIS_FORWARD_100",
+    "STEP_03_ALL_LEGS_DOWN_30",
+    "STEP_04_FRONT_ZERO",
+    "STEP_05_FRONT_DOWN_10",
+    "STEP_06_DRIVE_FORWARD_360",
+    "STEP_07_ALL_LEGS_UP_30",
+    "STEP_08_DRIVE_FORWARD_1530",
+    "STEP_09_ALL_LEGS_ZERO",
+    "STEP_10_REAR_DOWN_10",
+    "STEP_11_CHASSIS_FORWARD_200",
 ]
+CLIMB_STEP_NAMES = CLIMB_UPSTAIRS_STEP_NAMES
+CLIMB_DOWNSTAIRS_STEP_NAMES = [
+    "DOWN_01_REAR_UP_200",
+    "DOWN_02_FRONT_UP_10",
+    "DOWN_03_ALL_LEGS_UP_10",
+    "DOWN_04_FRONT_UP_10",
+    "DOWN_05_ALL_LEGS_UP_10",
+    "DOWN_06_DRIVE_BACKWARD_1500",
+    "DOWN_07_DRIVE_BACKWARD_300",
+    "DOWN_08_ALL_LEGS_DOWN_40",
+    "DOWN_09_FRONT_DOWN_10",
+    "DOWN_10_DRIVE_BACKWARD_120",
+    "DOWN_11_FRONT_UP_200",
+    "DOWN_12_DRIVE_BACKWARD_500",
+    "DOWN_13_ALL_LEGS_ZERO",
+    "DOWN_14_ALL_LEGS_DOWN_10",
+]
+
+
+def climb_state_name(state: int, flow: int = 0) -> str:
+    if state == 0:
+        return "IDLE"
+    if state == 22:
+        return "DONE"
+    if state == 23:
+        return "ERROR"
+    names = CLIMB_DOWNSTAIRS_STEP_NAMES if flow == 1 else CLIMB_UPSTAIRS_STEP_NAMES
+    if 1 <= state <= len(names):
+        return names[state - 1]
+    return "UNKNOWN"
+
+
 CLIMB_STATES = {0: "IDLE", 22: "DONE", 23: "ERROR"}
-CLIMB_STATES.update({i + 1: name for i, name in enumerate(CLIMB_STEP_NAMES)})
+CLIMB_STATES.update({i + 1: name for i, name in enumerate(CLIMB_UPSTAIRS_STEP_NAMES)})
 CLIMB_TEST_ACTIONS = {
     0: "NONE",
     1: "ALL_LEGS_220",
@@ -62,6 +85,12 @@ CLIMB_TEST_ACTIONS = {
     14: "REAR_UP_10",
     15: "REAR_DOWN_10",
     16: "ALL_LEGS_ZERO",
+    17: "DRIVE_BACKWARD_30",
+    18: "DRIVE_FORWARD_500",
+    19: "DRIVE_BACKWARD_500",
+    20: "CHASSIS_BACKWARD_100",
+    21: "CHASSIS_FORWARD_300",
+    22: "CHASSIS_BACKWARD_300",
 }
 YAW_TUNE_STATES = {0: "IDLE", 1: "RUNNING", 2: "DONE", 3: "FAILED", 4: "STOPPED"}
 YAW_TUNE_FAILS = {
@@ -322,6 +351,7 @@ def _decode_robot_status(p: bytes) -> Dict[str, Any]:
         climb_state = _u8(p, 97)
         test_action = _u8(p, 106)
         test_flags = _u8(p, 107)
+        climb_flow = 1 if (test_flags & 0x04) else 0
         yaw_state = _u8(p, 140)
         yaw_fail = _u8(p, 141)
         yaw_phase = _u8(p, 142)
@@ -331,12 +361,14 @@ def _decode_robot_status(p: bytes) -> Dict[str, Any]:
                 "climb": {
                     "active_source": _u8(p, 96),
                     "active_source_name": SOURCE_NAMES.get(_u8(p, 96), "UNKNOWN"),
+                    "flow": climb_flow,
+                    "flow_name": CLIMB_FLOW_NAMES.get(climb_flow, "UNKNOWN"),
                     "state": climb_state,
-                    "state_name": CLIMB_STATES.get(climb_state, "UNKNOWN"),
+                    "state_name": climb_state_name(climb_state, climb_flow),
                     "enabled": bool(_u8(p, 98)),
                     "auto_run": bool(_u8(p, 99)),
                     "state_done": bool(_u8(p, 100)),
-                    "error_flags": _flags(_u8(p, 101), ["timeout", "param_not_configured", "test_action"]),
+                    "error_flags": _flags(_u8(p, 101), ["timeout", "param_not_configured", "test_action", "flow_switch"]),
                     "pending_step": bool(_u8(p, 102)),
                     "pending_auto": bool(_u8(p, 103)),
                     "motor_active": bool(_u8(p, 104)),
@@ -387,13 +419,16 @@ def _decode_climb_status(p: bytes) -> Dict[str, Any]:
     source = _u8(p, 5)
     error_flags = _u8(p, 4)
     test_action = _u8(p, 7)
+    flow = _u8(p, 64) if len(p) >= 65 else 0
     return {
         "state": state,
-        "state_name": CLIMB_STATES.get(state, "UNKNOWN"),
+        "state_name": climb_state_name(state, flow),
+        "flow": flow,
+        "flow_name": CLIMB_FLOW_NAMES.get(flow, "UNKNOWN"),
         "enabled": bool(_u8(p, 1)),
         "auto_run": bool(_u8(p, 2)),
         "state_done": bool(_u8(p, 3)),
-        "error_flags": _flags(error_flags, ["timeout", "param_not_configured", "test_action"]),
+        "error_flags": _flags(error_flags, ["timeout", "param_not_configured", "test_action", "flow_switch"]),
         "active_source": source,
         "active_source_name": SOURCE_NAMES.get(source, "UNKNOWN"),
         "fdcan2_motor_online_count": _u8(p, 6),

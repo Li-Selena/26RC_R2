@@ -8,8 +8,8 @@
 - USB 命令解析：`Components/Algorithm/Src/Data_Analysis.c`
 - USB 状态回包：`Applications/Task/Src/PC_TX_Task.c`
 - USART 遥控帧解析：`Components/Algorithm/Src/CRC.c`
-- 上台阶状态机：`Applications/R2_user/Src/R2_climb.c`
-- 上台阶参数与 debug 结构：`Applications/R2_user/Inc/R2_climb.h`
+- 上/下台阶状态机：`Applications/R2_user/Src/R2_climb.c`
+- 上/下台阶参数与 debug 结构：`Applications/R2_user/Inc/R2_climb.h`
 
 ## 1. USB 帧格式
 
@@ -76,10 +76,10 @@ def pack_4float(cmd: int, f0=0.0, f1=0.0, f2=0.0, f3=0.0) -> bytes:
 
 | CMD | 名称 | DATA | 作用 |
 |---:|---|---|---|
-| `0x00` | `SYS_DISABLE` | 空或 4float | 停止 USB 底盘、上台阶，机械臂保持当前位置，工具保持，关闭底盘/机械臂/工具使能标志 |
+| `0x00` | `SYS_DISABLE` | 空或 4float | 停止 USB 底盘、上/下台阶，机械臂保持当前位置，工具保持，关闭底盘/机械臂/工具使能标志 |
 | `0x01` | `SYS_ENABLE` | 空或 4float | 打开底盘、机械臂、工具使能标志 |
 | `0x02` | `SYS_SWITCH_SOURCE` | `f0=0/1` | 切换控制源，`0=USART`，`1=USB` |
-| `0x05` | `SYS_STOP` | 空或 4float | 停止 USB 底盘和上台阶，工具 stop，机械臂保持当前位置 |
+| `0x05` | `SYS_STOP` | 空或 4float | 停止 USB 底盘和上/下台阶，工具 stop，机械臂保持当前位置 |
 | `0x06` | `SYS_GET_STATUS` | 空或 4float | 查询系统状态 |
 
 常用帧：
@@ -244,18 +244,44 @@ ARM_GET_STATUS -> TOOL_GET_STATUS -> ROBOT_GET_STATUS -> CLIMB_GET_STATUS
 0x26 -> 0x36 -> 0x46 -> 0x56
 ```
 
-### 2.6 Climb 上台阶
+### 2.6 Yaw Auto Tune 自动调参
 
 | CMD | 名称 | DATA | 作用 |
 |---:|---|---|---|
-| `0x50` | `CLIMB_DISABLE` | 空或 4float | 停止并复位上台阶状态机 |
-| `0x51` | `CLIMB_ENABLE` | 空或 4float | 使能上台阶状态机 |
+| `0x47` | `YAW_TUNE_START` | 空或 `f0=pass_count` | 启动 yaw 自动调参；空 payload 使用默认轮次 |
+| `0x48` | `YAW_TUNE_STOP` | 空或 4float | 停止 yaw 自动调参，并停止 USB 底盘 |
+| `0x49` | `YAW_TUNE_GET_STATUS` | 空或 4float | 查询 yaw 自动调参状态 |
+
+常用帧：
+
+```text
+YAW_TUNE_START default    A5 5A 00 47 C9 42 FF
+YAW_TUNE_START pass=1     A5 5A 10 47 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 BD 69 FF
+YAW_TUNE_STOP             A5 5A 00 48 CD 02 FF
+YAW_TUNE_GET_STATUS       A5 5A 00 49 0D C3 FF
+```
+
+使用方法：
+
+1. 切到 USB 控制源，并使能底盘。
+2. 发 `YAW_TUNE_START`，可选 `f0=pass_count` 指定轮次。
+3. 周期查询 `YAW_TUNE_GET_STATUS`，观察 `state/state_name`、误差和 PID 结果。
+4. 需要中断时发 `YAW_TUNE_STOP`。
+
+### 2.7 Climb 上/下台阶
+
+| CMD | 名称 | DATA | 作用 |
+|---:|---|---|---|
+| `0x50` | `CLIMB_DISABLE` | 空或 4float | 停止并复位上/下台阶状态机 |
+| `0x51` | `CLIMB_ENABLE` | 空或 4float | 使能上/下台阶状态机 |
 | `0x52` | `CLIMB_SET_CTRL` | `f0=enable, f1=step, f2=auto, f3=0` | 模拟 USART 三个控制字节 |
-| `0x53` | `CLIMB_STEP` | 空或 4float | 一次性步进请求，每发一次推进一个状态 |
-| `0x54` | `CLIMB_AUTO` | 空或 4float | 一次性自动执行请求，自动跑完整流程 |
-| `0x55` | `CLIMB_STOP` | 空或 4float | 停止并复位上台阶状态机 |
-| `0x56` | `CLIMB_GET_STATUS` | 空或 4float | 查询上台阶状态 |
+| `0x53` | `CLIMB_STEP` | 空或 4float | 上台阶一次性步进请求，每发一次推进一个状态 |
+| `0x54` | `CLIMB_AUTO` | 空或 4float | 上台阶一次性自动执行请求，自动跑完整流程 |
+| `0x55` | `CLIMB_STOP` | 空或 4float | 停止并复位上/下台阶状态机 |
+| `0x56` | `CLIMB_GET_STATUS` | 空或 4float | 查询上/下台阶状态 |
 | `0x57` | `CLIMB_TEST_ACTION` | `f0=动作ID` | 单独执行一个上台阶调试动作，不改变完整状态机流程 |
+| `0x58` | `CLIMB_DOWNSTAIRS_STEP` | 空或 4float | 下台阶一次性步进请求，每发一次推进一个状态 |
+| `0x59` | `CLIMB_DOWNSTAIRS_AUTO` | 空或 4float | 下台阶一次性自动执行请求，自动跑完整流程 |
 
 常用帧：
 
@@ -266,6 +292,8 @@ CLIMB_STEP                  A5 5A 00 53 C6 42 FF
 CLIMB_AUTO                  A5 5A 00 54 04 03 FF
 CLIMB_STOP                  A5 5A 00 55 C4 C2 FF
 CLIMB_GET_STATUS            A5 5A 00 56 C5 82 FF
+CLIMB_DOWNSTAIRS_STEP       A5 5A 00 58 01 03 FF
+CLIMB_DOWNSTAIRS_AUTO       A5 5A 00 59 C1 C2 FF
 CLIMB_SET_CTRL enable       A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 29 77 FF
 CLIMB_SET_CTRL step edge    A5 5A 10 52 00 00 80 3F 00 00 80 3F 00 00 00 00 00 00 00 00 30 65 FF
 CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 00 00 00 EC 7C FF
@@ -275,10 +303,13 @@ CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 0
 
 - `CLIMB_SET_CTRL` 是电平输入，等价于 USART 的 `climb_enable/climb_step/climb_auto` 三个字节。
 - `CLIMB_SET_CTRL` 的 `step` 和 `auto` 只识别 `0->1` 上升沿；一直重复发送 `f1=1` 不会连续步进。
-- `CLIMB_STEP` 是 USB 一次性命令；每收到一帧就触发一次步进，适合按钮点动。
-- `CLIMB_AUTO` 是 USB 一次性命令；在 `IDLE/DONE` 从头执行，在已完成的中间状态从下一状态继续，在执行中的状态会到位后继续自动执行。
+- `CLIMB_STEP` / `CLIMB_AUTO` 明确选择上台阶流程。
+- `CLIMB_DOWNSTAIRS_STEP` / `CLIMB_DOWNSTAIRS_AUTO` 明确选择下台阶流程。
+- step 命令是 USB 一次性命令；每收到一帧就触发一次步进，适合按钮点动。
+- auto 命令是 USB 一次性命令；在 `IDLE/DONE` 从头执行，在已完成的中间状态从下一状态继续，在执行中的状态会到位后继续自动执行。
+- 正在执行一种流程时不允许切换到另一种流程；误切会进入 `ERROR` 并置位 `flow_switch` 错误。
 - 如果只是做 USB 步进调试，推荐使用 `CLIMB_ENABLE` + 多次 `CLIMB_STEP`。
-- USB 上台阶命令只有当前控制源为 USB 时生效；USART 上台阶命令只有 `UU_flag=0`、当前源为 USART 时输出到电机。
+- USB 上/下台阶命令只有当前控制源为 USB 时生效；USART 上台阶命令只有 `UU_flag=0`、当前源为 USART 时输出到电机。
 
 ## 3. 上台阶动作流程
 
@@ -287,7 +318,7 @@ CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 0
 | state | 名称 | 动作 |
 |---:|---|---|
 | `0` | `IDLE` | 待机保持，四根立杆相对上电零位向上 `10mm`，目标 `-10mm`，上台阶使能后位置环开启 |
-| `1..21` | `STEP_XX_*` | 按 `PC_USB_Serial_Tool/upstairs_v02.json` 保存顺序执行，并合并连续 `DRIVE_FORWARD_30` 段；展开记录见 `CLIMB_ACTION_SEQUENCE.yaml` |
+| `1..11` | `STEP_XX_*` | 按执行相邻关系压缩后的上台阶主流程；展开记录见 `CLIMB_ACTION_SEQUENCE.yaml` |
 | `22` | `DONE` | 完成并保持待机位 `-10mm` |
 | `23` | `ERROR` | 错误 |
 
@@ -298,16 +329,16 @@ CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 0
 | 上电接地位置 | `0mm` |
 | 待机保持位置 | `-10mm` |
 | 离地最大高度 | `10mm` |
-| 撑地最大高度 | `230mm` |
+| 撑地最大高度 | `240mm` |
 | 高位抬升高度 | `220mm` |
 | 前腿离地待机位 | `-10mm` |
 | 前腿支撑过渡位 | `30mm` |
 | 上台阶动作文件 | `PC_USB_Serial_Tool/upstairs_v02.json` |
 | 保存动作总数 | `83` |
-| 压缩后固件状态数 | `21` |
-| 小驱动轮驱动块 | `30mm / 90mm / 120mm / 360mm / 1410mm` |
+| 压缩后固件状态数 | `11` |
+| 小驱动轮驱动块 | `120mm / 360mm / 1530mm` |
 | 小驱动轮超时估算 | `80mm/s + 1500ms` |
-| 底盘最终前进 | `100mm + 100mm` |
+| 底盘最终前进 | `200mm` |
 | 立杆到位容差 | `3mm` |
 | 小驱动轮到位容差 | `5mm` |
 
@@ -317,7 +348,21 @@ CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 0
 |---|---|
 | 立杆目标动作 | 对应立杆到目标位置 `±3mm` |
 | `DRIVE_FORWARD_xxx` | ID5/ID6 小驱动轮完成本段 `xxx mm ± 5mm` |
-| `CHASSIS_FORWARD_100` | 底盘位置模式返回 `R2_POS_DONE` |
+| `CHASSIS_FORWARD_xxx` | 底盘位置模式返回 `R2_POS_DONE` |
+
+下台阶压缩结构：
+
+| 参数 | 当前值 |
+|---|---:|
+| 下台阶动作文件 | `PC_USB_Serial_Tool/downstairs_v01.json` |
+| 保存动作总数 | `69` |
+| 压缩后固件状态数 | `14` |
+| 展开记录 | `DOWNSTAIRS_ACTION_SEQUENCE.yaml` |
+| 后驱动轮后退块 | `120mm / 300mm / 500mm / 1500mm` |
+| 后驱动轮超时估算 | `80mm/s + 1500ms` |
+| 结构体 | `s_downstairs_steps` |
+
+`s_downstairs_steps` 是下台阶流程数据表；`CLIMB_AUTO` / `CLIMB_STEP` 执行上台阶 `s_main_steps`，`CLIMB_DOWNSTAIRS_AUTO` / `CLIMB_DOWNSTAIRS_STEP` 执行下台阶 `s_downstairs_steps`。
 
 独立调试动作 `CLIMB_TEST_ACTION f0=动作ID`：
 
@@ -339,6 +384,12 @@ CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 0
 | `14` | `REAR_UP_10` | 后两根立杆 ID2/ID3 基于当前位置上升 `10mm` |
 | `15` | `REAR_DOWN_10` | 后两根立杆 ID2/ID3 基于当前位置下降 `10mm` |
 | `16` | `ALL_LEGS_ZERO` | 四根立杆统一回到 `0mm` |
+| `17` | `DRIVE_BACKWARD_30` | 后方小驱动轮后退 `30mm` |
+| `18` | `DRIVE_FORWARD_500` | 后方小驱动轮前进 `500mm` |
+| `19` | `DRIVE_BACKWARD_500` | 后方小驱动轮后退 `500mm` |
+| `20` | `CHASSIS_BACKWARD_100` | 底盘麦轮后退 `100mm` |
+| `21` | `CHASSIS_FORWARD_300` | 底盘麦轮前进 `300mm` |
+| `22` | `CHASSIS_BACKWARD_300` | 底盘麦轮后退 `300mm` |
 
 尺度定义：
 
@@ -346,7 +397,7 @@ CLIMB_SET_CTRL auto edge    A5 5A 10 52 00 00 80 3F 00 00 00 00 00 00 80 3F 00 0
 - 正方向表示立杆伸出、抬升底盘。
 - 负方向表示立杆收回、离地。
 - 离地目标禁止超过 `10mm`，即负向目标不能小于 `-10mm`。
-- 撑地目标禁止超过 `230mm`，即正向目标不能大于 `230mm`。
+- 撑地目标禁止超过 `240mm`，即正向目标不能大于 `240mm`。
 
 USB 步进流程：
 
@@ -363,7 +414,7 @@ USB 步进流程：
 4. 每次步进后查询状态，等待 state_done=1 再发下一次
    A5 5A 00 56 C5 82 FF
 
-5. 当前完整顺序为 STEP_01..STEP_21，连续 DRIVE_FORWARD_30 已合并为长距离驱动状态
+5. 当前完整顺序已压缩为 `11` 个固件状态：连续立杆 `10mm` 动作合并为 `30mm` 目标，连续后驱动轮前进合并为 `1530mm`，重复后腿下压和底盘前进也各合并为一段
 
 6. 查询状态，确认 state=22 或 state_name=DONE
    A5 5A 00 56 C5 82 FF
@@ -554,7 +605,7 @@ USART 上台阶用法：
 | 11 | u8 | active source，`0=USART, 1=USB` |
 | 12 | f32 | `chuck.real_angle` |
 
-### 6.4 `ROBOT_GET_STATUS` 回包 `0x46`, `LEN=96`
+### 6.4 `ROBOT_GET_STATUS` 回包 `0x46`, `LEN=160`
 
 | offset | 类型 | 含义 |
 |---:|---|---|
@@ -594,6 +645,37 @@ USART 上台阶用法：
 | 93 | u8 | 当前工具运行状态 |
 | 94 | u8 | 底盘 `pos_state` |
 | 95 | u8 | timeout flags |
+| 96 | u8 | climb active source，`0=USART, 1=USB, 2=none` |
+| 97 | u8 | climb `state` |
+| 98 | u8 | climb `enabled` |
+| 99 | u8 | climb `auto_run` |
+| 100 | u8 | climb `state_done` |
+| 101 | u8 | climb `error_flags`，bit0 超时，bit1 参数未配置，bit2 测试动作错误，bit3 流程切换错误 |
+| 102 | u8 | climb `pending_step` |
+| 103 | u8 | climb `pending_auto` |
+| 104 | u8 | climb motor active |
+| 105 | u8 | FDCAN2 上/下台阶电机在线数，统计 ID1..6 |
+| 106 | u8 | climb test action |
+| 107 | u8 | climb flags，bit0 test active，bit1 test chassis active，bit2 downstairs flow |
+| 108 | u32 | climb 当前状态已运行时间 ms |
+| 112 | u32 | climb 最近更新时间 ms |
+| 116 | u8 | laser valid flags |
+| 117 | u8 | laser online flags |
+| 118 | u8 | laser waiting flags |
+| 119 | u8 | laser all valid |
+| 120 | u8 | laser all online |
+| 124 | u32 | laser update tick |
+| 128 | i32 | laser x_pos distance mm |
+| 132 | i32 | laser y_pos distance mm |
+| 136 | i32 | laser height distance mm |
+| 140 | u8 | yaw tune state |
+| 141 | u8 | yaw tune fail reason |
+| 142 | u8 | yaw tune phase |
+| 143 | u8 | yaw tune active mode |
+| 144 | u32 | yaw tune tick ms |
+| 148 | u32 | yaw tune segment elapsed ms |
+| 152 | f32 | yaw tune yaw error deg |
+| 156 | f32 | yaw tune score |
 
 `ROBOT_GET_STATUS.error_flags`：
 
@@ -608,7 +690,7 @@ USART 上台阶用法：
 | 6 | 工具错误 |
 | 7 | 当前控制源命令不新鲜 |
 
-### 6.5 `CLIMB_GET_STATUS` 回包 `0x56`, `LEN=64`
+### 6.5 `CLIMB_GET_STATUS` 回包 `0x56`, `LEN=68`
 
 | offset | 类型 | 含义 |
 |---:|---|---|
@@ -616,10 +698,10 @@ USART 上台阶用法：
 | 1 | u8 | `enabled` |
 | 2 | u8 | `auto_run` |
 | 3 | u8 | `state_done` |
-| 4 | u8 | `error_flags`，bit0 超时，bit1 参数未配置 |
+| 4 | u8 | `error_flags`，bit0 超时，bit1 参数未配置，bit2 测试动作错误，bit3 流程切换错误 |
 | 5 | u8 | active source，`0=USART, 1=USB, 2=none` |
-| 6 | u8 | FDCAN2 上台阶电机在线数，统计 ID1..6 |
-| 7 | u8 | reserved |
+| 6 | u8 | FDCAN2 上/下台阶电机在线数，统计 ID1..6 |
+| 7 | u8 | `test_action` |
 | 8 | u32 | 当前状态已运行时间 ms |
 | 12 | u32 | 最近更新时间 ms |
 | 16 | f32 | `leg_pos_mm[0]`，立杆1 前右 |
@@ -634,13 +716,15 @@ USART 上台阶用法：
 | 52 | f32 | `drive_pos_mm[1]`，从车尾看右侧小驱动轮 |
 | 56 | f32 | `drive_target_mm[0]`，从车尾看左侧小驱动轮 |
 | 60 | f32 | `drive_target_mm[1]`，从车尾看右侧小驱动轮 |
+| 64 | u8 | `flow`，`0=UPSTAIRS, 1=DOWNSTAIRS` |
 
-上台阶状态判断建议：
+上/下台阶状态判断建议：
 
 - `state=22`：流程完成。
 - `state=23`：错误，读取 `error_flags`。
-- 手动步进时，通常等待 `state_done=1` 后再发下一次 `CLIMB_STEP`。
-- 如果你明确要强制推进，`CLIMB_STEP` 会直接进入下一状态，不要求 `state_done=1`。
+- 手动步进时，通常等待 `state_done=1` 后再发下一次 step 命令。
+- 上台阶步进用 `CLIMB_STEP`，下台阶步进用 `CLIMB_DOWNSTAIRS_STEP`。
+- 如果你明确要强制推进，step 命令会直接进入下一状态，不要求 `state_done=1`。
 
 ## 7. 最小可用流程汇总
 
@@ -666,6 +750,31 @@ USB 上台阶自动执行最小流程：
 A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF
 A5 5A 00 51 07 C3 FF
 A5 5A 00 54 04 03 FF
+A5 5A 00 56 C5 82 FF
+```
+
+USB 下台阶手动步进最小流程：
+
+```text
+A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF
+A5 5A 00 51 07 C3 FF
+A5 5A 00 58 01 03 FF
+A5 5A 00 56 C5 82 FF
+```
+
+之后每次要推进一个下台阶状态，继续发送：
+
+```text
+A5 5A 00 58 01 03 FF
+A5 5A 00 56 C5 82 FF
+```
+
+USB 下台阶自动执行最小流程：
+
+```text
+A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF
+A5 5A 00 51 07 C3 FF
+A5 5A 00 59 C1 C2 FF
 A5 5A 00 56 C5 82 FF
 ```
 

@@ -112,19 +112,27 @@ clamp_open          # 选择夹爪并打开
 clamp_close         # 选择夹爪并闭合
 ```
 
-## 上台阶机构
+## 上/下台阶机构
 
 ```text
-climb_enable                    # 上台阶机构使能
+climb_enable                    # 上/下台阶机构使能
 climb_step                      # 手动推进上台阶状态机一步
-climb_step_wait 40              # 等当前动作完成，发送 step，再等待本步完成，超时 40s
+climb_step_wait 40              # 等当前动作完成，发送上台阶 step，再等待本步完成，超时 40s
 climb_auto                      # 启动/继续上台阶自动流程
-climb_auto_wait 180             # 启动自动流程并等待最终 DONE，超时 180s
+climb_auto_wait 180             # 启动上台阶自动流程并等待最终 DONE，超时 180s
+climb_upstairs_step             # 上台阶 step 的明确别名
+climb_upstairs_step_wait 40     # 上台阶等待后步进
+climb_upstairs_auto             # 上台阶 auto 的明确别名
+climb_upstairs_auto_wait 180    # 上台阶自动并等待 DONE
+climb_downstairs_step           # 手动推进下台阶状态机一步
+climb_downstairs_step_wait 40   # 等当前动作完成，发送下台阶 step，再等待本步完成，超时 40s
+climb_downstairs_auto           # 启动/继续下台阶自动流程
+climb_downstairs_auto_wait 180  # 启动下台阶自动流程并等待最终 DONE，超时 180s
 climb_wait 40                   # 仅等待当前 climb 动作完成，超时 40s
 climb_wait_then CLIMB_STEP      # 等当前动作完成后发送指定 USB 命令
-climb_status                    # 查询上台阶状态
-climb_stop                      # 停止上台阶机构
-climb_disable                   # 上台阶机构失能
+climb_status                    # 查询上/下台阶状态，返回 flow=UPSTAIRS/DOWNSTAIRS
+climb_stop                      # 停止上/下台阶机构
+climb_disable                   # 上/下台阶机构失能
 climb_tests                     # 列出所有 climb 测试动作编号
 climb_test ACTION               # 发送指定测试动作，不等待完成
 climb_test_wait ACTION [timeout_s]  # 发送指定测试动作并等待完成
@@ -134,12 +142,18 @@ climb_all_legs_down_10 [timeout_s] # 四条腿当前位置下降 10mm；带超�
 climb_drive_forward_30 [timeout_s] # 后驱动轮前进 30mm；带超时时间则等待完成
 climb_drive_forward_10 [timeout_s] # 后驱动轮前进 10mm；带超时时间则等待完成
 climb_drive_backward_10 [timeout_s] # 后驱动轮后退 10mm；带超时时间则等待完成
+climb_drive_backward_30 [timeout_s] # 后驱动轮后退 30mm；带超时时间则等待完成
+climb_drive_forward_500 [timeout_s] # 后驱动轮前进 500mm；带超时时间则等待完成
+climb_drive_backward_500 [timeout_s] # 后驱动轮后退 500mm；带超时时间则等待完成
 climb_front_zero [timeout_s]    # 前腿回零；带超时时间则等待完成
 climb_front_up_10 [timeout_s]   # 前腿上升 10mm；带超时时间则等待完成
 climb_front_down_10 [timeout_s] # 前腿下降 10mm；带超时时间则等待完成
 climb_chassis_forward_100 [timeout_s] # 底盘前进 100mm；带超时时间则等待完成
+climb_chassis_backward_100 [timeout_s] # 底盘后退 100mm；带超时时间则等待完成
 climb_chassis_forward_50 [timeout_s] # 底盘前进 50mm；带超时时间则等待完成
 climb_chassis_backward_50 [timeout_s] # 底盘后退 50mm；带超时时间则等待完成
+climb_chassis_forward_300 [timeout_s] # 底盘前进 300mm；带超时时间则等待完成
+climb_chassis_backward_300 [timeout_s] # 底盘后退 300mm；带超时时间则等待完成
 climb_rear_zero [timeout_s]     # 后腿回零；带超时时间则等待完成
 climb_rear_up_10 [timeout_s]    # 后腿上升 10mm；带超时时间则等待完成
 climb_rear_down_10 [timeout_s]  # 后腿下降 10mm；带超时时间则等待完成
@@ -188,12 +202,19 @@ send ARM_SET_TARGET 200 0 180  # 设置机械臂目标点
 send TOOL_SET_MODE 0        # 选择夹爪/Clamp
 send TOOL_ACTION 1          # 当前工具打开
 send CLIMB_STEP             # 上台阶手动推进一步
+send CLIMB_AUTO             # 上台阶自动执行/继续
+send CLIMB_DOWNSTAIRS_STEP  # 下台阶手动推进一步
+send CLIMB_DOWNSTAIRS_AUTO  # 下台阶自动执行/继续
 send CLIMB_TEST_ACTION 10   # 执行 climb 测试动作 10：底盘前进 100mm
 send YAW_TUNE_START 1       # 启动 yaw 自动调参
+send YAW_TUNE_GET_STATUS    # 查询 yaw 自动调参状态
+send YAW_TUNE_STOP          # 停止 yaw 自动调参
 ```
 
-查看完整底层命令号：
+查看完整底层 USB 命令号和打包结果：
 
 ```text
 commands                    # 查看工具内置的完整 USB 命令表
+pack YAW_TUNE_GET_STATUS    # 打印该命令的完整 USB 帧
+pack CLIMB_DOWNSTAIRS_STEP  # 打印下台阶 step 的完整 USB 帧
 ```

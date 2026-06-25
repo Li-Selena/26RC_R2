@@ -130,6 +130,7 @@ typedef struct
     uint8_t auto_run;
     uint8_t state_done;
     uint8_t error_flags;
+    uint8_t flow;
     uint8_t pending_step;
     uint8_t pending_auto;
     uint8_t pending_test_action;

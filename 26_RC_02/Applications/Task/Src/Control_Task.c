@@ -5,6 +5,7 @@
 #include "CRC.h"
 #include "FreeRTOS.h"
 #include "task.h"
+#include <math.h>
 
 extern TIM_HandleTypeDef htim1;
 extern TIM_HandleTypeDef htim3;
@@ -310,6 +311,8 @@ static void R2_Control_1msStep(void)
     int32_t delta;
     uint8_t i;
     float imu_yaw_rad;
+    float robot_vx_mps = 0.0f;
+    float robot_vy_mps = 0.0f;
     float odom_vx_mps = 0.0f;
     float odom_vy_mps = 0.0f;
     float odom_wz_radps = 0.0f;
@@ -363,20 +366,18 @@ static void R2_Control_1msStep(void)
          *   FR/BR 安装反向 → fr_wheel = -encoder[0], br_wheel = -encoder[1]
          *   代入标准 FK: vx = (fl - fr - bl + br)/4 等, 得到以下公式。
          */
-        /* New chassis front is the original rear: rotate robot XY by 180 deg. */
-        robot_dx   = -((+w_delta[0] - w_delta[1] - w_delta[2] + w_delta[3]) * 0.25f);
-        robot_dy   = -((-w_delta[0] - w_delta[1] + w_delta[2] + w_delta[3]) * 0.25f);
+        /* Project robot frame: +X is right, +Y is front, +yaw is CCW. */
+        robot_dx   = (+w_delta[0] - w_delta[1] - w_delta[2] + w_delta[3]) * 0.25f;
+        robot_dy   = (-w_delta[0] - w_delta[1] + w_delta[2] + w_delta[3]) * 0.25f;
         robot_dyaw = -(+w_delta[0] + w_delta[1] + w_delta[2] + w_delta[3])
                     * 0.25f / (mecParam.L + mecParam.W);
 
-        odom_vx_mps = robot_dx * 1000.0f;
-        odom_vy_mps = robot_dy * 1000.0f;
+        robot_vx_mps = robot_dx * 1000.0f;
+        robot_vy_mps = robot_dy * 1000.0f;
         odom_wz_radps = robot_dyaw * 1000.0f;
         g_r2_debug_odom.robot_dx_m = robot_dx;
         g_r2_debug_odom.robot_dy_m = robot_dy;
         g_r2_debug_odom.robot_dyaw_rad = robot_dyaw;
-        g_r2_debug_odom.odom_vx_mps = odom_vx_mps;
-        g_r2_debug_odom.odom_vy_mps = odom_vy_mps;
         g_r2_debug_odom.odom_wz_radps = odom_wz_radps;
 
         /* 累加到世界系里程计（内部做 robot→world 旋转） */
@@ -451,6 +452,14 @@ static void R2_Control_1msStep(void)
     g_r2_debug_odom.active_odom_x = active_ctrl->odom_x;
     g_r2_debug_odom.active_odom_y = active_ctrl->odom_y;
     g_r2_debug_odom.active_odom_yaw = active_ctrl->odom_yaw;
+    {
+        float c = cosf(active_ctrl->odom_yaw);
+        float s = sinf(active_ctrl->odom_yaw);
+        odom_vx_mps = robot_vx_mps * c - robot_vy_mps * s;
+        odom_vy_mps = robot_vx_mps * s + robot_vy_mps * c;
+    }
+    g_r2_debug_odom.odom_vx_mps = odom_vx_mps;
+    g_r2_debug_odom.odom_vy_mps = odom_vy_mps;
 
     INS_SetOdometry(active_ctrl->odom_x,
                     active_ctrl->odom_y,

@@ -12,7 +12,10 @@
 #define TOOL_DEV_CLAMP    0U
 #define TOOL_DEV_CHUCK    1U
 
-/* FDCAN3 id4 M2006 switches tools through 18T -> 33T external gears. */
+/* FDCAN3 id4 M2006 switches tools.
+ * Motor encoder → 36:1 gearbox output shaft (330°) → 18T:33T external → tool gear (180°)
+ * TOOL_MOTOR_REDUCTION only needs the M2006 internal 36:1; the 33/18 external ratio
+ * is already baked into TOOL_CHUCK_OUTPUT_DEG (330° at gearbox output = 180° at tool). */
 #define TOOL_MOTOR_ENCODER_CPR       8192.0f
 #define TOOL_MOTOR_REDUCTION         36.0f
 #define TOOL_MOTOR_DEG_TO_COUNT      (TOOL_MOTOR_ENCODER_CPR * TOOL_MOTOR_REDUCTION / 360.0f)

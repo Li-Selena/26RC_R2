@@ -37,7 +37,7 @@
  *   >0 mm : legs extend to lift the chassis.
  *   <0 mm : legs retract above ground.
  *   negative travel is limited to 10 mm above ground.
- *   positive support travel is limited to 230 mm.
+ *   positive support travel is limited to 240 mm.
  *   IDLE/DONE hold the standby position, 10 mm above the power-on zero.
  *
  * Leg rack:   count/mm = encoder_count_per_motor_rev * total_reduction /
@@ -120,7 +120,7 @@
 
 #define R2_CLIMB_AIR_CLEARANCE_MAX_MM   10.0f
 #define R2_CLIMB_LEG_MIN_MM            (-R2_CLIMB_AIR_CLEARANCE_MAX_MM)
-#define R2_CLIMB_LEG_MAX_MM            230.0f
+#define R2_CLIMB_LEG_MAX_MM            240.0f
 
 #define R2_CLIMB_HOME_MM                 0.0f
 #define R2_CLIMB_STANDBY_MM            (-R2_CLIMB_AIR_CLEARANCE_MAX_MM)
@@ -129,17 +129,24 @@
 #define R2_CLIMB_TEST_LEG_DELTA_MM       10.0f
 #define R2_CLIMB_TEST_DRIVE_30_MM        30.0f
 #define R2_CLIMB_TEST_DRIVE_10_MM        10.0f
+#define R2_CLIMB_TEST_DRIVE_500_MM      500.0f
 #define R2_CLIMB_TEST_CHASSIS_100_M       0.10f
 #define R2_CLIMB_TEST_CHASSIS_50_M        0.05f
+#define R2_CLIMB_TEST_CHASSIS_300_M       0.30f
 
 #define R2_CLIMB_LEG_TOL_MM              3.0f
 #define R2_CLIMB_DRIVE_TOL_MM            5.0f
 
 /* Main flow replays the saved debug actions one by one. */
-#define R2_CLIMB_MAIN_STEP_COUNT          21U
+#define R2_CLIMB_MAIN_STEP_COUNT          11U
+#define R2_CLIMB_DOWNSTAIRS_STEP_COUNT    14U
+#define R2_CLIMB_STATE_DONE_ID            22U
+#define R2_CLIMB_STATE_ERROR_ID           23U
 #define R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS 9000U
 #define R2_CLIMB_STEP_FRONT_ZERO_TIMEOUT_MS 8000U
 #define R2_CLIMB_STEP_LEG_10_TIMEOUT_MS   3000U
+#define R2_CLIMB_STEP_LEG_30_TIMEOUT_MS   5000U
+#define R2_CLIMB_STEP_LEG_40_TIMEOUT_MS   5000U
 #define R2_CLIMB_DRIVE_TIMEOUT_SPEED_MM_S 80.0f
 #define R2_CLIMB_DRIVE_TIMEOUT_MARGIN_MS 1500U
 #define R2_CLIMB_DRIVE_TIMEOUT_MS(distance_mm) \
@@ -147,13 +154,18 @@
                  R2_CLIMB_DRIVE_TIMEOUT_SPEED_MM_S) + \
                 (float)R2_CLIMB_DRIVE_TIMEOUT_MARGIN_MS))
 #define R2_CLIMB_STEP_CHASSIS_100_TIMEOUT_MS 5000U
+#define R2_CLIMB_STEP_CHASSIS_200_TIMEOUT_MS 8000U
 #define R2_CLIMB_TEST_LEG_TIMEOUT_MS      5000U
 #define R2_CLIMB_TEST_DRIVE_TIMEOUT_MS    4000U
+#define R2_CLIMB_TEST_DRIVE_500_TIMEOUT_MS \
+    R2_CLIMB_DRIVE_TIMEOUT_MS(R2_CLIMB_TEST_DRIVE_500_MM)
 #define R2_CLIMB_TEST_CHASSIS_TIMEOUT_MS  5000U
+#define R2_CLIMB_TEST_CHASSIS_300_TIMEOUT_MS 10000U
 
 #define R2_CLIMB_ERR_TIMEOUT             0x01U
 #define R2_CLIMB_ERR_PARAM_NOT_CONFIGURED 0x02U
 #define R2_CLIMB_ERR_TEST_ACTION         0x04U
+#define R2_CLIMB_ERR_FLOW_SWITCH         0x08U
 
 #define R2_CLIMB_DEBUG_SOURCE_USART   0U
 #define R2_CLIMB_DEBUG_SOURCE_USB     1U
@@ -163,9 +175,15 @@ typedef enum
 {
     R2_CLIMB_STATE_IDLE = 0,
     R2_CLIMB_STATE_STEP_1 = 1,
-    R2_CLIMB_STATE_DONE = R2_CLIMB_MAIN_STEP_COUNT + 1U,
-    R2_CLIMB_STATE_ERROR,
+    R2_CLIMB_STATE_DONE = R2_CLIMB_STATE_DONE_ID,
+    R2_CLIMB_STATE_ERROR = R2_CLIMB_STATE_ERROR_ID,
 } R2_ClimbState_t;
+
+typedef enum
+{
+    R2_CLIMB_FLOW_UPSTAIRS = 0,
+    R2_CLIMB_FLOW_DOWNSTAIRS = 1,
+} R2_ClimbFlow_t;
 
 typedef enum
 {
@@ -186,6 +204,12 @@ typedef enum
     R2_CLIMB_TEST_REAR_UP_10,
     R2_CLIMB_TEST_REAR_DOWN_10,
     R2_CLIMB_TEST_ALL_LEGS_ZERO,
+    R2_CLIMB_TEST_DRIVE_BACKWARD_30,
+    R2_CLIMB_TEST_DRIVE_FORWARD_500,
+    R2_CLIMB_TEST_DRIVE_BACKWARD_500,
+    R2_CLIMB_TEST_CHASSIS_BACKWARD_100,
+    R2_CLIMB_TEST_CHASSIS_FORWARD_300,
+    R2_CLIMB_TEST_CHASSIS_BACKWARD_300,
 } R2_ClimbTestAction_t;
 
 typedef struct
@@ -201,6 +225,8 @@ typedef struct
     uint8_t auto_run;
     uint8_t state_done;
     uint8_t error_flags;
+    uint8_t flow;
+    uint8_t pending_flow;
     uint8_t pending_step;
     uint8_t pending_auto;
     uint8_t zero_captured;
@@ -231,6 +257,7 @@ typedef struct
     uint8_t auto_run;
     uint8_t state_done;
     uint8_t error_flags;
+    uint8_t flow;
     uint8_t is_motor_active;
     uint8_t pending_step;
     uint8_t pending_auto;
@@ -269,12 +296,16 @@ void R2_Climb_SetInput(R2_Climb_Ctrl_t *ctrl,
                        uint8_t auto_level);
 void R2_Climb_RequestStep(R2_Climb_Ctrl_t *ctrl);
 void R2_Climb_RequestAuto(R2_Climb_Ctrl_t *ctrl);
+void R2_Climb_RequestFlowStep(R2_Climb_Ctrl_t *ctrl, uint8_t flow);
+void R2_Climb_RequestFlowAuto(R2_Climb_Ctrl_t *ctrl, uint8_t flow);
 void R2_Climb_RequestTestAction(R2_Climb_Ctrl_t *ctrl, uint8_t action);
 void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
                      R2_Move_Ctrl_t *move_ctrl,
                      uint32_t now_ms);
 uint8_t R2_Climb_IsMotorActive(const R2_Climb_Ctrl_t *ctrl);
 uint8_t R2_Climb_TestActionUsesChassis(uint8_t action);
+uint32_t R2_Climb_GetDownstairsStepCount(void);
+const char *R2_Climb_GetDownstairsStepName(uint8_t step);
 void R2_Climb_GetMotorCurrent(const R2_Climb_Ctrl_t *ctrl,
                               R2_ClimbMotorCmd_t *cmd);
 void R2_Climb_UpdateDebugViews(const R2_Climb_Ctrl_t *usart_ctrl,

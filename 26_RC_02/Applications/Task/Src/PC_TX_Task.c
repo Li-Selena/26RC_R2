@@ -362,7 +362,7 @@ static void SendToolStatus(void)
     Send_Cmd_Data(USB_CMD_TOOL_GET_STATUS, buf, TOOL_STATUS_LEN);
 }
 
-#define CLIMB_STATUS_LEN  64U
+#define CLIMB_STATUS_LEN  68U
 
 static void SendClimbStatus(void)
 {
@@ -414,6 +414,7 @@ static void SendClimbStatus(void)
     PackFloatLE(climb.drive_pos_mm[1], buf, 52);
     PackFloatLE(climb.drive_target_mm[0], buf, 56);
     PackFloatLE(climb.drive_target_mm[1], buf, 60);
+    buf[64] = climb.flow;
 
     Send_Cmd_Data(USB_CMD_CLIMB_GET_STATUS, buf, CLIMB_STATUS_LEN);
 }
@@ -746,6 +747,7 @@ void RobotStatusView_Update(void)
     view->climb.auto_run = climb.auto_run;
     view->climb.state_done = climb.state_done;
     view->climb.error_flags = climb.error_flags;
+    view->climb.flow = climb.flow;
     view->climb.pending_step = climb.pending_step;
     view->climb.pending_auto = climb.pending_auto;
     view->climb.pending_test_action = climb.pending_test_action;
@@ -886,7 +888,8 @@ static void SendRobotStatus(void)
     buf[105] = view->climb.motor_online;
     buf[106] = view->climb.test_action;
     buf[107] = ((view->climb.test_active != 0U) ? 0x01U : 0U) |
-               ((view->climb.test_chassis_active != 0U) ? 0x02U : 0U);
+               ((view->climb.test_chassis_active != 0U) ? 0x02U : 0U) |
+               ((view->climb.flow == (uint8_t)R2_CLIMB_FLOW_DOWNSTAIRS) ? 0x04U : 0U);
     PackU32LE(view->climb.elapsed_ms,     buf, 108);
     PackU32LE(view->climb.last_update_ms, buf, 112);
 

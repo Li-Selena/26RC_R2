@@ -5,12 +5,17 @@
 #define RPM_TO_MS  (2.0f * 3.1415926f * MEC_R / 60.0f) // rpm 转换为 m/s 的系数
 #define MOTOR_IN2OUT (187.0f / 3591.0f) // 电机转速到轮子转速的转换系数（根据实际测量）
 
-#define MEC_REMOTE_VX_MIN_RPM      -9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // 3.68m/s 
-#define MEC_REMOTE_VX_MAX_RPM       9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // m/s
-#define MEC_REMOTE_VY_MIN_RPM      -9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // m/s
-#define MEC_REMOTE_VY_MAX_RPM       9000.0f * MOTOR_IN2OUT * RPM_TO_MS   // m/s
-#define MEC_REMOTE_VW_MIN_RAD_S    -3.1415926f * 2.0f / 20.0f  // rad/s
-#define MEC_REMOTE_VW_MAX_RAD_S     3.1415926f * 2.0f / 20.0f  // rad/s
+#define MEC_MOTOR_MAX_RPM              9000.0f
+#define MEC_WHEEL_PHYSICAL_MAX_MPS     (MEC_MOTOR_MAX_RPM * MOTOR_IN2OUT * RPM_TO_MS) /* about 3.68 m/s */
+#define MEC_DEBUG_WHEEL_LIMIT_MPS      0.68f
+
+#define MEC_REMOTE_XY_MAX_MPS          MEC_DEBUG_WHEEL_LIMIT_MPS
+#define MEC_REMOTE_VX_MIN_MPS          (-MEC_REMOTE_XY_MAX_MPS)
+#define MEC_REMOTE_VX_MAX_MPS          MEC_REMOTE_XY_MAX_MPS
+#define MEC_REMOTE_VY_MIN_MPS          (-MEC_REMOTE_XY_MAX_MPS)
+#define MEC_REMOTE_VY_MAX_MPS          MEC_REMOTE_XY_MAX_MPS
+#define MEC_REMOTE_VW_MIN_RAD_S        (-3.1415926f * 2.0f / 20.0f)
+#define MEC_REMOTE_VW_MAX_RAD_S        ( 3.1415926f * 2.0f / 20.0f)
 
 typedef struct
 {

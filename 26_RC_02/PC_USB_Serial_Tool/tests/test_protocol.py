@@ -84,7 +84,7 @@ class ProtocolTests(unittest.TestCase):
         self.assertTrue(decoded["executing_flags"]["climb_motor_active"])
         self.assertTrue(decoded["executing_flags"]["yaw_tune_running"])
         self.assertTrue(decoded["executing_flags"]["any"])
-        self.assertEqual(decoded["climb"]["state_name"], "STEP_04_ALL_LEGS_DOWN_10")
+        self.assertEqual(decoded["climb"]["state_name"], "STEP_04_FRONT_ZERO")
         self.assertEqual(decoded["climb"]["test_action_name"], "CHASSIS_FORWARD_100")
         self.assertTrue(decoded["climb"]["test_chassis_active"])
         self.assertEqual(decoded["laser"]["distance_mm"]["y_pos"], -1)
@@ -92,6 +92,18 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(decoded["yaw_tune"]["state_name"], "RUNNING")
         self.assertEqual(decoded["yaw_tune"]["active_mode_name"], "WORLD_VEL")
         self.assertAlmostEqual(decoded["yaw_tune"]["score"], 8.75)
+
+    def test_decode_robot_status_downstairs_flow(self):
+        payload = bytearray(160)
+        payload[0] = 2
+        payload[96] = 1
+        payload[97] = 4
+        payload[107] = 0b100
+        frame = pack_usb_frame(0x46, bytes(payload))
+        parsed = UsbStreamParser().feed(frame)[0]
+        decoded = decode_usb_frame(parsed)["payload"]
+        self.assertEqual(decoded["climb"]["flow_name"], "DOWNSTAIRS")
+        self.assertEqual(decoded["climb"]["state_name"], "DOWN_04_FRONT_UP_10")
 
     def test_decode_yaw_tune_status_payload(self):
         payload = bytearray(64)
@@ -137,7 +149,7 @@ class ProtocolTests(unittest.TestCase):
         parsed = UsbStreamParser().feed(frame)[0]
         decoded = decode_usb_frame(parsed)
         self.assertEqual(decoded["cmd_name"], "CLIMB_GET_STATUS")
-        self.assertEqual(decoded["payload"]["state_name"], "STEP_04_ALL_LEGS_DOWN_10")
+        self.assertEqual(decoded["payload"]["state_name"], "STEP_04_FRONT_ZERO")
         self.assertTrue(decoded["payload"]["state_done"])
         self.assertTrue(decoded["payload"]["error_flags"]["test_action"])
         self.assertEqual(decoded["payload"]["active_source_name"], "USB")
@@ -152,6 +164,27 @@ class ProtocolTests(unittest.TestCase):
         parsed = UsbStreamParser().feed(frame)[0]
         self.assertEqual(parsed.cmd, 0x57)
         self.assertAlmostEqual(struct.unpack_from("<f", parsed.payload, 0)[0], 16.0)
+
+    def test_climb_downstairs_command_frames(self):
+        parsed = UsbStreamParser().feed(build_usb_command("CLIMB_DOWNSTAIRS_STEP"))[0]
+        self.assertEqual(parsed.cmd, 0x58)
+        parsed = UsbStreamParser().feed(build_usb_command("CLIMB_DOWNSTAIRS_AUTO"))[0]
+        self.assertEqual(parsed.cmd, 0x59)
+
+    def test_decode_climb_downstairs_status_payload(self):
+        payload = bytearray(68)
+        payload[0] = 4
+        payload[1] = 1
+        payload[3] = 1
+        payload[5] = 1
+        payload[6] = 6
+        payload[64] = 1
+        struct.pack_into("<I", payload, 8, 2345)
+        frame = pack_usb_frame(0x56, bytes(payload))
+        parsed = UsbStreamParser().feed(frame)[0]
+        decoded = decode_usb_frame(parsed)["payload"]
+        self.assertEqual(decoded["flow_name"], "DOWNSTAIRS")
+        self.assertEqual(decoded["state_name"], "DOWN_04_FRONT_UP_10")
 
     def test_usart_remote_frame(self):
         frame = build_remote_frame(mode=3, source_usb=1, chassis=(0.2, 0.0, 0.0), arm_target=(0.0, 0.0, 180.0))

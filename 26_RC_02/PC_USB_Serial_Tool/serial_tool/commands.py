@@ -47,11 +47,13 @@ COMMANDS: Tuple[UsbCommand, ...] = (
     UsbCommand("CLIMB_DISABLE", 0x50),
     UsbCommand("CLIMB_ENABLE", 0x51),
     UsbCommand("CLIMB_SET_CTRL", 0x52, True, "f0=enable, f1=step, f2=auto."),
-    UsbCommand("CLIMB_STEP", 0x53),
-    UsbCommand("CLIMB_AUTO", 0x54),
+    UsbCommand("CLIMB_STEP", 0x53, aliases=("CLIMB_UPSTAIRS_STEP", "UPSTAIRS_STEP")),
+    UsbCommand("CLIMB_AUTO", 0x54, aliases=("CLIMB_UPSTAIRS_AUTO", "UPSTAIRS_AUTO")),
     UsbCommand("CLIMB_STOP", 0x55),
     UsbCommand("CLIMB_GET_STATUS", 0x56, aliases=("CLIMB_STATUS",)),
     UsbCommand("CLIMB_TEST_ACTION", 0x57, True, "f0=action id.", aliases=("CLIMB_ACTION", "CLIMB_TEST")),
+    UsbCommand("CLIMB_DOWNSTAIRS_STEP", 0x58, aliases=("CLIMB_DOWN_STEP", "DOWNSTAIRS_STEP")),
+    UsbCommand("CLIMB_DOWNSTAIRS_AUTO", 0x59, aliases=("CLIMB_DOWN_AUTO", "DOWNSTAIRS_AUTO")),
     UsbCommand("ARM_IK_RESULT", 0x90, doc="Async arm IK result from firmware."),
 )
 
