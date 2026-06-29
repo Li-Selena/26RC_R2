@@ -29,6 +29,23 @@
 /* encoder delta count → wheel linear meter */
 #define ENCODER_TO_WHEEL_M  (MOTOR_IN2OUT * (2.0f * 3.1415926f * MEC_R / ENCODER_RESOLUTION))
 
+/*
+ * Physical chassis motor order.
+ * Motor IDs start at the front-right corner and go clockwise:
+ *   1 / CAN 0x201 / index 0 = FR
+ *   2 / CAN 0x202 / index 1 = BR
+ *   3 / CAN 0x203 / index 2 = BL
+ *   4 / CAN 0x204 / index 3 = FL
+ */
+typedef enum
+{
+    CHASSIS_MOTOR_FR = 0U,
+    CHASSIS_MOTOR_BR = 1U,
+    CHASSIS_MOTOR_BL = 2U,
+    CHASSIS_MOTOR_FL = 3U,
+    CHASSIS_MOTOR_COUNT = 4U
+} ChassisMotorIndex_t;
+
 
 /* 底盘运动控制器状态机 */
 typedef enum
@@ -56,7 +73,7 @@ typedef struct
     float start_time;       /* 运动开始时刻的系统时间 (s)，首次 Update 时记录 */
 
     /* 里程计起点（编码器原始累积值，上电清零） */
-    int32_t start_enc[4];   /* motor_fdcan1[0..3].total_angle，启动瞬间快照 */
+    int32_t start_enc[CHASSIS_MOTOR_COUNT]; /* [0..3] = FR, BR, BL, FL physical motors 1..4 */
 
     /* 里程计世界坐标起点 (m, rad)，启动瞬间快照 */
     float start_odom_x;
@@ -142,9 +159,9 @@ float EncoderDeltaToWheelMeter(int32_t delta_enc);
 /**
  * @brief 电机 RPM → 单轮线速度 (m/s)，已做转向校正
  * @param motor_rpm 电机转速 (RPM)
- * @param wheel_idx 轮子索引 0=fl, 1=fr, 2=bl, 3=br
+ * @param motor_idx Physical motor index: 0=FR, 1=BR, 2=BL, 3=FL
  * @return 轮子线速度 (m/s，正向=前进)
  */
-float MotorRPMToWheelMPS(float motor_rpm, uint8_t wheel_idx);
+float MotorRPMToWheelMPS(float motor_rpm, uint8_t motor_idx);
 
 #endif

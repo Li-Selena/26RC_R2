@@ -5,7 +5,7 @@ ChassisVel_t total_vel = {0,0,0};
 WheelSpeed_t total_speed = {0,0,0,0};
 
 MecanumParam_t mecParam = {
-    .wheel_radius = 0.075f,       // 轮子半径：150mm = 0.150m
+    .wheel_radius = 0.076f,       // 轮子半径：150mm = 0.150m
     
     .L = 0.338f,                  // 前后轴到中心的距离：380mm / 2 = 190mm = 0.190m
     .W = 0.375f,                  // 左右半轮距：(!!! 请根据你实际的长方形底盘轮距修改此值 !!!)
@@ -30,9 +30,9 @@ void Mecanum_Calc(
     const MecanumParam_t *param,
     WheelSpeed_t *wheel)
 {
-    /* Project robot frame: +X is right, +Y is front, +yaw is CCW. */
-    float chassis_vx = chassis->vx;
-    float chassis_vy = chassis->vy;
+    /* Project robot frame: +X is right, +Y is physical front, +yaw is CCW. */
+    float chassis_vx = MEC_RIGHT_SIGN * chassis->vx;
+    float chassis_vy = MEC_FORWARD_SIGN * chassis->vy;
     float chassis_vw = chassis->vw;  // +vw follows the project yaw convention: CCW is positive.
 
     // 1. 由于长方形底盘对称，旋转切向速度的系数 4 个轮子完全相同

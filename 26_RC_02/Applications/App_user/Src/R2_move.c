@@ -121,9 +121,9 @@ void R2_Move_Init(R2_Move_Ctrl_t *ctrl, const MecanumParam_t *param, float dt_s)
     ctrl->param          = param;
     ctrl->emergency_stop = 1U;   /* 上电急停，收到第一帧遥控/上位机命令后自动解除 */
 
-    /* 速度平滑器：accel 温和加速, decel 快速刹车 */
-    speedPlanner_Init(&ctrl->sp_vx, R2_MOVE_XY_A_MAX_MPS2, R2_MOVE_XY_A_MAX_MPS2, dt_s);
-    speedPlanner_Init(&ctrl->sp_vy, R2_MOVE_XY_A_MAX_MPS2, R2_MOVE_XY_A_MAX_MPS2, dt_s);
+    /* 速度平滑器：横移轴更软，降低麦轮侧滑启停时的 yaw 冲击 */
+    speedPlanner_Init(&ctrl->sp_vx, R2_MOVE_X_A_MAX_MPS2, R2_MOVE_X_A_MAX_MPS2, dt_s);
+    speedPlanner_Init(&ctrl->sp_vy, R2_MOVE_Y_A_MAX_MPS2, R2_MOVE_Y_A_MAX_MPS2, dt_s);
     speedPlanner_Init(&ctrl->sp_vw, 6.0f, 20.0f, dt_s);
 
     /* 默认运动参数 */

@@ -51,4 +51,6 @@
   ..\Core\Inc\fdcan.h ..\BSP\Inc\bsp_l1_usart.h \
   ..\Components\Controller\Inc\pid.h \
   ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
-  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
+  ..\Applications\R2_user\Inc\R2_laser_user.h \
+  ..\Components\Device\Inc\l1_laser.h

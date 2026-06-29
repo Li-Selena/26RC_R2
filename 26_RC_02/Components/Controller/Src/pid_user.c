@@ -31,7 +31,7 @@ pid_type_def pid_yaw_rate;  // 机器人/世界坐标系：角速度内环
 // PID 参数数组: {Kp, Ki, Kd, Kf(前馈)} 
 // 注意：以下参数需根据底盘实际重量和动力情况进行整定
 const float PID_YAW_ANGLE_PARAM[4] = {2.03f, 0.0f, 0.05f, 0.0f};  // yaw angle loop Kp/Ki/Kd/Kf
-const float PID_YAW_RATE_PARAM[4]  = {1.625f, 0.02f, 1.0f, 0.0f};  // yaw rate loop Kp/Ki/Kd/Kf
+const float PID_YAW_RATE_PARAM[4]  = {0.8f, 0.0f, 0.0f, 0.0f};  // yaw rate loop Kp/Ki/Kd/Kf
 
 #define FDCAN2_CLIMB_LEG_POS_MAX_RPM       2500
 #define FDCAN2_CLIMB_LEG_POS_MAX_IOUT       300

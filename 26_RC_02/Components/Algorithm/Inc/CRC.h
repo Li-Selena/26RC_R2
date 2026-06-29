@@ -16,22 +16,23 @@ typedef enum
 } ParseState;
 
 /*
- * 数据区 = 39 字节。
+ * 数据区 = 40 字节。
  *
  *   byte 0..7   : 8 个模式标志位，同时只有一个为 1，全 0 = 底盘静止
  *   byte 8      : arm_flag       (int8_t, 0=归零 1=使能)
  *   byte 9      : UU_flag        (uint8_t, 0=USART源 1=USB源)
- *   byte 10     : tool_flag      (uint8_t, 0=夹爪 1=吸盘)
- *   byte 11     : tooluse_flag   (uint8_t, 0=闭合 1=张开)
- *   byte 12     : climb_enable   (uint8_t, 0=停止/复位 1=允许上台阶)
- *   byte 13     : climb_step     (uint8_t, 0->1 边沿手动推进一步)
- *   byte 14     : climb_auto     (uint8_t, 0->1 边沿启动/继续自动)
- *   byte 15..38 : 6 个 little-endian float
+ *   byte 10     : tool_flag      (uint8_t, 0=夹爪位 1=吸盘位)
+ *   byte 11     : clampuse_flag  (uint8_t, 0=夹爪关闭 1=夹爪打开)
+ *   byte 12     : chuckuse_flag  (uint8_t, 0=吸盘关闭 1=吸盘打开)
+ *   byte 13     : climb_enable   (uint8_t, 0=停止/复位 1=允许上台阶)
+ *   byte 14     : climb_step     (uint8_t, 0->1 边沿手动推进一步)
+ *   byte 15     : climb_auto     (uint8_t, 0->1 边沿启动/继续自动)
+ *   byte 16..39 : 6 个 little-endian float
  */
-#define BT_FRAME_DATA_LEN   39U
+#define BT_FRAME_DATA_LEN   40U
 
 /* float 数据区在帧内的起始偏移 */
-#define BT_FRAME_FLOAT_OFFSET  15U
+#define BT_FRAME_FLOAT_OFFSET  16U
 
 #define USART_CONTROL_TIMEOUT_MS 300U
 
@@ -55,7 +56,8 @@ extern float arm_Z;
 extern uint8_t arm_input_valid;
 
 extern uint8_t tool_flag;
-extern uint8_t tooluse_flag;
+extern uint8_t clampuse_flag;
+extern uint8_t chuckuse_flag;
 extern uint8_t climb_enable_flag;
 extern uint8_t climb_step_flag;
 extern uint8_t climb_auto_flag;
@@ -80,8 +82,9 @@ typedef struct
     float    arm_z;         /* 机械臂 Z (mm) */
     uint8_t  arm_flag;      /* 机械臂使能 */
     uint8_t  uu_flag;       /* 控制源 */
-    uint8_t  tool_flag;     /* 工具选择 */
-    uint8_t  tooluse_flag;  /* 工具状态 */
+    uint8_t  tool_flag;     /* 工具位置 */
+    uint8_t  clampuse_flag; /* 夹爪状态 */
+    uint8_t  chuckuse_flag; /* 吸盘状态 */
     uint8_t  climb_enable;
     uint8_t  climb_step;
     uint8_t  climb_auto;

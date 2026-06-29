@@ -109,6 +109,8 @@ extern void set_clamp_target_angle(clamp_Handle_t *clamp, float angle);
 extern void set_chuck_target_angle(chuck_Handle_t *chuck, float angle);
 extern int get_clamp_safe_flag(clamp_Handle_t *clamp);
 extern int get_chuck_safe_flag(chuck_Handle_t *chuck);
+extern void Tool_SetClampActuator(clamp_Handle_t *clamp, uint8_t target_state);
+extern void Tool_SetChuckActuator(chuck_Handle_t *chuck, uint8_t target_state);
 extern void trigger_clamp_action(clamp_Handle_t *clamp, uint8_t target_state);
 extern void trigger_chuck_action(chuck_Handle_t *chuck, uint8_t target_state);
 extern void clamp_state_machine_run(clamp_Handle_t *clamp);     

@@ -5,13 +5,14 @@
 
 /*
  * ─── 轮子方向符号表 ─────────────────────────────────────
- * fl=0  fr=1  bl=2  br=3
+ * motor_fdcan1[0..3] = Motor1(FR), Motor2(BR), Motor3(BL), Motor4(FL).
+ * Physical IDs start at the front-right corner and go clockwise.
  *
  * 因为 CAN_Task 中对 fr / br 取反（-total_speed.fr），
  * 所以 odometry 读回时也要对这两个通道取反，
  * 才能保持 “正向 = 轮子前进” 的统一约定。
  */
-static const int8_t wheel_sign[4] = { 1, 1, 1, 1 };  /* 所有轮子安装方向一致 */
+static const int8_t motor_to_wheel_sign[CHASSIS_MOTOR_COUNT] = { -1, -1, 1, 1 };
 
 /* 电机测量值 extern 声明 */
 extern motor_measure_t motor_fdcan1[8];
@@ -25,18 +26,18 @@ float EncoderDeltaToWheelMeter(int32_t delta_enc)
 }
 
 /* 电机 RPM → 轮子线速度 (m/s)，自动校正轮子方向符号 */
-float MotorRPMToWheelMPS(float motor_rpm, uint8_t wheel_idx)
+float MotorRPMToWheelMPS(float motor_rpm, uint8_t motor_idx)
 {
     return motor_rpm * MOTOR_RPM_TO_WHEEL_MPS
-           * (float)(int8_t)wheel_sign[wheel_idx & 0x03U];
+           * (float)(int8_t)motor_to_wheel_sign[motor_idx % CHASSIS_MOTOR_COUNT];
 }
 
 /*
  * 麦克纳姆正向运动学：四轮线速度 → 底盘速度 (vx, vy, vw)
  * 公式（经典麦克纳姆解算矩阵的逆）：
- *   vx = (w_fl - w_fr - w_bl + w_br) / 4
- *   vy = (w_fl + w_fr + w_bl + w_br) / 4
- *   vw = (w_fl - w_fr + w_bl - w_br) / (4 * (L + W))
+ *   vx = MEC_RIGHT_SIGN * (w_fl - w_fr - w_bl + w_br) / 4
+ *   vy = MEC_FORWARD_SIGN * (w_fl + w_fr + w_bl + w_br) / 4
+ *   vw = (-w_fl + w_fr - w_bl + w_br) / (4 * (L + W))
  */
 void ChassisForwardKinematics(const WheelSpeed_t *w,
                               const MecanumParam_t *p,
@@ -49,9 +50,9 @@ void ChassisForwardKinematics(const WheelSpeed_t *w,
     sum_xy = 0.25f;
     sum_k  = 0.25f / (p->L + p->W);
 
-    out->vx = ( w->fl - w->fr - w->bl + w->br) * sum_xy;
-    out->vy = ( w->fl + w->fr + w->bl + w->br) * sum_xy;
-    out->vw = ( w->fl - w->fr + w->bl - w->br) * sum_k;
+    out->vx = MEC_RIGHT_SIGN * ( w->fl - w->fr - w->bl + w->br) * sum_xy;
+    out->vy = MEC_FORWARD_SIGN * ( w->fl + w->fr + w->bl + w->br) * sum_xy;
+    out->vw = (-w->fl + w->fr - w->bl + w->br) * sum_k;
 }
 
 /* ─── 里程计更新 ────────────────────────────────────── */
@@ -64,7 +65,7 @@ void ChassisForwardKinematics(const WheelSpeed_t *w,
 void ChassisOdometry_Update(ChassisMove_Ctrl_t *ctrl,
                             const MecanumParam_t *param)
 {
-    float wheel_delta[4];
+    float wheel_delta[CHASSIS_MOTOR_COUNT];
     WheelSpeed_t wheel_deltas;
     ChassisVel_t delta;
     int32_t cur_enc;
@@ -73,17 +74,17 @@ void ChassisOdometry_Update(ChassisMove_Ctrl_t *ctrl,
     if (ctrl == NULL || param == NULL) return;
 
     /* 读取 4 个底盘电机的累积角度，计算本轮增量 */
-    for (i = 0U; i < 4U; i++) {
+    for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
         cur_enc = motor_fdcan1[i].total_angle;
         /* 编码器增量 × 符号 × 转换系数 → 轮子线位移 */
         wheel_delta[i] = EncoderDeltaToWheelMeter(
-            (int32_t)wheel_sign[i] * (cur_enc - ctrl->start_enc[i]));
+            (int32_t)motor_to_wheel_sign[i] * (cur_enc - ctrl->start_enc[i]));
     }
 
-    wheel_deltas.fl = wheel_delta[0];
-    wheel_deltas.fr = wheel_delta[1];
-    wheel_deltas.bl = wheel_delta[2];
-    wheel_deltas.br = wheel_delta[3];
+    wheel_deltas.fr = wheel_delta[CHASSIS_MOTOR_FR];
+    wheel_deltas.br = wheel_delta[CHASSIS_MOTOR_BR];
+    wheel_deltas.bl = wheel_delta[CHASSIS_MOTOR_BL];
+    wheel_deltas.fl = wheel_delta[CHASSIS_MOTOR_FL];
 
     /* 正向运动学：轮子位移增量 → 底盘位移增量 */
     ChassisForwardKinematics(&wheel_deltas, param, &delta);
@@ -139,7 +140,7 @@ void ChassisMove_Start(ChassisMove_Ctrl_t *ctrl,
     ctrl->start_odom_y   = ctrl->odom_y;
     ctrl->start_odom_yaw = ctrl->odom_yaw;
 
-    for (i = 0U; i < 4U; i++) {
+    for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
         ctrl->start_enc[i] = motor_fdcan1[i].total_angle;
     }
 

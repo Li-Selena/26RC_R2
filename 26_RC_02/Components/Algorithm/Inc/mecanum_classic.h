@@ -7,15 +7,17 @@
 
 #define MEC_MOTOR_MAX_RPM              9000.0f
 #define MEC_WHEEL_PHYSICAL_MAX_MPS     (MEC_MOTOR_MAX_RPM * MOTOR_IN2OUT * RPM_TO_MS) /* about 3.68 m/s */
-#define MEC_DEBUG_WHEEL_LIMIT_MPS      0.68f
+#define MEC_DEBUG_WHEEL_LIMIT_MPS      2.0f
+#define MEC_RIGHT_SIGN                 ( 1.0f)
+#define MEC_FORWARD_SIGN               ( 1.0f)
 
 #define MEC_REMOTE_XY_MAX_MPS          MEC_DEBUG_WHEEL_LIMIT_MPS
 #define MEC_REMOTE_VX_MIN_MPS          (-MEC_REMOTE_XY_MAX_MPS)
 #define MEC_REMOTE_VX_MAX_MPS          MEC_REMOTE_XY_MAX_MPS
 #define MEC_REMOTE_VY_MIN_MPS          (-MEC_REMOTE_XY_MAX_MPS)
 #define MEC_REMOTE_VY_MAX_MPS          MEC_REMOTE_XY_MAX_MPS
-#define MEC_REMOTE_VW_MIN_RAD_S        (-3.1415926f * 2.0f / 20.0f)
-#define MEC_REMOTE_VW_MAX_RAD_S        ( 3.1415926f * 2.0f / 20.0f)
+#define MEC_REMOTE_VW_MIN_RAD_S        (-3.1415926f * 2.0f / 10.0f)
+#define MEC_REMOTE_VW_MAX_RAD_S        ( 3.1415926f * 2.0f / 10.0f)
 
 typedef struct
 {

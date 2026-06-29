@@ -3,7 +3,11 @@
 
 #include "include.h"
 
-/* CAN send and receive ID */
+/*
+ * CAN send and receive ID.
+ * On FDCAN1 chassis motors, M1..M4 are physical motor IDs:
+ * M1=FR, M2=BR, M3=BL, M4=FL, starting at the front-right corner clockwise.
+ */
 typedef enum
 {
     CAN_CHASSIS_ALL_ID = 0x200,
@@ -33,7 +37,7 @@ typedef struct
 		uint32_t			msg_cnt;
 } motor_measure_t;
 
-extern motor_measure_t motor_fdcan1[8];  /* 底盘四轮 + 小电机 */
+extern motor_measure_t motor_fdcan1[8];  /* FDCAN1 chassis: [0..3] = FR, BR, BL, FL */
 extern motor_measure_t motor_fdcan2[8];  /* 抬升四电机 */
 extern motor_measure_t motor_fdcan3[8];  /* 机械臂电机 */
 

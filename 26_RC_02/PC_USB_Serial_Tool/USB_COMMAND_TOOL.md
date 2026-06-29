@@ -35,13 +35,20 @@ status
 ```text
 climb_wait 20
 climb_step_wait 40
+climb_up_auto_wait 180
 climb_auto_wait 180
+climb_run_wait 180
+climb_up_step_wait 40
 climb_upstairs_step_wait 40
 climb_upstairs_auto_wait 180
+climb_upstairs_run_wait 180
+climb_down_step_wait 40
+climb_down_auto_wait 180
 climb_downstairs_step_wait 40
 climb_downstairs_auto_wait 180
-climb_wait_then CLIMB_STEP
-climb_wait_then CLIMB_DOWNSTAIRS_STEP
+climb_downstairs_run_wait 180
+climb_wait_then CLIMB_UP_STEP
+climb_wait_then CLIMB_DOWN_STEP
 climb_tests
 climb_test CHASSIS_FORWARD_100
 climb_test_wait FRONT_UP_10 10
@@ -72,17 +79,24 @@ flow_recover
 send YAW_TUNE_START 1       # 启动 yaw 自动调参，pass_count=1
 send YAW_TUNE_GET_STATUS    # 查询 yaw 自动调参状态
 send YAW_TUNE_STOP          # 停止 yaw 自动调参
-send CLIMB_STEP             # 上台阶手动推进一步
-send CLIMB_AUTO             # 上台阶自动执行/继续
-send CLIMB_DOWNSTAIRS_STEP  # 下台阶手动推进一步
-send CLIMB_DOWNSTAIRS_AUTO  # 下台阶自动执行/继续
+send CLIMB_UP_STEP          # 上台阶手动推进一步
+send CLIMB_UP_AUTO          # 上台阶自动执行/继续
+send CLIMB_DOWN_STEP        # 下台阶手动推进一步
+send CLIMB_DOWN_AUTO        # 下台阶自动执行/继续
 ```
+
+Auto laser gate:
+
+- `CLIMB_UP_AUTO` starts a forward mecanum search immediately; firmware drives forward until valid X reaches `0 <= x < 35mm` before starting the climb flow. Transient X invalid readings (`-1`) are tolerated, but continuous X invalid for `1000ms` enters `ERROR` with the `timeout` flag.
+- `CLIMB_DOWN_AUTO` starts a backward mecanum search immediately. During `DOWN_LASER_APPROACH_H_GT_65`, valid height `h > 65mm` detects the 50-53mm to 160mm+ drop jump; transient height invalid readings (`-1`) are tolerated, continuous invalid height for `1000ms` enters `ERROR`, and no trigger within `8000ms` also times out. After trigger, the chassis backs up another `5mm`, then enters `PREPARE_ALL_LEGS_MINUS_10` before the normal downstairs flow.
+- Old names `CLIMB_AUTO` and `CLIMB_DOWNSTAIRS_AUTO` are still accepted as aliases.
 
 只想生成帧、不发送串口时可以用：
 
 ```powershell
 .\.venv\Scripts\python usb_cmd_tool.py pack YAW_TUNE_GET_STATUS
-.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_DOWNSTAIRS_STEP
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_UP_AUTO
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_DOWN_AUTO
 ```
 
 ## 4. 自动调参指令

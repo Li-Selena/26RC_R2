@@ -36,10 +36,10 @@ typedef struct
     uint8_t active_source;
     uint8_t reserved;
 
-    int32_t current_enc[4];
-    int32_t last_enc[4];
-    int32_t enc_delta[4];
-    float wheel_delta_m[4];
+    int32_t current_enc[CHASSIS_MOTOR_COUNT];
+    int32_t last_enc[CHASSIS_MOTOR_COUNT];
+    int32_t enc_delta[CHASSIS_MOTOR_COUNT];
+    float wheel_delta_m[CHASSIS_MOTOR_COUNT];
 
     float robot_dx_m;
     float robot_dy_m;
@@ -63,7 +63,7 @@ extern R2_Climb_Ctrl_t g_r2_climb_usb;
 void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, WheelSpeed_t *speed_user);    //麦克纳姆轮底盘控制处理，专门给USB数据解析调用的接口
 extern R2_DebugOdom_t g_r2_debug_odom;
 extern uint32_t g_r2_tick_ms;
-extern int32_t g_r2_last_enc[4];
+extern int32_t g_r2_last_enc[CHASSIS_MOTOR_COUNT];
 extern uint8_t g_r2_enc_inited;
 
 void Arm_task_USB(float x,float y,float z);

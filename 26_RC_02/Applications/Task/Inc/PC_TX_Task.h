@@ -49,7 +49,8 @@ typedef struct
     uint8_t usart_arm_flag;
     uint8_t usart_source_flag;
     uint8_t usart_tool_flag;
-    uint8_t usart_tooluse_flag;
+    uint8_t usart_clampuse_flag;
+    uint8_t usart_chuckuse_flag;
     uint8_t usart_climb_enable;
     uint8_t usart_climb_step;
     uint8_t usart_climb_auto;

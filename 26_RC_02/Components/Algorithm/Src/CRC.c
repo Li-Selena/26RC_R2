@@ -34,7 +34,8 @@ float arm_Z = 0.0f;
 uint8_t arm_input_valid = 0U;
 
 uint8_t tool_flag = TOOL_DEV_CLAMP;
-uint8_t tooluse_flag = 0;
+uint8_t clampuse_flag = CLAMP_CLOSE;
+uint8_t chuckuse_flag = CHUCK_CLOSE;
 uint8_t climb_enable_flag = 0U;
 uint8_t climb_step_flag = 0U;
 uint8_t climb_auto_flag = 0U;
@@ -61,8 +62,8 @@ void Control_SetSource(uint8_t source)
 /*
  * UART10 单字节接收状态机
  *
- * 帧格式：0xA5 + 39 字节数据区 + 1 字节校验和 + 0x5A
- * 校验和 = data[0] + ... + data[38] 取低 8 位
+ * 帧格式：0xA5 + 40 字节数据区 + 1 字节校验和 + 0x5A
+ * 校验和 = data[0] + ... + data[39] 取低 8 位
  */
 void UART10_Receive(uint8_t receiveData)
 {
@@ -167,15 +168,25 @@ void R2_Chassis_Process(R2_Move_Ctrl_t *ctrl, uint8_t mode,
 {
     R2_MoveMode_t m;
 
-    /* 全 0 = 无模式激活 → 急停 */
+    if (ctrl == NULL) {
+        return;
+    }
+
+    /* 全 0 = 静止；速度模式走斜坡减速，其他模式直接停止 */
     if (mode > 7U) {
-        R2_Move_Stop(ctrl);
+        if (R2_Move_IsVelMode(ctrl->mode)) {
+            R2_Move_SetVel(ctrl, 0.0f, 0.0f, 0.0f);
+        } else {
+            R2_Move_Stop(ctrl);
+        }
         return;
     }
 
     m = (R2_MoveMode_t)mode;
 
-    R2_Move_SetMode(ctrl, m);
+    if (ctrl->mode != m) {
+        R2_Move_SetMode(ctrl, m);
+    }
 
     if (R2_Move_IsVelMode(m)) {
         R2_Move_SetVel(ctrl, p1, p2, p3);
@@ -189,9 +200,9 @@ void R2_Chassis_Process(R2_Move_Ctrl_t *ctrl, uint8_t mode,
  * CRC 仅服务 USART 遥控器 → 固定写入 g_r2_ctrl_usart。
  *
  * 帧布局：
- *   byte 0~11  : 控制字段（mode, arm, UU, tool...）
- *   byte 12~14 : climb_enable, climb_step, climb_auto
- *   byte 15~38 : 6 个 float（chassis×3 + arm×3）
+ *   byte 0~12  : 控制字段（mode, arm, UU, tool position, clamp, chuck）
+ *   byte 13~15 : climb_enable, climb_step, climb_auto
+ *   byte 16~39 : 6 个 float（chassis×3 + arm×3）
  */
 void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
 {
@@ -219,18 +230,19 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
         }
     }
 
-    /* ── byte 8~11: 4 控制字节 ── */
+    /* ── byte 8~12: 5 控制字节 ── */
     arm_flag     = (int8_t)frame[8];  /* ARM */
     UU_flag      = frame[9];          /* UU  */
-    tool_flag    = frame[10];         /* tool */
-    tooluse_flag = frame[11];         /* state */
-    climb_enable_flag = frame[12];
-    climb_step_flag   = frame[13];
-    climb_auto_flag   = frame[14];
+    tool_flag    = frame[10];         /* tool position */
+    clampuse_flag = frame[11];        /* clamp state */
+    chuckuse_flag = frame[12];        /* chuck state */
+    climb_enable_flag = frame[13];
+    climb_step_flag   = frame[14];
+    climb_auto_flag   = frame[15];
 
-    /* Current float payload starts after the 3 climb bytes: byte 15~38. */
+    /* Current float payload starts after the 3 climb bytes: byte 16~39. */
 
-    /* ── 6 float 数据区（byte 12~35） ── */
+    /* ── 6 float 数据区（byte 16~39） ── */
     chs_p1 = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 0U]);   /* chassis param1 */
     chs_p2 = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 4U]);   /* chassis param2 */
     chs_p3 = read_float_le(&frame[BT_FRAME_FLOAT_OFFSET + 8U]);   /* chassis param3 */
@@ -249,7 +261,8 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
     crc_dbg.arm_flag     = (uint8_t)arm_flag;
     crc_dbg.uu_flag      = UU_flag;
     crc_dbg.tool_flag    = tool_flag;
-    crc_dbg.tooluse_flag = tooluse_flag;
+    crc_dbg.clampuse_flag = clampuse_flag;
+    crc_dbg.chuckuse_flag = chuckuse_flag;
     crc_dbg.climb_enable = climb_enable_flag;
     crc_dbg.climb_step   = climb_step_flag;
     crc_dbg.climb_auto   = climb_auto_flag;
@@ -269,11 +282,10 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
             arm_input_valid = 1U;
         } else {
             ArmIK_ComponentStep(ax, ay, az);
+            Arm_HoldCurrentPosition(TOOL_USART_SOURCE);
         }
     } else if (arm_flag != 1) {
-        arm_X = 0.0f;
-        arm_Y = 0.0f;
-        arm_Z = 0.0f;
+        /* Keep the last target values for debug; Control_Task holds the arm. */
     }
 
     /* ── USART/USB 控制源切换 ── */
@@ -295,21 +307,10 @@ void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
     if (USART_Task_flag == 1U) {
         Tool_SetSelectedDev(TOOL_USART_SOURCE, tool_flag);
 
-        if (tool_flag == TOOL_DEV_CHUCK) {
-            chuck_Handle_t *usart_chuck = Tool_GetChuck(TOOL_USART_SOURCE);
-            if (tooluse_flag == 0U && usart_chuck->state != CHUCK_CLOSE) {
-                trigger_chuck_action(usart_chuck, CHUCK_CLOSE);
-            } else if (tooluse_flag == 1U && usart_chuck->state != CHUCK_OPEN) {
-                trigger_chuck_action(usart_chuck, CHUCK_OPEN);
-            }
-        } else if (tool_flag == TOOL_DEV_CLAMP) {
-            clamp_Handle_t *usart_clamp = Tool_GetClamp(TOOL_USART_SOURCE);
-            if (tooluse_flag == 0U && usart_clamp->state != CLAMP_CLOSE) {
-                trigger_clamp_action(usart_clamp, CLAMP_CLOSE);
-            } else if (tooluse_flag == 1U && usart_clamp->state != CLAMP_OPEN) {
-                trigger_clamp_action(usart_clamp, CLAMP_OPEN);
-            }
-        }
+        Tool_SetClampActuator(Tool_GetClamp(TOOL_USART_SOURCE),
+                              (clampuse_flag != 0U) ? CLAMP_OPEN : CLAMP_CLOSE);
+        Tool_SetChuckActuator(Tool_GetChuck(TOOL_USART_SOURCE),
+                              (chuckuse_flag != 0U) ? CHUCK_OPEN : CHUCK_CLOSE);
     }
 }
 

@@ -65,6 +65,8 @@ def _remote_kwargs(args: argparse.Namespace):
         "source_usb": args.source_usb,
         "tool": args.tool,
         "tool_action": args.tool_action,
+        "clamp_action": args.clamp_action,
+        "chuck_action": args.chuck_action,
         "climb_enable": args.climb_enable,
         "climb_step": args.climb_step,
         "climb_auto": args.climb_auto,
@@ -140,8 +142,10 @@ def build_parser() -> argparse.ArgumentParser:
         p.add_argument("--arm-enable", type=int, choices=[0, 1], default=0)
         p.add_argument("--source-usart", dest="source_usb", action="store_const", const=0, default=0)
         p.add_argument("--source-usb", dest="source_usb", action="store_const", const=1)
-        p.add_argument("--tool", type=int, choices=[0, 1], default=0, help="0 clamp, 1 chuck.")
-        p.add_argument("--tool-action", type=int, choices=[0, 1], default=0, help="0 close, 1 open.")
+        p.add_argument("--tool", type=int, choices=[0, 1], default=0, help="0 clamp position, 1 chuck position.")
+        p.add_argument("--tool-action", type=int, choices=[0, 1], help="Legacy alias for --clamp-action.")
+        p.add_argument("--clamp-action", type=int, choices=[0, 1], default=0, help="0 clamp close, 1 clamp open.")
+        p.add_argument("--chuck-action", type=int, choices=[0, 1], default=0, help="0 chuck close, 1 chuck open.")
         p.add_argument("--climb-enable", type=int, choices=[0, 1], default=0)
         p.add_argument("--climb-step", type=int, choices=[0, 1], default=0)
         p.add_argument("--climb-auto", type=int, choices=[0, 1], default=0)

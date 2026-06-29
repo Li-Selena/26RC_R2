@@ -42,6 +42,8 @@ typedef enum
 
 #define R2_MOVE_XY_V_MAX_MPS        MEC_REMOTE_XY_MAX_MPS
 #define R2_MOVE_XY_A_MAX_MPS2       2.0f
+#define R2_MOVE_X_A_MAX_MPS2        1.2f   /* vx/right-left ramp: reduce lateral start/stop yaw kick */
+#define R2_MOVE_Y_A_MAX_MPS2        R2_MOVE_XY_A_MAX_MPS2
 #define R2_MOVE_XY_J_MAX_MPS3       10.0f
 
 /* ─── 位置控制子状态 ────────────────────────────────── */

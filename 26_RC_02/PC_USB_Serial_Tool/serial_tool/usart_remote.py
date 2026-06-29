@@ -11,7 +11,9 @@ def build_remote_data(
     arm_enable: int = 0,
     source_usb: int = 0,
     tool: int = 0,
-    tool_action: int = 0,
+    tool_action: Optional[int] = None,
+    clamp_action: int = 0,
+    chuck_action: int = 0,
     climb_enable: int = 0,
     climb_step: int = 0,
     climb_auto: int = 0,
@@ -28,10 +30,13 @@ def build_remote_data(
     data[8] = 1 if arm_enable else 0
     data[9] = 1 if source_usb else 0
     data[10] = 1 if tool else 0
-    data[11] = 1 if tool_action else 0
-    data[12] = 1 if climb_enable else 0
-    data[13] = 1 if climb_step else 0
-    data[14] = 1 if climb_auto else 0
+    if tool_action is not None:
+        clamp_action = tool_action
+    data[11] = 1 if clamp_action else 0
+    data[12] = 1 if chuck_action else 0
+    data[13] = 1 if climb_enable else 0
+    data[14] = 1 if climb_step else 0
+    data[15] = 1 if climb_auto else 0
 
     chassis_vals = list(chassis)
     arm_vals = list(arm_target)
@@ -40,7 +45,7 @@ def build_remote_data(
     if len(arm_vals) != 3:
         raise ValueError("arm_target needs 3 floats")
 
-    data[15:39] = struct.pack("<6f", *(chassis_vals + arm_vals))
+    data[16:40] = struct.pack("<6f", *(chassis_vals + arm_vals))
     return bytes(data)
 
 

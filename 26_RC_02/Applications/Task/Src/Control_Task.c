@@ -54,7 +54,7 @@ R2_DebugOdom_t g_r2_debug_odom;
 uint32_t g_r2_tick_ms = 0U;
 
 /* 1ms 里程计：记录上一周期编码器值，计算增量 */
-int32_t g_r2_last_enc[4];    /* motor_fdcan1[0..3].total_angle 上次读数 */
+int32_t g_r2_last_enc[CHASSIS_MOTOR_COUNT]; /* [0..3] = FR, BR, BL, FL physical motors 1..4 */
 uint8_t g_r2_enc_inited = 0U;
 
 
@@ -63,7 +63,8 @@ extern int8_t control_cmd ;
 
 //串口控制切换工具
 extern uint8_t tool_flag;
-extern uint8_t tooluse_flag;
+extern uint8_t clampuse_flag;
+extern uint8_t chuckuse_flag;
 
 
 
@@ -71,6 +72,7 @@ static void Arm_task(void);    //��е�ۿ��ƴ���
 static void R2_Control_1msStep(void);
 
 static TaskHandle_t s_control_task_handle = NULL;
+static uint8_t s_usart_arm_hold_active = 0U;
 
 void Mecanum_task_USB(ChassisVel_t *chassis_user, MecanumParam_t *param_user, WheelSpeed_t *speed_user);    //ķֵ̿ƴרŸUSBݽõĽӿ
 void Arm_task_USB(float x,float y,float z);    //еۿƴרŸUSBݽõĽӿ
@@ -141,21 +143,11 @@ static void Arm_task()
 
     if (arm_flag != 1)
     {
-        model_theta1 = 0.0f;
-        model_theta2 = 0.0f;
-        model_theta3 = 0.0f;
-
-        ctrl_j1 = 0.0f;
-        ctrl_j2 = 0.0f;
-        ctrl_j3 = 0.0f;
-
-        model_J_USART[0] = 0.0f;
-        model_J_USART[1] = 0.0f;
-        model_J_USART[2] = 0.0f;
-
-        ctrl_J_USART[0] = 0.0f;
-        ctrl_J_USART[1] = 0.0f;
-        ctrl_J_USART[2] = 0.0f;
+        if (s_usart_arm_hold_active == 0U) {
+            Arm_HoldCurrentPosition(TOOL_USART_SOURCE);
+            s_usart_arm_hold_active = 1U;
+        }
+        arm_input_valid = 0U;
         return;
     }
 
@@ -166,24 +158,14 @@ static void Arm_task()
 
     if(start_X == arm_X && start_Y == arm_Y && start_Z == arm_Z)
     {
-		model_theta1 = 0.0f;
-		model_theta2 = 0.0f;
-		model_theta3 = 0.0f;
-
-		ctrl_j1 = 0.0f;
-		ctrl_j2 = 0.0f;
-		ctrl_j3 = 0.0f;
-
-        model_J_USART[0] = 0.0f;
-        model_J_USART[1] = 0.0f;
-        model_J_USART[2] = 0.0f;
-
-        ctrl_J_USART[0] = 0.0f;
-        ctrl_J_USART[1] = 0.0f;
-        ctrl_J_USART[2] = 0.0f;
+        if (s_usart_arm_hold_active == 0U) {
+            Arm_HoldCurrentPosition(TOOL_USART_SOURCE);
+            s_usart_arm_hold_active = 1U;
+        }
     }
     else
     {
+        s_usart_arm_hold_active = 0U;
         ArmIK_ComponentStep(arm_X, arm_Y, arm_Z);
 
         /* ��ȡӦ�ò㵱ǰʵ��ά�ֵİ�ȫ��� */
@@ -191,26 +173,13 @@ static void Arm_task()
 
         if (app->has_last_valid != 0U)
         {
-		    if(arm_flag == 1)
-            {
-                model_J_USART[0] = app->active_model.theta1;
-                model_J_USART[1] = app->active_model.theta2;
-                model_J_USART[2] = app->active_model.theta3;
+            model_J_USART[0] = app->active_model.theta1;
+            model_J_USART[1] = app->active_model.theta2;
+            model_J_USART[2] = app->active_model.theta3;
 
-                ctrl_J_USART[0] = app->active_motor_deg.j1_deg;
-                ctrl_J_USART[1] = app->active_motor_deg.j2_deg;
-                ctrl_J_USART[2] = app->active_motor_deg.j3_deg;
-		    }
-		    else 
-		    {
-			    model_J_USART[0] = 0.0f;
-			    model_J_USART[1] = 0.0f;
-			    model_J_USART[2] = 0.0f;
-
-			    ctrl_J_USART[0] = 0.0f;
-			    ctrl_J_USART[1] = 0.0f;
-			    ctrl_J_USART[2] = 0.0f;
-		    }
+            ctrl_J_USART[0] = app->active_motor_deg.j1_deg;
+            ctrl_J_USART[1] = app->active_motor_deg.j2_deg;
+            ctrl_J_USART[2] = app->active_motor_deg.j3_deg;
 
 	        if (ArmEchoUart10_IsBusy() == 0U)
             {
@@ -259,15 +228,7 @@ void Arm_task_USB(float x,float y,float z)
 
     if(start_X_USB == x && start_Y_USB == y && start_Z_USB == z)
     {
-        taskENTER_CRITICAL();
-		model_J_USB[0] = 0.0f;
-		model_J_USB[1] = 0.0f;
-		model_J_USB[2] = 0.0f;
-
-		ctrl_J_USB[0] = 0.0f;
-		ctrl_J_USB[1] = 0.0f;
-		ctrl_J_USB[2] = 0.0f;
-        taskEXIT_CRITICAL();
+        Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
     }
     else
     {
@@ -305,9 +266,9 @@ void Arm_task_USB(float x,float y,float z)
 static void R2_Control_1msStep(void)
 {
     float now_sec;
-    float w_delta[4];
+    float w_delta[CHASSIS_MOTOR_COUNT];
     float robot_dx, robot_dy, robot_dyaw;
-    int32_t cur_enc[4];
+    int32_t cur_enc[CHASSIS_MOTOR_COUNT];
     int32_t delta;
     uint8_t i;
     float imu_yaw_rad;
@@ -341,7 +302,7 @@ static void R2_Control_1msStep(void)
     }
 
     /* 读取 4 路编码器当前累积值 */
-    for (i = 0U; i < 4U; i++) {
+    for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
         cur_enc[i] = motor_fdcan1[i].total_angle;
         g_r2_debug_odom.current_enc[i] = cur_enc[i];
         g_r2_debug_odom.last_enc[i] = g_r2_last_enc[i];
@@ -351,7 +312,7 @@ static void R2_Control_1msStep(void)
     if (g_r2_enc_inited != 0U) {
 
         /* 编码器增量 → 线位移 (m) */
-        for (i = 0U; i < 4U; i++) {
+        for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
             delta = cur_enc[i] - g_r2_last_enc[i];
             w_delta[i] = EncoderDeltaToWheelMeter(delta);
             g_r2_debug_odom.enc_delta[i] = delta;
@@ -367,10 +328,19 @@ static void R2_Control_1msStep(void)
          *   代入标准 FK: vx = (fl - fr - bl + br)/4 等, 得到以下公式。
          */
         /* Project robot frame: +X is right, +Y is front, +yaw is CCW. */
-        robot_dx   = (+w_delta[0] - w_delta[1] - w_delta[2] + w_delta[3]) * 0.25f;
-        robot_dy   = (-w_delta[0] - w_delta[1] + w_delta[2] + w_delta[3]) * 0.25f;
-        robot_dyaw = -(+w_delta[0] + w_delta[1] + w_delta[2] + w_delta[3])
-                    * 0.25f / (mecParam.L + mecParam.W);
+        {
+            float fr_delta = w_delta[CHASSIS_MOTOR_FR];
+            float br_delta = w_delta[CHASSIS_MOTOR_BR];
+            float bl_delta = w_delta[CHASSIS_MOTOR_BL];
+            float fl_delta = w_delta[CHASSIS_MOTOR_FL];
+
+            robot_dx   = MEC_RIGHT_SIGN *
+                         (+fr_delta - br_delta - bl_delta + fl_delta) * 0.25f;
+            robot_dy   = MEC_FORWARD_SIGN *
+                         (-fr_delta - br_delta + bl_delta + fl_delta) * 0.25f;
+            robot_dyaw = -(fr_delta + br_delta + bl_delta + fl_delta)
+                        * 0.25f / (mecParam.L + mecParam.W);
+        }
 
         robot_vx_mps = robot_dx * 1000.0f;
         robot_vy_mps = robot_dy * 1000.0f;
@@ -397,7 +367,7 @@ static void R2_Control_1msStep(void)
     } else {
         /* 首次调用：仅快照编码器基准值 */
         g_r2_enc_inited = 1U;
-        for (i = 0U; i < 4U; i++) {
+        for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
             g_r2_debug_odom.enc_delta[i] = 0;
             g_r2_debug_odom.wheel_delta_m[i] = 0.0f;
         }
@@ -411,7 +381,7 @@ static void R2_Control_1msStep(void)
     g_r2_debug_odom.enc_inited = g_r2_enc_inited;
 
     /* 保存本轮编码器值，供下一周期算增量 */
-    for (i = 0U; i < 4U; i++) {
+    for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
         g_r2_last_enc[i] = cur_enc[i];
     }
 

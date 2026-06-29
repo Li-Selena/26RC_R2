@@ -227,6 +227,48 @@ static void Tool_HoldChuck(chuck_Handle_t *chuck)
     update_chuck_real_angle(chuck, motor_fdcan3[3].total_angle);
     chuck->target_angle = chuck->real_angle;
 }
+
+void Tool_SetClampActuator(clamp_Handle_t *clamp, uint8_t target_state)
+{
+    if (clamp == 0) {
+        return;
+    }
+    if ((target_state != CLAMP_OPEN) && (target_state != CLAMP_CLOSE)) {
+        return;
+    }
+
+    Tool_SetClampServo(target_state);
+    clamp->state = target_state;
+    clamp->pending_state = target_state;
+
+    if (clamp->run_status == TOOL_STATUS_ERROR) {
+        return;
+    }
+    if (clamp->run_status != TOOL_STATUS_MOVING) {
+        clamp->run_status = TOOL_STATUS_IDLE;
+    }
+}
+
+void Tool_SetChuckActuator(chuck_Handle_t *chuck, uint8_t target_state)
+{
+    if (chuck == 0) {
+        return;
+    }
+    if ((target_state != CHUCK_OPEN) && (target_state != CHUCK_CLOSE)) {
+        return;
+    }
+
+    Tool_SetChuckSucker(target_state);
+    chuck->state = target_state;
+    chuck->pending_state = target_state;
+
+    if (chuck->run_status == TOOL_STATUS_ERROR) {
+        return;
+    }
+    if (chuck->run_status != TOOL_STATUS_MOVING) {
+        chuck->run_status = TOOL_STATUS_IDLE;
+    }
+}
 //更新使用控制状态
 // int update_clamp_control_state(clamp_Handle_t *clamp,uint8_t state)
 // {

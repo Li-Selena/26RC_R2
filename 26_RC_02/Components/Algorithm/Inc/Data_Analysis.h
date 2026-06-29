@@ -48,6 +48,7 @@
 #define USB_CMD_TOOL_ENABLE         0x31U
 #define USB_CMD_TOOL_SET_MODE       0x32U  /* datas[0]: 0=夹爪 1=吸盘 */
 #define USB_CMD_TOOL_ACTION         0x33U  /* datas[0]: 0=闭合 1=张开 */
+#define USB_CMD_TOOL_SET_STATE      0x34U  /* datas[0]: dev, datas[1]: 0=闭合 1=张开 */
 #define USB_CMD_TOOL_STOP           0x35U  /* 同松开 */
 #define USB_CMD_TOOL_GET_STATUS     0x36U
 
@@ -62,12 +63,17 @@
 #define USB_CMD_CLIMB_ENABLE        0x51U
 #define USB_CMD_CLIMB_SET_CTRL      0x52U  /* f0=enable, f1=step, f2=auto */
 #define USB_CMD_CLIMB_STEP          0x53U
-#define USB_CMD_CLIMB_AUTO          0x54U
+#define USB_CMD_CLIMB_UP_STEP       USB_CMD_CLIMB_STEP
+#define USB_CMD_CLIMB_UP_AUTO       0x54U
+#define USB_CMD_CLIMB_AUTO          USB_CMD_CLIMB_UP_AUTO
+#define USB_CMD_CLIMB_RUN           USB_CMD_CLIMB_UP_AUTO
+#define USB_CMD_CLIMB_UP_RUN        USB_CMD_CLIMB_UP_AUTO
 #define USB_CMD_CLIMB_STOP          0x55U
 #define USB_CMD_CLIMB_GET_STATUS    0x56U
 #define USB_CMD_CLIMB_TEST_ACTION   0x57U  /* f0=R2_ClimbTestAction_t */
 #define USB_CMD_CLIMB_DOWN_STEP     0x58U
 #define USB_CMD_CLIMB_DOWN_AUTO     0x59U
+#define USB_CMD_CLIMB_DOWN_RUN      USB_CMD_CLIMB_DOWN_AUTO
 
 #define USB_CHASSIS_TIMEOUT_MS      100U
 #define USB_ARM_TIMEOUT_MS          300U

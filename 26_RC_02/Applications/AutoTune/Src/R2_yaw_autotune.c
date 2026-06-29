@@ -71,20 +71,22 @@ typedef struct
 } TuneContext_t;
 
 /*
- * Nominal path is kept inside a 3m x 3m observation area with margin.
- * The later position segments pull the robot back instead of accumulating drift.
+ * Closed nominal path inside a 2.4m x 3.0m observation area.
+ * All eight R2 motion modes are visited once:
+ *   - VEL modes exercise yaw hold/rate PID and wheel velocity PID.
+ *   - POS modes exercise XY position loop, yaw position loop, yaw PID, and wheel PID.
+ * Nominal end pose returns to the start: x=0, y=0, yaw=0.
  */
 static const TuneSegment_t s_segments[] =
 {
-    {R2_MODE_ROBOT_NO_YAW_VEL,  0.00f,  0.30f,  0.00f,  0.00f,  0.00f,  0.000000f, 1800U, 3200U},
-    {R2_MODE_ROBOT_NO_YAW_VEL,  0.30f,  0.00f,  0.00f,  0.00f,  0.00f,  0.000000f, 1500U, 3000U},
-    {R2_MODE_WORLD_NO_YAW_VEL, -0.25f,  0.20f,  0.00f,  0.00f,  0.00f,  0.000000f, 1800U, 3300U},
-    {R2_MODE_ROBOT_VEL,         0.00f,  0.22f,  0.42f,  0.00f,  0.00f,  0.000000f, 1600U, 3200U},
-    {R2_MODE_WORLD_VEL,         0.28f, -0.24f, -0.35f,  0.00f,  0.00f,  0.000000f, 1600U, 3200U},
-    {R2_MODE_ROBOT_NO_YAW_POS,  0.00f,  0.00f,  0.00f,  0.00f,  0.55f,  0.000000f,    0U, 7000U},
-    {R2_MODE_WORLD_NO_YAW_POS,  0.00f,  0.00f,  0.00f,  0.55f, -0.45f,  0.000000f,    0U, 7000U},
-    {R2_MODE_ROBOT_POS,         0.00f,  0.00f,  0.00f, -0.45f,  0.45f,  0.785398f,    0U, 8000U},
-    {R2_MODE_WORLD_POS,         0.00f,  0.00f,  0.00f, -0.35f, -1.35f, -0.785398f,    0U, 9000U},
+    {R2_MODE_ROBOT_NO_YAW_VEL,  0.00f,  0.35f,  0.00f,  0.00f,  0.00f,  0.000000f, 1800U, 3300U},
+    {R2_MODE_WORLD_NO_YAW_VEL,  0.35f,  0.00f,  0.00f,  0.00f,  0.00f,  0.000000f, 1800U, 3300U},
+    {R2_MODE_ROBOT_VEL,         0.00f,  0.00f,  0.45f,  0.00f,  0.00f,  0.000000f, 1400U, 3000U},
+    {R2_MODE_WORLD_VEL,        -0.25f,  0.25f, -0.45f,  0.00f,  0.00f,  0.000000f, 1400U, 3000U},
+    {R2_MODE_ROBOT_NO_YAW_POS,  0.00f,  0.00f,  0.00f, -0.28f,  0.00f,  0.000000f,    0U, 6500U},
+    {R2_MODE_WORLD_NO_YAW_POS,  0.00f,  0.00f,  0.00f,  0.00f, -0.68f,  0.000000f,    0U, 6500U},
+    {R2_MODE_ROBOT_POS,         0.00f,  0.00f,  0.00f,  0.30f, -0.30f,  0.523599f,    0U, 7000U},
+    {R2_MODE_WORLD_POS,         0.00f,  0.00f,  0.00f, -0.30f,  0.00f, -0.523599f,    0U, 7000U},
 };
 
 static TuneContext_t s_tune;
@@ -118,7 +120,7 @@ static uint8_t TuneMotorOnline(void)
 {
     uint8_t i;
 
-    for (i = 0U; i < 4U; i++) {
+    for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
         if (motor_fdcan1[i].msg_cnt < TUNE_MOTOR_ONLINE_MIN_CNT) {
             return 0U;
         }
@@ -132,7 +134,7 @@ static float TuneMaxWheelRpm(void)
     uint8_t i;
     float max_rpm = 0.0f;
 
-    for (i = 0U; i < 4U; i++) {
+    for (i = 0U; i < CHASSIS_MOTOR_COUNT; i++) {
         float rpm = TuneAbs((float)motor_fdcan1[i].speed_rpm);
         if (rpm > max_rpm) {
             max_rpm = rpm;
@@ -154,6 +156,22 @@ static void TuneSnapshotParams(R2_Move_Ctrl_t *ctrl)
     s_tune.status.rate_ki = p.rate_ki;
     s_tune.status.rate_kd = p.rate_kd;
     s_tune.status.pos_kp_yaw = (ctrl != NULL) ? ctrl->pos_kp_yaw : 0.0f;
+}
+
+static void TuneStartFail(R2_Move_Ctrl_t *ctrl, R2_YawAutoTuneFail_t reason)
+{
+    if (ctrl != NULL) {
+        R2_Move_Stop(ctrl);
+    }
+
+    memset(&s_tune, 0, sizeof(s_tune));
+    s_tune.ctrl = ctrl;
+    s_tune.phase = TUNE_PHASE_IDLE;
+    s_tune.status.state = (uint8_t)R2_YAW_AUTOTUNE_FAILED;
+    s_tune.status.fail_reason = (uint8_t)reason;
+    s_tune.status.phase = (uint8_t)TUNE_PHASE_IDLE;
+    s_tune.status.segment_count = (uint8_t)(sizeof(s_segments) / sizeof(s_segments[0]));
+    TuneSnapshotParams(ctrl);
 }
 
 static void TuneFail(R2_YawAutoTuneFail_t reason)
@@ -463,20 +481,17 @@ uint8_t R2_YawAutoTune_Start(R2_Move_Ctrl_t *ctrl, uint8_t pass_count)
     INS_NavState_t nav;
 
     if (ctrl == NULL) {
-        s_tune.status.state = (uint8_t)R2_YAW_AUTOTUNE_FAILED;
-        s_tune.status.fail_reason = (uint8_t)R2_YAW_AUTOTUNE_FAIL_BAD_ARG;
+        TuneStartFail(NULL, R2_YAW_AUTOTUNE_FAIL_BAD_ARG);
         return 0U;
     }
 
     INS_GetState(&nav);
     if (nav.imu_online == 0U) {
-        s_tune.status.state = (uint8_t)R2_YAW_AUTOTUNE_FAILED;
-        s_tune.status.fail_reason = (uint8_t)R2_YAW_AUTOTUNE_FAIL_IMU_OFFLINE;
+        TuneStartFail(ctrl, R2_YAW_AUTOTUNE_FAIL_IMU_OFFLINE);
         return 0U;
     }
     if (TuneMotorOnline() == 0U) {
-        s_tune.status.state = (uint8_t)R2_YAW_AUTOTUNE_FAILED;
-        s_tune.status.fail_reason = (uint8_t)R2_YAW_AUTOTUNE_FAIL_MOTOR;
+        TuneStartFail(ctrl, R2_YAW_AUTOTUNE_FAIL_MOTOR);
         return 0U;
     }
 

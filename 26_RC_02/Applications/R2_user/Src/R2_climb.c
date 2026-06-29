@@ -1,6 +1,7 @@
 #include "R2_climb.h"
 #include "fdcan_receive.h"
 #include "pid_user.h"
+#include "R2_laser_user.h"
 #include <string.h>
 
 extern motor_measure_t motor_fdcan2[8];
@@ -48,34 +49,32 @@ typedef struct
 } R2_ClimbMainStep_t;
 
 static const R2_ClimbMainStep_t s_main_steps[R2_CLIMB_MAIN_STEP_COUNT] = {
-    {"STEP_01_ALL_LEGS_220", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {220.0f, 220.0f, 220.0f, 220.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
-    {"STEP_02_DRIVE_FORWARD_120", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {220.0f, 220.0f, 220.0f, 220.0f}, 120.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(120.0f)},
-    {"STEP_03_ALL_LEGS_DOWN_30", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {190.0f, 190.0f, 190.0f, 190.0f}, 0.0f, R2_CLIMB_STEP_LEG_30_TIMEOUT_MS},
-    {"STEP_04_FRONT_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {0.0f, 190.0f, 190.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_FRONT_ZERO_TIMEOUT_MS},
-    {"STEP_05_FRONT_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {-10.0f, 190.0f, 190.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
-    {"STEP_06_DRIVE_FORWARD_360", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 190.0f, 190.0f, -10.0f}, 360.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(360.0f)},
-    {"STEP_07_ALL_LEGS_UP_30", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {20.0f, 220.0f, 220.0f, 20.0f}, 0.0f, R2_CLIMB_STEP_LEG_30_TIMEOUT_MS},
-    {"STEP_08_DRIVE_FORWARD_1530", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, 1530.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(1530.0f)},
-    {"STEP_09_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
-    {"STEP_10_REAR_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {0.0f, -10.0f, -10.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
-    {"STEP_11_CHASSIS_FORWARD_200", R2_CLIMB_MAIN_STEP_CHASSIS_DELTA, 0x00U, {0.0f, -10.0f, -10.0f, 0.0f}, 0.20f, R2_CLIMB_STEP_CHASSIS_200_TIMEOUT_MS},
+    {"STEP_01_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"STEP_02_ALL_LEGS_220", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {220.0f, 220.0f, 220.0f, 220.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"STEP_03_DRIVE_FORWARD_120", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {220.0f, 220.0f, 220.0f, 220.0f}, 120.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(120.0f)},
+    {"STEP_04_ALL_LEGS_DOWN_30", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {190.0f, 190.0f, 190.0f, 190.0f}, 0.0f, R2_CLIMB_STEP_LEG_30_TIMEOUT_MS},
+    {"STEP_05_FRONT_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {0.0f, 190.0f, 190.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_FRONT_ZERO_TIMEOUT_MS},
+    {"STEP_06_FRONT_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {-10.0f, 190.0f, 190.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_07_DRIVE_FORWARD_360", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 190.0f, 190.0f, -10.0f}, 360.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(360.0f)},
+    {"STEP_08_ALL_LEGS_UP_30", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {20.0f, 220.0f, 220.0f, 20.0f}, 0.0f, R2_CLIMB_STEP_LEG_30_TIMEOUT_MS},
+    {"STEP_09_DRIVE_FORWARD_1530", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, 1530.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(1530.0f)},
+    {"STEP_10_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"STEP_11_REAR_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {0.0f, -10.0f, -10.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"STEP_12_CHASSIS_FORWARD_200", R2_CLIMB_MAIN_STEP_CHASSIS_DELTA, 0x00U, {0.0f, -10.0f, -10.0f, 0.0f}, 0.20f, R2_CLIMB_STEP_CHASSIS_200_TIMEOUT_MS},
 };
 
 static const R2_ClimbMainStep_t s_downstairs_steps[R2_CLIMB_DOWNSTAIRS_STEP_COUNT] = {
-    {"DOWN_01_REAR_UP_200", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {-10.0f, 190.0f, 190.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
-    {"DOWN_02_FRONT_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {0.0f, 190.0f, 190.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
-    {"DOWN_03_ALL_LEGS_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {10.0f, 200.0f, 200.0f, 10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
-    {"DOWN_04_FRONT_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {20.0f, 200.0f, 200.0f, 20.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
-    {"DOWN_05_ALL_LEGS_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {30.0f, 210.0f, 210.0f, 30.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
-    {"DOWN_06_DRIVE_BACKWARD_1500", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {30.0f, 210.0f, 210.0f, 30.0f}, -1500.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(1500.0f)},
-    {"DOWN_07_DRIVE_BACKWARD_300", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {30.0f, 210.0f, 210.0f, 30.0f}, -300.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(300.0f)},
-    {"DOWN_08_ALL_LEGS_DOWN_40", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {-10.0f, 170.0f, 170.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_40_TIMEOUT_MS},
-    {"DOWN_09_FRONT_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {-10.0f, 170.0f, 170.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
-    {"DOWN_10_DRIVE_BACKWARD_120", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 170.0f, 170.0f, -10.0f}, -120.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(120.0f)},
-    {"DOWN_11_FRONT_UP_200", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {190.0f, 170.0f, 170.0f, 190.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
-    {"DOWN_12_DRIVE_BACKWARD_500", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {190.0f, 170.0f, 170.0f, 190.0f}, -500.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(500.0f)},
-    {"DOWN_13_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
-    {"DOWN_14_ALL_LEGS_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {-10.0f, -10.0f, -10.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"DOWN_01_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"DOWN_02_REAR_UP_200", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {-10.0f, 200.0f, 200.0f, -10.0f}, 0.0f, R2_CLIMB_LEG_TIMEOUT_MS(200.0f)},
+    {"DOWN_03_FRONT_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {0.0f, 200.0f, 200.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
+    {"DOWN_04_ALL_LEGS_UP_20", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {20.0f, 220.0f, 220.0f, 20.0f}, 0.0f, R2_CLIMB_STEP_LEG_20_TIMEOUT_MS},
+    {"DOWN_05_DRIVE_BACKWARD_1600", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, -1600.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(1600.0f)},
+    {"DOWN_06_ALL_LEGS_DOWN_30", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {-10.0f, 190.0f, 190.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_30_TIMEOUT_MS},
+    {"DOWN_07_DRIVE_BACKWARD_260", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 190.0f, 190.0f, -10.0f}, -260.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(260.0f)},
+    {"DOWN_08_FRONT_UP_200", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {190.0f, 190.0f, 190.0f, 190.0f}, 0.0f, R2_CLIMB_LEG_TIMEOUT_MS(200.0f)},
+    {"DOWN_09_DRIVE_BACKWARD_500", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {190.0f, 190.0f, 190.0f, 190.0f}, -500.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(500.0f)},
+    {"DOWN_10_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"DOWN_11_ALL_LEGS_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {-10.0f, -10.0f, -10.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
 };
 
 static uint8_t NormalizeFlow(uint8_t flow)
@@ -129,6 +128,14 @@ static uint8_t LegsReached(const R2_Climb_Ctrl_t *ctrl, uint8_t mask);
 static uint8_t DrivesReached(const R2_Climb_Ctrl_t *ctrl);
 static uint8_t StateUsesChassis(const R2_Climb_Ctrl_t *ctrl,
                                 R2_ClimbState_t state);
+static uint8_t UpLaserXReady(const R2_LaserMeasure_t *laser);
+static uint8_t UpLaserTriggerReached(void);
+static uint8_t UpLaserXInvalidTimedOut(R2_Climb_Ctrl_t *ctrl,
+                                       uint32_t now_ms);
+static uint8_t DownLaserHeightReady(const R2_LaserMeasure_t *laser);
+static uint8_t DownLaserTriggerReached(void);
+static uint8_t DownLaserHeightInvalidTimedOut(R2_Climb_Ctrl_t *ctrl,
+                                              uint32_t now_ms);
 
 static float AbsF(float x)
 {
@@ -157,12 +164,146 @@ static uint8_t ParamsReady(void)
     return 1U;
 }
 
+static uint8_t UpLaserXReady(const R2_LaserMeasure_t *laser)
+{
+    if (laser == 0) {
+        return 0U;
+    }
+
+    if ((laser->x_pos_valid == 0U) || (laser->x_pos_online == 0U)) {
+        return 0U;
+    }
+
+    if (laser->x_pos_mm < R2_CLIMB_UP_TRIGGER_X_MIN_MM) {
+        return 0U;
+    }
+
+    return 1U;
+}
+
+static uint8_t UpLaserTriggerReached(void)
+{
+    R2_LaserMeasure_t laser;
+
+    R2_LaserUser_GetMeasure(&laser);
+    if (UpLaserXReady(&laser) == 0U) {
+        return 0U;
+    }
+
+    if (laser.x_pos_mm >= R2_CLIMB_UP_TRIGGER_X_MAX_MM) {
+        return 0U;
+    }
+
+    return 1U;
+}
+
+static uint8_t UpLaserXInvalidTimedOut(R2_Climb_Ctrl_t *ctrl,
+                                       uint32_t now_ms)
+{
+    R2_LaserMeasure_t laser;
+
+    if (ctrl == 0) {
+        return 1U;
+    }
+
+    R2_LaserUser_GetMeasure(&laser);
+    if (UpLaserXReady(&laser) != 0U) {
+        ctrl->up_laser_invalid_active = 0U;
+        ctrl->up_laser_invalid_start_ms = 0U;
+        return 0U;
+    }
+
+    if (ctrl->up_laser_invalid_active == 0U) {
+        ctrl->up_laser_invalid_active = 1U;
+        ctrl->up_laser_invalid_start_ms = now_ms;
+        return 0U;
+    }
+
+    return ((now_ms - ctrl->up_laser_invalid_start_ms) >
+            R2_CLIMB_UP_LASER_INVALID_TIMEOUT_MS) ? 1U : 0U;
+}
+
+static uint8_t DownLaserHeightReady(const R2_LaserMeasure_t *laser)
+{
+    if (laser == 0) {
+        return 0U;
+    }
+
+    if ((laser->height_valid == 0U) || (laser->height_online == 0U)) {
+        return 0U;
+    }
+
+    if (laser->height_mm < 0) {
+        return 0U;
+    }
+
+    return 1U;
+}
+
+static uint8_t DownLaserTriggerReached(void)
+{
+    R2_LaserMeasure_t laser;
+
+    R2_LaserUser_GetMeasure(&laser);
+    if (DownLaserHeightReady(&laser) == 0U) {
+        return 0U;
+    }
+
+    return (laser.height_mm > R2_CLIMB_DOWN_TRIGGER_HEIGHT_MIN_MM) ? 1U : 0U;
+}
+
+static uint8_t DownLaserHeightInvalidTimedOut(R2_Climb_Ctrl_t *ctrl,
+                                              uint32_t now_ms)
+{
+    R2_LaserMeasure_t laser;
+
+    if (ctrl == 0) {
+        return 1U;
+    }
+
+    R2_LaserUser_GetMeasure(&laser);
+    if (DownLaserHeightReady(&laser) != 0U) {
+        ctrl->down_laser_invalid_active = 0U;
+        ctrl->down_laser_invalid_start_ms = 0U;
+        return 0U;
+    }
+
+    if (ctrl->down_laser_invalid_active == 0U) {
+        ctrl->down_laser_invalid_active = 1U;
+        ctrl->down_laser_invalid_start_ms = now_ms;
+        return 0U;
+    }
+
+    return ((now_ms - ctrl->down_laser_invalid_start_ms) >
+            R2_CLIMB_DOWN_LASER_INVALID_TIMEOUT_MS) ? 1U : 0U;
+}
+
 static uint32_t StateTimeoutMs(const R2_Climb_Ctrl_t *ctrl,
                                R2_ClimbState_t state)
 {
     uint32_t step = (uint32_t)state;
     const R2_ClimbMainStep_t *steps = CtrlSteps(ctrl);
     uint32_t count = CtrlStepCount(ctrl);
+
+    if (state == R2_CLIMB_STATE_PREPARE) {
+        return R2_CLIMB_PREPARE_TIMEOUT_MS;
+    }
+
+    if (state == R2_CLIMB_STATE_UP_APPROACH) {
+        return R2_CLIMB_UP_APPROACH_TIMEOUT_MS;
+    }
+
+    if (state == R2_CLIMB_STATE_UP_LASER_APPROACH) {
+        return R2_CLIMB_UP_LASER_APPROACH_TIMEOUT_MS;
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) {
+        return R2_CLIMB_DOWN_LASER_APPROACH_TIMEOUT_MS;
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_APPROACH) {
+        return R2_CLIMB_DOWN_APPROACH_TIMEOUT_MS;
+    }
 
     if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
         (step <= count)) {
@@ -177,6 +318,30 @@ static R2_ClimbState_t NextState(const R2_Climb_Ctrl_t *ctrl,
 {
     uint32_t step = (uint32_t)state;
     uint32_t count = CtrlStepCount(ctrl);
+
+    if (state == R2_CLIMB_STATE_UP_LASER_APPROACH) {
+        return R2_CLIMB_STATE_PREPARE;
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) {
+        return R2_CLIMB_STATE_DOWN_APPROACH;
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_APPROACH) {
+        return R2_CLIMB_STATE_PREPARE;
+    }
+
+    if (state == R2_CLIMB_STATE_PREPARE) {
+        if ((ctrl != 0) &&
+            (NormalizeFlow(ctrl->flow) == (uint8_t)R2_CLIMB_FLOW_UPSTAIRS)) {
+            return R2_CLIMB_STATE_UP_APPROACH;
+        }
+        return R2_CLIMB_STATE_STEP_1;
+    }
+
+    if (state == R2_CLIMB_STATE_UP_APPROACH) {
+        return R2_CLIMB_STATE_STEP_1;
+    }
 
     if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
         (step < count)) {
@@ -202,6 +367,26 @@ static const char *StateName(uint8_t flow, R2_ClimbState_t state)
 
     if (state == R2_CLIMB_STATE_ERROR) {
         return "ERROR";
+    }
+
+    if (state == R2_CLIMB_STATE_PREPARE) {
+        return "PREPARE_ALL_LEGS_MINUS_10";
+    }
+
+    if (state == R2_CLIMB_STATE_UP_APPROACH) {
+        return "UP_PREPARE_CHASSIS_FORWARD_30";
+    }
+
+    if (state == R2_CLIMB_STATE_UP_LASER_APPROACH) {
+        return "UP_LASER_APPROACH_X_LT_35";
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) {
+        return "DOWN_LASER_APPROACH_H_GT_65";
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_APPROACH) {
+        return "DOWN_PREPARE_CHASSIS_BACKWARD_5";
     }
 
     if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
@@ -396,6 +581,13 @@ static uint8_t StateUsesChassis(const R2_Climb_Ctrl_t *ctrl,
     const R2_ClimbMainStep_t *steps = CtrlSteps(ctrl);
     uint32_t count = CtrlStepCount(ctrl);
 
+    if ((state == R2_CLIMB_STATE_UP_APPROACH) ||
+        (state == R2_CLIMB_STATE_UP_LASER_APPROACH) ||
+        (state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) ||
+        (state == R2_CLIMB_STATE_DOWN_APPROACH)) {
+        return 1U;
+    }
+
     if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
         (step <= count) &&
         (steps[step - 1U].kind == R2_CLIMB_MAIN_STEP_CHASSIS_DELTA)) {
@@ -428,6 +620,129 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
     ctrl->test_active = 0U;
     ctrl->test_action = R2_CLIMB_TEST_NONE;
     ctrl->test_chassis_active = 0U;
+    ctrl->up_laser_invalid_active = 0U;
+    ctrl->up_laser_invalid_start_ms = 0U;
+    ctrl->down_laser_invalid_active = 0U;
+    ctrl->down_laser_invalid_start_ms = 0U;
+
+    if (state == R2_CLIMB_STATE_PREPARE) {
+        ClearLegPidByMask(0x0FU);
+        SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, 0.0f);
+        UpdatePositions(ctrl);
+        return;
+    }
+
+    if (state == R2_CLIMB_STATE_UP_LASER_APPROACH) {
+        SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, 0.0f);
+        if (move_ctrl != 0) {
+            R2_Move_Stop(move_ctrl);
+        }
+
+        if (UpLaserTriggerReached() == 0U) {
+            if (move_ctrl == 0) {
+                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+                ctrl->auto_run = 0U;
+                ctrl->state = R2_CLIMB_STATE_ERROR;
+            } else {
+                R2_Move_Resume(move_ctrl);
+                R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_VEL);
+                R2_Move_SetVel(move_ctrl,
+                               0.0f,
+                               R2_CLIMB_UP_LASER_APPROACH_SPEED_MPS,
+                               0.0f);
+                ctrl->test_chassis_active = 1U;
+                (void)UpLaserXInvalidTimedOut(ctrl, now_ms);
+            }
+        }
+        UpdatePositions(ctrl);
+        return;
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) {
+        SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, 0.0f);
+        if (move_ctrl != 0) {
+            R2_Move_Stop(move_ctrl);
+        }
+
+        if (DownLaserTriggerReached() == 0U) {
+            if (move_ctrl == 0) {
+                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+                ctrl->auto_run = 0U;
+                ctrl->state = R2_CLIMB_STATE_ERROR;
+            } else {
+                R2_Move_Resume(move_ctrl);
+                R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_VEL);
+                R2_Move_SetVel(move_ctrl,
+                               0.0f,
+                               R2_CLIMB_DOWN_LASER_APPROACH_SPEED_MPS,
+                               0.0f);
+                ctrl->test_chassis_active = 1U;
+                (void)DownLaserHeightInvalidTimedOut(ctrl, now_ms);
+            }
+        }
+        UpdatePositions(ctrl);
+        return;
+    }
+
+    if (state == R2_CLIMB_STATE_DOWN_APPROACH) {
+        SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, 0.0f);
+        if (move_ctrl == 0) {
+            ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+            ctrl->auto_run = 0U;
+            ctrl->state = R2_CLIMB_STATE_ERROR;
+        } else {
+            R2_Move_Stop(move_ctrl);
+            R2_Move_Resume(move_ctrl);
+            R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_POS);
+            if (R2_Move_SetDist(move_ctrl,
+                                0.0f,
+                                -R2_CLIMB_DOWN_APPROACH_BACKWARD_M,
+                                0.0f) == 0) {
+                ctrl->test_chassis_active = 1U;
+            } else {
+                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+                ctrl->auto_run = 0U;
+                ctrl->state = R2_CLIMB_STATE_ERROR;
+            }
+        }
+        UpdatePositions(ctrl);
+        return;
+    }
+
+    if (state == R2_CLIMB_STATE_UP_APPROACH) {
+        SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, 0.0f);
+        if (move_ctrl == 0) {
+            ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+            ctrl->auto_run = 0U;
+            ctrl->state = R2_CLIMB_STATE_ERROR;
+        } else {
+            R2_Move_Stop(move_ctrl);
+            R2_Move_Resume(move_ctrl);
+            R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_POS);
+            if (R2_Move_SetDist(move_ctrl,
+                                0.0f,
+                                R2_CLIMB_UP_APPROACH_FORWARD_M,
+                                0.0f) == 0) {
+                ctrl->test_chassis_active = 1U;
+            } else {
+                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
+                ctrl->auto_run = 0U;
+                ctrl->state = R2_CLIMB_STATE_ERROR;
+            }
+        }
+        UpdatePositions(ctrl);
+        return;
+    }
 
     if (((uint32_t)state >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
         ((uint32_t)state <= CtrlStepCount(ctrl))) {
@@ -792,6 +1107,34 @@ static uint8_t CurrentStateReached(const R2_Climb_Ctrl_t *ctrl,
     const R2_ClimbMainStep_t *step;
     const R2_ClimbMainStep_t *steps = CtrlSteps(ctrl);
     uint32_t count = CtrlStepCount(ctrl);
+
+    if (ctrl->state == R2_CLIMB_STATE_PREPARE) {
+        return LegsReached(ctrl, 0x0FU);
+    }
+
+    if (ctrl->state == R2_CLIMB_STATE_UP_LASER_APPROACH) {
+        return UpLaserTriggerReached();
+    }
+
+    if (ctrl->state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) {
+        return DownLaserTriggerReached();
+    }
+
+    if (ctrl->state == R2_CLIMB_STATE_DOWN_APPROACH) {
+        if ((move_ctrl != 0) &&
+            (R2_Move_GetPosState(move_ctrl) == R2_POS_DONE)) {
+            return 1U;
+        }
+        return 0U;
+    }
+
+    if (ctrl->state == R2_CLIMB_STATE_UP_APPROACH) {
+        if ((move_ctrl != 0) &&
+            (R2_Move_GetPosState(move_ctrl) == R2_POS_DONE)) {
+            return 1U;
+        }
+        return 0U;
+    }
 
     if ((step_index < (uint32_t)R2_CLIMB_STATE_STEP_1) ||
         (step_index > count)) {
@@ -1191,7 +1534,18 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
             ctrl->auto_run = 1U;
             if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
                 (ctrl->state == R2_CLIMB_STATE_DONE)) {
-                BeginState(ctrl, move_ctrl, R2_CLIMB_STATE_STEP_1, now_ms);
+                if (NormalizeFlow(ctrl->flow) ==
+                    (uint8_t)R2_CLIMB_FLOW_UPSTAIRS) {
+                    BeginState(ctrl,
+                               move_ctrl,
+                               R2_CLIMB_STATE_UP_LASER_APPROACH,
+                               now_ms);
+                } else {
+                    BeginState(ctrl,
+                               move_ctrl,
+                               R2_CLIMB_STATE_DOWN_LASER_APPROACH,
+                               now_ms);
+                }
             } else if (ctrl->state_done != 0U) {
                 BeginState(ctrl, move_ctrl, NextState(ctrl, ctrl->state), now_ms);
             }
@@ -1202,7 +1556,7 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
     if (step != 0U) {
         ctrl->auto_run = 0U;
         if (ctrl->state == R2_CLIMB_STATE_IDLE) {
-            BeginState(ctrl, move_ctrl, R2_CLIMB_STATE_STEP_1, now_ms);
+            BeginState(ctrl, move_ctrl, R2_CLIMB_STATE_PREPARE, now_ms);
         } else if ((ctrl->state != R2_CLIMB_STATE_DONE) &&
                    (ctrl->state != R2_CLIMB_STATE_ERROR)) {
             BeginState(ctrl, move_ctrl, NextState(ctrl, ctrl->state), now_ms);
@@ -1213,6 +1567,36 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
         (ctrl->state == R2_CLIMB_STATE_DONE) ||
         (ctrl->state == R2_CLIMB_STATE_ERROR) ||
         (ctrl->state_done != 0U)) {
+        return;
+    }
+
+    if ((ctrl->state == R2_CLIMB_STATE_UP_LASER_APPROACH) &&
+        (UpLaserXInvalidTimedOut(ctrl, now_ms) != 0U)) {
+        ctrl->error_flags |= R2_CLIMB_ERR_TIMEOUT;
+        if (ctrl->test_chassis_active != 0U) {
+            if (move_ctrl != 0) {
+                R2_Move_Stop(move_ctrl);
+            }
+            ctrl->test_chassis_active = 0U;
+        }
+        ctrl->auto_run = 0U;
+        ctrl->state_done = 0U;
+        ctrl->state = R2_CLIMB_STATE_ERROR;
+        return;
+    }
+
+    if ((ctrl->state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) &&
+        (DownLaserHeightInvalidTimedOut(ctrl, now_ms) != 0U)) {
+        ctrl->error_flags |= R2_CLIMB_ERR_TIMEOUT;
+        if (ctrl->test_chassis_active != 0U) {
+            if (move_ctrl != 0) {
+                R2_Move_Stop(move_ctrl);
+            }
+            ctrl->test_chassis_active = 0U;
+        }
+        ctrl->auto_run = 0U;
+        ctrl->state_done = 0U;
+        ctrl->state = R2_CLIMB_STATE_ERROR;
         return;
     }
 

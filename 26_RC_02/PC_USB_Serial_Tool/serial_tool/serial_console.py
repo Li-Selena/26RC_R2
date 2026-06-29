@@ -281,14 +281,16 @@ class SerialShell:
                 self._write(build_usb_command("TOOL_ACTION", [0.0]))
             elif op == "tool_open":
                 self._write(build_usb_command("TOOL_ACTION", [1.0]))
+            elif op == "tool_state":
+                self._write(build_usb_command("TOOL_SET_STATE", self._need_floats(args, 2, "tool_state DEV ACT")))
             elif op == "chuck_open":
-                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_MODE", [1.0]), build_usb_command("TOOL_ACTION", [1.0]), build_usb_command("TOOL_GET_STATUS")])
+                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_STATE", [1.0, 1.0]), build_usb_command("TOOL_GET_STATUS")])
             elif op == "chuck_close":
-                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_MODE", [1.0]), build_usb_command("TOOL_ACTION", [0.0]), build_usb_command("TOOL_GET_STATUS")])
+                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_STATE", [1.0, 0.0]), build_usb_command("TOOL_GET_STATUS")])
             elif op == "clamp_open":
-                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_MODE", [0.0]), build_usb_command("TOOL_ACTION", [1.0]), build_usb_command("TOOL_GET_STATUS")])
+                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_STATE", [0.0, 1.0]), build_usb_command("TOOL_GET_STATUS")])
             elif op == "clamp_close":
-                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_MODE", [0.0]), build_usb_command("TOOL_ACTION", [0.0]), build_usb_command("TOOL_GET_STATUS")])
+                self._write_sequence([build_usb_command("TOOL_ENABLE"), build_usb_command("TOOL_SET_STATE", [0.0, 0.0]), build_usb_command("TOOL_GET_STATUS")])
             elif op == "tune_start":
                 pass_count = float(args[0]) if args else 1.0
                 self._write_sequence(
@@ -309,42 +311,42 @@ class SerialShell:
                         build_usb_command("YAW_TUNE_GET_STATUS"),
                     ]
                 )
-            elif op in {"climb_auto", "climb_upstairs_auto"}:
+            elif op in {"climb_auto", "climb_run", "climb_up_auto", "climb_up_run", "climb_upstairs_auto", "climb_upstairs_run"}:
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_AUTO"),
+                        build_usb_command("CLIMB_UP_AUTO"),
                         build_usb_command("CLIMB_GET_STATUS"),
                     ]
                 )
-            elif op in {"climb_auto_wait", "climb_upstairs_auto_wait"}:
+            elif op in {"climb_auto_wait", "climb_run_wait", "climb_up_auto_wait", "climb_up_run_wait", "climb_upstairs_auto_wait", "climb_upstairs_run_wait"}:
                 timeout_s = self._optional_timeout(args, DEFAULT_CLIMB_FINAL_TIMEOUT_S)
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_AUTO"),
+                        build_usb_command("CLIMB_UP_AUTO"),
                     ]
                 )
                 time.sleep(CLIMB_COMMAND_SETTLE_S)
                 self._wait_for_climb(timeout_s, final_state=True)
-            elif op == "climb_downstairs_auto":
+            elif op in {"climb_down_auto", "climb_down_run", "climb_downstairs_auto", "climb_downstairs_run"}:
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_DOWNSTAIRS_AUTO"),
+                        build_usb_command("CLIMB_DOWN_AUTO"),
                         build_usb_command("CLIMB_GET_STATUS"),
                     ]
                 )
-            elif op == "climb_downstairs_auto_wait":
+            elif op in {"climb_down_auto_wait", "climb_down_run_wait", "climb_downstairs_auto_wait", "climb_downstairs_run_wait"}:
                 timeout_s = self._optional_timeout(args, DEFAULT_CLIMB_FINAL_TIMEOUT_S)
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_DOWNSTAIRS_AUTO"),
+                        build_usb_command("CLIMB_DOWN_AUTO"),
                     ]
                 )
                 time.sleep(CLIMB_COMMAND_SETTLE_S)
@@ -354,39 +356,39 @@ class SerialShell:
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_STEP"),
+                        build_usb_command("CLIMB_UP_STEP"),
                         build_usb_command("CLIMB_GET_STATUS"),
                     ]
                 )
-            elif op == "climb_downstairs_step":
+            elif op in {"climb_down_step", "climb_downstairs_step"}:
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_DOWNSTAIRS_STEP"),
+                        build_usb_command("CLIMB_DOWN_STEP"),
                         build_usb_command("CLIMB_GET_STATUS"),
                     ]
                 )
-            elif op in {"climb_step_wait", "climb_next", "climb_upstairs_step_wait", "climb_upstairs_next"}:
+            elif op in {"climb_step_wait", "climb_next", "climb_up_step_wait", "climb_up_next", "climb_upstairs_step_wait", "climb_upstairs_next"}:
                 timeout_s = self._optional_timeout(args)
                 self._wait_for_climb(timeout_s, final_state=False)
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_STEP"),
+                        build_usb_command("CLIMB_UP_STEP"),
                     ]
                 )
                 time.sleep(CLIMB_COMMAND_SETTLE_S)
                 self._wait_for_climb(timeout_s, final_state=False)
-            elif op in {"climb_downstairs_step_wait", "climb_downstairs_next"}:
+            elif op in {"climb_down_step_wait", "climb_down_next", "climb_downstairs_step_wait", "climb_downstairs_next"}:
                 timeout_s = self._optional_timeout(args)
                 self._wait_for_climb(timeout_s, final_state=False)
                 self._write_sequence(
                     [
                         build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
                         build_usb_command("CLIMB_ENABLE"),
-                        build_usb_command("CLIMB_DOWNSTAIRS_STEP"),
+                        build_usb_command("CLIMB_DOWN_STEP"),
                     ]
                 )
                 time.sleep(CLIMB_COMMAND_SETTLE_S)
@@ -836,10 +838,10 @@ class SerialShell:
                     "usb | usart | enable | disable | stop | status",
                     "chs_enable | chs_disable | chs_mode MODE | vel VX VY VW [LOCK] | pos DX DY DYAW | chs_stop | chs_status",
                     "arm_enable | arm_disable | arm_target X Y Z | arm_stop | arm_status",
-                    "tool_enable | tool_chuck | tool_clamp | tool_open | tool_close | chuck_open | chuck_close | clamp_open | clamp_close | tool_status",
-                    "climb_enable | climb_step | climb_auto | climb_ctrl ENABLE STEP AUTO | climb_stop | climb_status",
-                    "climb_wait [timeout_s] | climb_step_wait [timeout_s] | climb_auto_wait [timeout_s] | climb_wait_then NAME [float...]",
-                    "climb_downstairs_step | climb_downstairs_step_wait [timeout_s] | climb_downstairs_auto | climb_downstairs_auto_wait [timeout_s]",
+                    "tool_enable | tool_chuck/tool_clamp position | tool_open/tool_close legacy | tool_state DEV ACT | chuck_open/close | clamp_open/close | tool_status",
+                    "climb_enable | climb_step | climb_up_auto/climb_auto | climb_ctrl ENABLE STEP AUTO | climb_stop | climb_status",
+                    "climb_wait [timeout_s] | climb_step_wait [timeout_s] | climb_up_auto_wait/climb_auto_wait [timeout_s] | climb_wait_then NAME [float...]",
+                    "climb_down_step/climb_downstairs_step | climb_down_step_wait [timeout_s] | climb_down_auto/climb_downstairs_auto | climb_down_auto_wait [timeout_s]",
                     "climb_tests | climb_test ACTION | climb_test_wait ACTION [timeout_s]",
                     "climb_<action_name_lower> [timeout_s], for example climb_all_legs_220 or climb_all_legs_zero 10",
                     "tune_start [pass_count] | tune_status | tune_stop",

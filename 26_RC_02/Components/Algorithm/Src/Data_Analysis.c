@@ -24,6 +24,7 @@ static void USB_ToolWatchdog_Disarm(void);
 static void USB_ArmWatchdog_Check(uint32_t now_tick);
 static void USB_ToolWatchdog_Check(uint32_t now_tick);
 static void USB_CommandRx_Record(uint8_t cmd, const uint8_t *d, uint8_t len);
+static void USB_ToolSetActuator(uint8_t dev, uint8_t act);
 static float  Clamp(float x, float lo, float hi);
 
 extern void    Arm_task_USB(float x, float y, float z);
@@ -60,6 +61,7 @@ static volatile float    s_usb_cmd_last_f[4] = {0.0f};
 #define USB_ARM_TNUM1           0.0002464f
 #define USB_ARM_TNUM23          0.0004577f
 
+
 uint8_t tool_dev = TOOL_DEV_CLAMP;  /* 0=夹爪 1=吸盘 */
 
 
@@ -77,13 +79,17 @@ uint8_t tool_dev = TOOL_DEV_CLAMP;  /* 0=夹爪 1=吸盘 */
  *   vx    vy    vw    lock_yaw   ← CHS_SET_VEL
  *   dx    dy    dyaw  (reserved) ← CHS_SET_POS
  *   x     y     z     (reserved) ← ARM_SET_TARGET
- *   dev   act   —     —          ← TOOL_SET_MODE / TOOL_ACTION
+ *   dev   act   —     —          ← TOOL_SET_STATE
+ *   dev   —     —     —          ← TOOL_SET_MODE
+ *   act   —     —     —          ← TOOL_ACTION (legacy current-position action)
  *   src   —     —     —          ← SYS_SWITCH_SOURCE
  *   mode  —     —     —          ← CHS_SET_MODE
  */
 void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
 {
     float f[4] = {0.0f, 0.0f, 0.0f, 0.0f};
+    uint8_t climb_auto_level = 0U;
+    uint8_t climb_auto_allowed = 1U;
 
     USB_CommandRx_Record(cmd, d, len);
 
@@ -243,7 +249,8 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
                 Arm_task_USB(f[0], f[1], f[2]);
                 USB_ArmWatchdog_Feed();
             } else {
-                Arm_task_USB(f[0], f[1], f[2]);
+                ArmIK_ComponentStep(f[0], f[1], f[2]);
+                Arm_HoldCurrentPosition(TOOL_USB_SOURCE);
                 USB_ArmWatchdog_Disarm();
             }
         } else {
@@ -289,15 +296,19 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
             uint8_t act = (uint8_t)f[0];  /* 0=闭合 1=张开 */
             if (!USB_Task_flag || !Tool_control_flag) break;
             taskENTER_CRITICAL();
-            if (Tool_GetSelectedDev(TOOL_USB_SOURCE) == TOOL_DEV_CHUCK) {
-                chuck_Handle_t *usb_chuck = Tool_GetChuck(TOOL_USB_SOURCE);
-                if (act==0U && usb_chuck->state!=CHUCK_CLOSE) trigger_chuck_action(usb_chuck, CHUCK_CLOSE);
-                if (act==1U && usb_chuck->state!=CHUCK_OPEN)  trigger_chuck_action(usb_chuck, CHUCK_OPEN);
-            } else {
-                clamp_Handle_t *usb_clamp = Tool_GetClamp(TOOL_USB_SOURCE);
-                if (act==0U && usb_clamp->state!=CLAMP_CLOSE) trigger_clamp_action(usb_clamp, CLAMP_CLOSE);
-                if (act==1U && usb_clamp->state!=CLAMP_OPEN)  trigger_clamp_action(usb_clamp, CLAMP_OPEN);
-            }
+            USB_ToolSetActuator(Tool_GetSelectedDev(TOOL_USB_SOURCE), act);
+            taskEXIT_CRITICAL();
+            USB_ToolWatchdog_Feed();
+        }
+        break;
+    case USB_CMD_TOOL_SET_STATE:
+        if (!USB_Read4FloatsChecked(d, len, f)) break;
+        {
+            uint8_t dev = (uint8_t)f[0];  /* 0=夹爪 1=吸盘 */
+            uint8_t act = (uint8_t)f[1];  /* 0=闭合 1=张开 */
+            if (!USB_Task_flag || !Tool_control_flag) break;
+            taskENTER_CRITICAL();
+            USB_ToolSetActuator(dev, act);
             taskEXIT_CRITICAL();
             USB_ToolWatchdog_Feed();
         }
@@ -323,14 +334,17 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
     case USB_CMD_YAW_TUNE_START:
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         if (len == 16U) {
-            USB_Read4Floats(d, f);
+            if (!USB_Read4FloatsChecked(d, len, f)) break;
         }
         if (USB_Task_flag && Mecanum_control_flag) {
             uint8_t pass_count = (uint8_t)f[0];
-            USB_ChassisWatchdog_Disarm();
+            uint8_t started;
             taskENTER_CRITICAL();
-            (void)R2_YawAutoTune_Start(&g_r2_ctrl_usb, pass_count);
+            started = R2_YawAutoTune_Start(&g_r2_ctrl_usb, pass_count);
             taskEXIT_CRITICAL();
+            if (started != 0U) {
+                USB_ChassisWatchdog_Disarm();
+            }
         }
         break;
 
@@ -370,15 +384,35 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
     case USB_CMD_CLIMB_SET_CTRL:
         if (!USB_Read4FloatsChecked(d, len, f)) break;
         if (USB_Task_flag) {
+            climb_auto_level = ((uint8_t)f[2]) ? 1U : 0U;
+            climb_auto_allowed = 1U;
+
             taskENTER_CRITICAL();
             if ((((uint8_t)f[0]) == 0U) &&
                 (g_r2_climb_usb.test_chassis_active != 0U)) {
                 R2_Move_Stop(&g_r2_ctrl_usb);
             }
-            R2_Climb_SetInput(&g_r2_climb_usb,
-                              ((uint8_t)f[0]) ? 1U : 0U,
-                              ((uint8_t)f[1]) ? 1U : 0U,
-                              ((uint8_t)f[2]) ? 1U : 0U);
+            /* Consume blocked auto edges so held-high input cannot start later. */
+            if ((((uint8_t)f[0]) != 0U) &&
+                (climb_auto_level != 0U) &&
+                (g_r2_climb_usb.last_auto_level == 0U) &&
+                (climb_auto_allowed == 0U)) {
+                R2_Climb_SetInput(&g_r2_climb_usb,
+                                  1U,
+                                  ((uint8_t)f[1]) ? 1U : 0U,
+                                  0U);
+                g_r2_climb_usb.last_auto_level = 1U;
+            } else {
+                R2_Climb_SetInput(&g_r2_climb_usb,
+                                  ((uint8_t)f[0]) ? 1U : 0U,
+                                  ((uint8_t)f[1]) ? 1U : 0U,
+                                  climb_auto_level);
+                if (((uint8_t)f[0] != 0U) &&
+                    (climb_auto_level != 0U) &&
+                    (climb_auto_allowed != 0U)) {
+                    USB_ChassisWatchdog_Disarm();
+                }
+            }
             taskEXIT_CRITICAL();
         }
         break;
@@ -393,10 +427,11 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         }
         break;
 
-    case USB_CMD_CLIMB_AUTO:
+    case USB_CMD_CLIMB_UP_AUTO:
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         if (USB_Task_flag) {
             taskENTER_CRITICAL();
+            USB_ChassisWatchdog_Disarm();
             R2_Climb_RequestFlowAuto(&g_r2_climb_usb,
                                      R2_CLIMB_FLOW_UPSTAIRS);
             taskEXIT_CRITICAL();
@@ -417,6 +452,7 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         if (USB_Task_flag) {
             taskENTER_CRITICAL();
+            USB_ChassisWatchdog_Disarm();
             R2_Climb_RequestFlowAuto(&g_r2_climb_usb,
                                      R2_CLIMB_FLOW_DOWNSTAIRS);
             taskEXIT_CRITICAL();
@@ -487,6 +523,29 @@ static void USB_CommandRx_Record(uint8_t cmd, const uint8_t *d, uint8_t len)
         s_usb_cmd_last_f[i] = (payload_valid != 0U) ? f[i] : 0.0f;
     }
     taskEXIT_CRITICAL();
+}
+
+static void USB_ToolSetActuator(uint8_t dev, uint8_t act)
+{
+    if ((act != 0U) && (act != 1U)) {
+        return;
+    }
+
+    if (dev == TOOL_DEV_CHUCK) {
+        chuck_Handle_t *usb_chuck = Tool_GetChuck(TOOL_USB_SOURCE);
+        if (act == 0U) {
+            Tool_SetChuckActuator(usb_chuck, CHUCK_CLOSE);
+        } else {
+            Tool_SetChuckActuator(usb_chuck, CHUCK_OPEN);
+        }
+    } else if (dev == TOOL_DEV_CLAMP) {
+        clamp_Handle_t *usb_clamp = Tool_GetClamp(TOOL_USB_SOURCE);
+        if (act == 0U) {
+            Tool_SetClampActuator(usb_clamp, CLAMP_CLOSE);
+        } else {
+            Tool_SetClampActuator(usb_clamp, CLAMP_OPEN);
+        }
+    }
 }
 
 void USB_GetCommandRxState(USB_CommandRxState_t *out)

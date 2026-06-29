@@ -158,7 +158,7 @@ static void SendSysStatus(void)
     buf[2] = Mecanum_control_flag;
     buf[3] = Arm_control_flag;
     buf[4] = Tool_control_flag;
-    buf[5] = MotorOnline(motor_fdcan1, 4U);
+    buf[5] = MotorOnline(motor_fdcan1, CHASSIS_MOTOR_COUNT);
     buf[6] = USB_ControlWatchdog_TimeoutFlags();
     buf[7] = 0U;
     Send_Cmd_Data(USB_CMD_SYS_GET_STATUS, buf, 8U);
@@ -490,6 +490,7 @@ void RobotStatusView_Update(void)
     uint8_t climb_motor_active;
     uint8_t chassis_motor_online;
     uint8_t arm_motor_online;
+    uint8_t arm_enabled;
     uint8_t climb_motor_online;
     uint8_t yaw_tune_running;
     uint8_t enable_flags = 0U;
@@ -545,6 +546,14 @@ void RobotStatusView_Update(void)
         active_source_stale = 1U;
     }
 
+    if (active_source == TOOL_USB_SOURCE) {
+        arm_enabled = (Arm_control_flag != 0U) ? 1U : 0U;
+    } else if (active_source == TOOL_USART_SOURCE) {
+        arm_enabled = (usart_rx.arm_flag == 1U) ? 1U : 0U;
+    } else {
+        arm_enabled = 0U;
+    }
+
     chassis_pos_running = (chs.pos_state == R2_POS_RUNNING) ? 1U : 0U;
     chassis_moving = ((chassis_pos_running != 0U) ||
                       (AbsF(chs.robot_vel.vx) > ROBOT_VEL_MOVE_TOL) ||
@@ -563,15 +572,12 @@ void RobotStatusView_Update(void)
     arm_moving = (((arm_err[0] > ROBOT_ARM_MOVE_TOL_DEG) ||
                    (arm_err[1] > ROBOT_ARM_MOVE_TOL_DEG) ||
                    (arm_err[2] > ROBOT_ARM_MOVE_TOL_DEG)) &&
-                  (Arm_control_flag != 0U)) ? 1U : 0U;
+                  (arm_enabled != 0U)) ? 1U : 0U;
 
-    if (selected_dev == TOOL_DEV_CHUCK) {
-        tool_moving = (chuck_snapshot.run_status == TOOL_STATUS_MOVING) ? 1U : 0U;
-        tool_error = (chuck_snapshot.run_status == TOOL_STATUS_ERROR) ? 1U : 0U;
-    } else {
-        tool_moving = (clamp_snapshot.run_status == TOOL_STATUS_MOVING) ? 1U : 0U;
-        tool_error = (clamp_snapshot.run_status == TOOL_STATUS_ERROR) ? 1U : 0U;
-    }
+    tool_moving = ((clamp_snapshot.run_status == TOOL_STATUS_MOVING) ||
+                   (chuck_snapshot.run_status == TOOL_STATUS_MOVING)) ? 1U : 0U;
+    tool_error = ((clamp_snapshot.run_status == TOOL_STATUS_ERROR) ||
+                  (chuck_snapshot.run_status == TOOL_STATUS_ERROR)) ? 1U : 0U;
 
     climb_motor_active = R2_Climb_IsMotorActive(&climb);
     if ((climb.state_start_ms != 0U) &&
@@ -579,7 +585,7 @@ void RobotStatusView_Update(void)
         climb_elapsed_ms = climb.last_update_ms - climb.state_start_ms;
     }
 
-    chassis_motor_online = MotorOnline(motor_fdcan1, 4U);
+    chassis_motor_online = MotorOnline(motor_fdcan1, CHASSIS_MOTOR_COUNT);
     arm_motor_online = MotorOnline(motor_fdcan3, 3U);
     climb_motor_online = MotorOnline(motor_fdcan2, 6U);
     yaw_tune_running = (yaw_tune.state == (uint8_t)R2_YAW_AUTOTUNE_RUNNING) ? 1U : 0U;
@@ -589,7 +595,7 @@ void RobotStatusView_Update(void)
                             (arm_motor_online >= 3U) ? 1U : 0U);
 
     if (Mecanum_control_flag != 0U) enable_flags |= 0x01U;
-    if (Arm_control_flag != 0U)     enable_flags |= 0x02U;
+    if (arm_enabled != 0U)          enable_flags |= 0x02U;
     if (Tool_control_flag != 0U)    enable_flags |= 0x04U;
     if (climb.enabled != 0U)        enable_flags |= 0x08U;
 
@@ -615,7 +621,7 @@ void RobotStatusView_Update(void)
     if (usb_recent != 0U)             online_flags |= 0x01U;
     if (usart_recent != 0U)           online_flags |= 0x02U;
     if (nav.imu_online != 0U)         online_flags |= 0x04U;
-    if (chassis_motor_online >= 4U)   online_flags |= 0x08U;
+    if (chassis_motor_online >= CHASSIS_MOTOR_COUNT) online_flags |= 0x08U;
     if (arm_motor_online >= 3U)       online_flags |= 0x10U;
     if (climb_motor_online >= 6U)     online_flags |= 0x20U;
     if (laser.all_online != 0U)       online_flags |= 0x40U;
@@ -658,7 +664,8 @@ void RobotStatusView_Update(void)
     view->rx.usart_arm_flag = usart_rx.arm_flag;
     view->rx.usart_source_flag = usart_rx.uu_flag;
     view->rx.usart_tool_flag = usart_rx.tool_flag;
-    view->rx.usart_tooluse_flag = usart_rx.tooluse_flag;
+    view->rx.usart_clampuse_flag = usart_rx.clampuse_flag;
+    view->rx.usart_chuckuse_flag = usart_rx.chuckuse_flag;
     view->rx.usart_climb_enable = usart_rx.climb_enable;
     view->rx.usart_climb_step = usart_rx.climb_step;
     view->rx.usart_climb_auto = usart_rx.climb_auto;
@@ -696,7 +703,7 @@ void RobotStatusView_Update(void)
     view->chassis.pos_err_y = chs.pos_err_y;
     view->chassis.pos_err_yaw = chs.pos_err_yaw;
 
-    view->arm.enabled = Arm_control_flag;
+    view->arm.enabled = arm_enabled;
     view->arm.has_last_valid = (app != NULL) ? app->has_last_valid : 0U;
     view->arm.last_status_code = (app != NULL) ? app->last_status_code : ARM_IK_RESULT_PARAM_ERR;
     view->arm.last_action_code = (app != NULL) ? app->last_action_code : ARM_IK_ACTION_KEEP_CURRENT;

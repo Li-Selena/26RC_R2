@@ -92,12 +92,14 @@ Z: 50..500          # Z 方向目标范围，单位 mm
 
 ```text
 tool_enable         # 工具机构使能
-tool_chuck          # 选择吸盘/Chuck
-tool_open           # 当前工具打开
-tool_close          # 当前工具闭合
-tool_clamp          # 选择夹爪/Clamp
-tool_open           # 当前工具打开
-tool_close          # 当前工具闭合
+tool_chuck          # 旋转到吸盘位/Chuck position
+tool_clamp          # 旋转到夹爪位/Clamp position
+tool_open           # 旧兼容命令：当前位置执行器打开
+tool_close          # 旧兼容命令：当前位置执行器闭合
+tool_state 0 1      # 夹爪打开，不改变旋转位置
+tool_state 0 0      # 夹爪关闭，不改变旋转位置
+tool_state 1 1      # 吸盘打开，不改变旋转位置
+tool_state 1 0      # 吸盘关闭，不改变旋转位置
 tool_status         # 查询工具机构状态
 tool_stop           # 工具机构停止
 tool_disable        # 工具机构失能
@@ -106,10 +108,10 @@ tool_disable        # 工具机构失能
 也可以用组合快捷命令：
 
 ```text
-chuck_open          # 选择吸盘并打开
-chuck_close         # 选择吸盘并闭合
-clamp_open          # 选择夹爪并打开
-clamp_close         # 选择夹爪并闭合
+chuck_open          # 吸盘打开，不改变旋转位置
+chuck_close         # 吸盘关闭，不改变旋转位置
+clamp_open          # 夹爪打开，不改变旋转位置
+clamp_close         # 夹爪关闭，不改变旋转位置
 ```
 
 ## 上/下台阶机构
@@ -118,18 +120,20 @@ clamp_close         # 选择夹爪并闭合
 climb_enable                    # 上/下台阶机构使能
 climb_step                      # 手动推进上台阶状态机一步
 climb_step_wait 40              # 等当前动作完成，发送上台阶 step，再等待本步完成，超时 40s
-climb_auto                      # 启动/继续上台阶自动流程
-climb_auto_wait 180             # 启动上台阶自动流程并等待最终 DONE，超时 180s
+climb_up_auto                   # 启动/继续上台阶自动流程
+climb_up_auto_wait 180          # 启动上台阶自动流程并等待最终 DONE，超时 180s
 climb_upstairs_step             # 上台阶 step 的明确别名
 climb_upstairs_step_wait 40     # 上台阶等待后步进
 climb_upstairs_auto             # 上台阶 auto 的明确别名
 climb_upstairs_auto_wait 180    # 上台阶自动并等待 DONE
 climb_downstairs_step           # 手动推进下台阶状态机一步
 climb_downstairs_step_wait 40   # 等当前动作完成，发送下台阶 step，再等待本步完成，超时 40s
-climb_downstairs_auto           # 启动/继续下台阶自动流程
-climb_downstairs_auto_wait 180  # 启动下台阶自动流程并等待最终 DONE，超时 180s
+climb_down_auto                 # 启动/继续下台阶自动流程
+climb_down_auto_wait 180        # 启动下台阶自动流程并等待最终 DONE，超时 180s
+# Auto laser gate: upstairs auto starts forward immediately; firmware drives forward until valid X reaches 0 <= x < 35mm. Transient X=-1 is tolerated; continuous invalid X for 1000ms times out.
+# Auto laser gate: downstairs auto starts backward immediately; h > 65mm detects the 50-53mm to 160mm+ jump, then chassis backs up another 5mm before the normal downstairs flow. H=-1 is tolerated briefly; 1000ms invalid or 8000ms without trigger times out.
 climb_wait 40                   # 仅等待当前 climb 动作完成，超时 40s
-climb_wait_then CLIMB_STEP      # 等当前动作完成后发送指定 USB 命令
+climb_wait_then CLIMB_UP_STEP   # 等当前动作完成后发送指定 USB 命令
 climb_status                    # 查询上/下台阶状态，返回 flow=UPSTAIRS/DOWNSTAIRS
 climb_stop                      # 停止上/下台阶机构
 climb_disable                   # 上/下台阶机构失能
@@ -199,12 +203,12 @@ send SYS_ENABLE             # 系统使能
 send CHS_SET_MODE 3         # 设置底盘模式为 WORLD_VEL
 send CHS_SET_VEL 0.2 0 0 0  # 发送底盘速度指令
 send ARM_SET_TARGET 200 0 180  # 设置机械臂目标点
-send TOOL_SET_MODE 0        # 选择夹爪/Clamp
-send TOOL_ACTION 1          # 当前工具打开
-send CLIMB_STEP             # 上台阶手动推进一步
-send CLIMB_AUTO             # 上台阶自动执行/继续
-send CLIMB_DOWNSTAIRS_STEP  # 下台阶手动推进一步
-send CLIMB_DOWNSTAIRS_AUTO  # 下台阶自动执行/继续
+send TOOL_SET_MODE 0        # 旋转到夹爪位/Clamp position
+send TOOL_SET_STATE 0 1     # 夹爪打开，不改变旋转位置
+send CLIMB_UP_STEP          # 上台阶手动推进一步
+send CLIMB_UP_AUTO          # 上台阶自动执行/继续
+send CLIMB_DOWN_STEP        # 下台阶手动推进一步
+send CLIMB_DOWN_AUTO        # 下台阶自动执行/继续
 send CLIMB_TEST_ACTION 10   # 执行 climb 测试动作 10：底盘前进 100mm
 send YAW_TUNE_START 1       # 启动 yaw 自动调参
 send YAW_TUNE_GET_STATUS    # 查询 yaw 自动调参状态
@@ -216,5 +220,5 @@ send YAW_TUNE_STOP          # 停止 yaw 自动调参
 ```text
 commands                    # 查看工具内置的完整 USB 命令表
 pack YAW_TUNE_GET_STATUS    # 打印该命令的完整 USB 帧
-pack CLIMB_DOWNSTAIRS_STEP  # 打印下台阶 step 的完整 USB 帧
+pack CLIMB_DOWN_STEP        # 打印下台阶 step 的完整 USB 帧
 ```

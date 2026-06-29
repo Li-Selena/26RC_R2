@@ -8,7 +8,7 @@
 - 校验并解析下位机状态回包：System、Chassis、Arm、Tool、Robot、Climb、Arm IK result。
 - 按命令名或原始 hex 发送数据给下位机。
 - 支持交互式 shell，边读边发，适合 VSCode 调试。
-- 可生成旧 USART 遥控帧：`A5 + 39 DATA + checksum + 5A`。
+- 可生成 USART 遥控帧：`A5 + 40 DATA + checksum + 5A`。
 
 ## 快速开始
 
@@ -48,16 +48,16 @@ status                      # 查询整车综合状态
 tune_start 1                # 切到 USB、使能并开始 yaw 自动整定
 tune_status                 # 查询 yaw 自动整定状态
 tune_stop                   # 停止 yaw 自动整定并查询状态
-climb_auto                  # 切到 USB、使能上台阶并自动运行
+climb_up_auto               # 切到 USB、使能上台阶并自动运行
 climb_step                  # 切到 USB、使能上台阶并步进一步
-climb_downstairs_auto       # 切到 USB、使能下台阶并自动运行
+climb_down_auto             # 切到 USB、使能下台阶并自动运行
 climb_downstairs_step       # 切到 USB、使能下台阶并步进一步
 climb_wait 20               # 轮询 CLIMB_GET_STATUS，直到就绪或完成
 climb_step_wait 40          # 等当前上台阶动作完成，再步进并等待这一步完成
-climb_auto_wait 180         # 发送自动上台阶，并等待最终 DONE
+climb_up_auto_wait 180      # 发送自动上台阶，并等待最终 DONE
 climb_downstairs_step_wait 40 # 等当前下台阶动作完成，再步进并等待这一步完成
-climb_downstairs_auto_wait 180 # 发送自动下台阶，并等待最终 DONE
-climb_wait_then CLIMB_STEP  # 等当前上/下台阶动作完成，再发送一条 USB 命令
+climb_down_auto_wait 180    # 发送自动下台阶，并等待最终 DONE
+climb_wait_then CLIMB_UP_STEP # 等当前上/下台阶动作完成，再发送一条 USB 命令
 climb_tests                 # 列出上台阶独立调试动作 ID
 climb_test CHASSIS_FORWARD_100      # 单独发送底盘麦轮前进 100mm，不等待完成
 climb_test_wait FRONT_UP_10 10      # 发送前两根立杆上升 10mm，并等待完成，超时 10s
@@ -73,7 +73,7 @@ send YAW_TUNE_START 1
 query YAW_TUNE
 send ARM_SET_TARGET 200 0 180 0
 send TOOL_SET_MODE 0
-send TOOL_ACTION 1
+send TOOL_SET_STATE 0 1
 query CLIMB_GET_STATUS
 raw A5 5A 00 56 C5 82 FF
 commands
@@ -186,7 +186,7 @@ flow_export downstairs_v1.json
 .\.venv\Scripts\python -m serial_tool remote-pack --mode 3 --source-usb --chassis 0.2 0 0 --arm-target 0 0 180
 ```
 
-USART 上台阶字段在遥控帧 `byte12..14`：`climb_enable / climb_step / climb_auto`。步进和自动都按 `0->1` 上升沿触发；自动启动后仍要持续发送 `--source-usart --climb-enable` 保活帧，否则固件 `300ms` USART 看门狗会停止 USART 侧控制器。
+USART 遥控帧工具字段为 `byte10..12`：`tool_flag / clampuse_flag / chuckuse_flag`，分别控制旋转位置、夹爪开闭、吸盘开闭。上台阶字段顺延到 `byte13..15`：`climb_enable / climb_step / climb_auto`。步进和自动都按 `0->1` 上升沿触发；自动启动后仍要持续发送 `--source-usart --climb-enable` 保活帧，否则固件 `300ms` USART 看门狗会停止 USART 侧控制器。
 
 ## 协议来源
 
