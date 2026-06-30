@@ -739,6 +739,11 @@ USART 上台阶用法：
 | 56 | f32 | `drive_target_mm[0]`，从车尾看左侧小驱动轮 |
 | 60 | f32 | `drive_target_mm[1]`，从车尾看右侧小驱动轮 |
 | 64 | u8 | `flow`，`0=UPSTAIRS, 1=DOWNSTAIRS` |
+| 65 | u8 | `status_flags`: bit0=motor_output_active, bit1=leg_busy, bit2=drive_busy, bit3=test_chassis_active, bit4=pending_step, bit5=pending_auto, bit6=pending_test_action, bit7=ready_for_next |
+| 66 | u8 | `leg_reached_mask`: bit0..3 = leg1..4 reached target tolerance |
+| 67 | u8 | `drive_reached_mask`: bit0..1 = left/right rear drive reached target tolerance |
+
+`ready_for_next` is set only when the climb state is done/idle/done-state, no pending command is queued, no chassis test action is active, and all leg/drive reached masks are complete.
 
 上/下台阶状态判断建议：
 

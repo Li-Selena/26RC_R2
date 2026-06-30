@@ -215,6 +215,7 @@ Auto laser gate:
 - `CLIMB_DOWN_STEP` / `CLIMB_DOWN_AUTO` 明确选择下台阶流程；`CLIMB_DOWNSTAIRS_STEP` / `CLIMB_DOWNSTAIRS_AUTO` 作为旧名兼容。
 - `step` 是一次性命令，适合按钮点动。
 - `auto` 是一次性命令；在 `IDLE/DONE` 从头执行，在已完成的中间状态从下一状态继续。
+- `CLIMB_GET_STATUS` 回包 `LEN=68`，末尾 `status_flags/leg_reached_mask/drive_reached_mask` 可直接用于自动化判断：`status_flags.bit7=ready_for_next` 表示无 pending 且腿/驱动到位后可发下一条，`leg_reached_mask.bit0..3` 对应 1..4 号立杆到位，`drive_reached_mask.bit0..1` 对应左右小驱动轮到位。
 - 从 `IDLE/DONE` 自动启动上台阶时会先进入 `UP_LASER_APPROACH_X_LT_35`，麦轮直线前进到 `x < 35mm` 后进入 `PREPARE_ALL_LEGS_MINUS_10`；上台阶还会继续进入 `UP_PREPARE_CHASSIS_FORWARD_30`，让麦轮底盘前进 `30mm` 后再进入 `STEP_01_*`。自动启动下台阶时会先进入 `DOWN_LASER_APPROACH_H_GT_65`，麦轮直线后退等待 `h > 65mm` 的突变，然后进入 `DOWN_PREPARE_CHASSIS_BACKWARD_5` 再后退 `5mm`，之后进入 `PREPARE_ALL_LEGS_MINUS_10` 和 `STEP_01_*`。
 - `CLIMB_TEST_ACTION` 不推进完整状态机，只单独执行指定动作；动作完成后看 `CLIMB_GET_STATUS.state_done` 和各目标/当前位置。
 - `IDLE` 和 `DONE` 在上台阶使能后会让四根立杆位置环保持待机位：相对上电零位向上 `10mm`，即目标 `-10mm`。

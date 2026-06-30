@@ -364,11 +364,68 @@ static void SendToolStatus(void)
 
 #define CLIMB_STATUS_LEN  68U
 
+static uint8_t ClimbValueReached(float pos, float target, float tol)
+{
+    float err = pos - target;
+
+    if (err < 0.0f) {
+        err = -err;
+    }
+
+    return (err <= tol) ? 1U : 0U;
+}
+
+static uint8_t ClimbLegReachedMask(const R2_Climb_Ctrl_t *climb)
+{
+    uint8_t i;
+    uint8_t mask = 0U;
+
+    if (climb == 0) {
+        return 0U;
+    }
+
+    for (i = 0U; i < 4U; i++) {
+        if (ClimbValueReached(climb->leg_pos_mm[i],
+                              climb->leg_target_mm[i],
+                              R2_CLIMB_LEG_TOL_MM) != 0U) {
+            mask |= (uint8_t)(1U << i);
+        }
+    }
+
+    return mask;
+}
+
+static uint8_t ClimbDriveReachedMask(const R2_Climb_Ctrl_t *climb)
+{
+    uint8_t i;
+    uint8_t mask = 0U;
+
+    if (climb == 0) {
+        return 0U;
+    }
+
+    for (i = 0U; i < 2U; i++) {
+        if (ClimbValueReached(climb->drive_pos_mm[i],
+                              climb->drive_target_mm[i],
+                              R2_CLIMB_DRIVE_TOL_MM) != 0U) {
+            mask |= (uint8_t)(1U << i);
+        }
+    }
+
+    return mask;
+}
+
 static void SendClimbStatus(void)
 {
     uint8_t buf[CLIMB_STATUS_LEN];
     uint8_t i;
     uint8_t active_source;
+    uint8_t leg_reached_mask;
+    uint8_t drive_reached_mask;
+    uint8_t status_flags;
+    uint8_t leg_busy;
+    uint8_t drive_busy;
+    uint8_t ready_for_next;
     R2_Climb_Ctrl_t climb;
     uint32_t elapsed_ms = 0U;
 
@@ -387,6 +444,30 @@ static void SendClimbStatus(void)
         (climb.last_update_ms >= climb.state_start_ms)) {
         elapsed_ms = climb.last_update_ms - climb.state_start_ms;
     }
+
+    leg_reached_mask = ClimbLegReachedMask(&climb);
+    drive_reached_mask = ClimbDriveReachedMask(&climb);
+    leg_busy = ((leg_reached_mask & 0x0FU) != 0x0FU) ? 1U : 0U;
+    drive_busy = ((drive_reached_mask & 0x03U) != 0x03U) ? 1U : 0U;
+    ready_for_next =
+        ((((climb.state_done != 0U) ||
+           (climb.state == R2_CLIMB_STATE_IDLE) ||
+           (climb.state == R2_CLIMB_STATE_DONE)) &&
+          (climb.pending_step == 0U) &&
+          (climb.pending_auto == 0U) &&
+          (climb.pending_test_action == 0U) &&
+          (climb.test_chassis_active == 0U) &&
+          (leg_busy == 0U) &&
+          (drive_busy == 0U)) ? 1U : 0U);
+    status_flags =
+        ((R2_Climb_IsMotorActive(&climb) != 0U) ? 0x01U : 0U) |
+        ((leg_busy != 0U) ? 0x02U : 0U) |
+        ((drive_busy != 0U) ? 0x04U : 0U) |
+        ((climb.test_chassis_active != 0U) ? 0x08U : 0U) |
+        ((climb.pending_step != 0U) ? 0x10U : 0U) |
+        ((climb.pending_auto != 0U) ? 0x20U : 0U) |
+        ((climb.pending_test_action != 0U) ? 0x40U : 0U) |
+        ((ready_for_next != 0U) ? 0x80U : 0U);
 
     buf[0] = (uint8_t)climb.state;
     buf[1] = climb.enabled;
@@ -415,6 +496,9 @@ static void SendClimbStatus(void)
     PackFloatLE(climb.drive_target_mm[0], buf, 56);
     PackFloatLE(climb.drive_target_mm[1], buf, 60);
     buf[64] = climb.flow;
+    buf[65] = status_flags;
+    buf[66] = leg_reached_mask;
+    buf[67] = drive_reached_mask;
 
     Send_Cmd_Data(USB_CMD_CLIMB_GET_STATUS, buf, CLIMB_STATUS_LEN);
 }

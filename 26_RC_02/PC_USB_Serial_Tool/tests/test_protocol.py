@@ -243,12 +243,19 @@ class ProtocolTests(unittest.TestCase):
         payload[5] = 1
         payload[6] = 6
         payload[64] = 1
+        payload[65] = 0x81
+        payload[66] = 0x0F
+        payload[67] = 0x03
         struct.pack_into("<I", payload, 8, 2345)
         frame = pack_usb_frame(0x56, bytes(payload))
         parsed = UsbStreamParser().feed(frame)[0]
         decoded = decode_usb_frame(parsed)["payload"]
         self.assertEqual(decoded["flow_name"], "DOWNSTAIRS")
         self.assertEqual(decoded["state_name"], "DOWN_04_ALL_LEGS_UP_20")
+        self.assertTrue(decoded["status_flags"]["motor_output_active"])
+        self.assertTrue(decoded["status_flags"]["ready_for_next"])
+        self.assertEqual(decoded["leg_reached"], [True, True, True, True])
+        self.assertEqual(decoded["drive_reached"], [True, True])
 
     def test_usart_remote_frame(self):
         frame = build_remote_frame(

@@ -248,3 +248,15 @@
 528	1875	8044710545975808	CMakeFiles/Group_Components_Algorithm.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Components/Algorithm/Src/Data_Analysis.o	386b8c84cd3ce544
 519	1964	8044710545886107	CMakeFiles/Group_Applications_Task.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Applications/Task/Src/PC_TX_Task.o	e8ec5d73497656a7
 1964	2487	8044710560333830	F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/MDK-ARM/out/26_RC_02/26_RC_02/26_RC_02.axf	99825f7bb1d010a
+804	2324	8045304028066318	CMakeFiles/Group_BSP.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/BSP/Src/bsp_uart.o	94deb90638191299
+747	2351	8045304027501994	CMakeFiles/Group_Applications_Task.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Applications/Task/Src/CAN_Task.o	8cf1e77d56ef6013
+774	2353	8045304027771054	CMakeFiles/Group_Applications_Task.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Applications/Task/Src/PC_RX_Task.o	831426a0b8bd3bff
+788	2361	8045304027916817	CMakeFiles/Group_Components_Algorithm.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Components/Algorithm/Src/CRC.o	cb1ccc133d51fc64
+37	2362	8045304020409908	CMakeFiles/Group_Application_User_Core.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Core/Src/main.o	86df330d0da35502
+813	2379	8045304028156015	CMakeFiles/Group_BSP.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/BSP/Src/bsp_usb.o	a8faee984dcade24
+799	2404	8045304028016486	CMakeFiles/Group_Components_Device.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Components/Device/Src/arm_tools.o	2ae4c7cbc6f432c7
+752	2405	8045304027551786	CMakeFiles/Group_Applications_Task.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Applications/Task/Src/Control_Task.o	3917a3b5c60fd97
+794	2441	8045304027976620	CMakeFiles/Group_Components_Algorithm.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Components/Algorithm/Src/Data_Analysis.o	386b8c84cd3ce544
+779	2537	8045304027820884	CMakeFiles/Group_Applications_Task.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Applications/Task/Src/PC_TX_Task.o	e8ec5d73497656a7
+783	7834	8045304027860760	CMakeFiles/Group_Applications_R2_user.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/Applications/R2_user/Src/R2_climb.o	2c4ce52ba947ae3b
+7834	8246	8045304098370378	F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02/MDK-ARM/out/26_RC_02/26_RC_02/26_RC_02.axf	99825f7bb1d010a

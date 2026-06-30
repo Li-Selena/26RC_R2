@@ -64,6 +64,7 @@ flow_recover
 ```
 
 等待逻辑会轮询 `CLIMB_GET_STATUS`，看到 `state_done=1`、`IDLE` 或 `DONE` 后继续；如果状态变成 `ERROR` 会直接报错。
+新版 `CLIMB_GET_STATUS` 还会解析 `status_flags`、`leg_reached`、`drive_reached`，自动化脚本可直接判断 `ready_for_next` 或逐个执行机构是否到位。
 
 ## 3. 底层 USB 命令速查
 

@@ -23,13 +23,13 @@ CLIMB_FLOW_NAMES = {0: "UPSTAIRS", 1: "DOWNSTAIRS"}
 CLIMB_UPSTAIRS_STEP_NAMES = [
     "STEP_01_ALL_LEGS_ZERO",
     "STEP_02_ALL_LEGS_220",
-    "STEP_03_DRIVE_FORWARD_120",
+    "STEP_03_DRIVE_FORWARD_60",
     "STEP_04_ALL_LEGS_DOWN_30",
     "STEP_05_FRONT_ZERO",
     "STEP_06_FRONT_DOWN_10",
-    "STEP_07_DRIVE_FORWARD_360",
+    "STEP_07_DRIVE_FORWARD_180",
     "STEP_08_ALL_LEGS_UP_30",
-    "STEP_09_DRIVE_FORWARD_1530",
+    "STEP_09_DRIVE_FORWARD_765",
     "STEP_10_ALL_LEGS_ZERO",
     "STEP_11_REAR_DOWN_10",
     "STEP_12_CHASSIS_FORWARD_200",
@@ -40,11 +40,11 @@ CLIMB_DOWNSTAIRS_STEP_NAMES = [
     "DOWN_02_REAR_UP_200",
     "DOWN_03_FRONT_UP_10",
     "DOWN_04_ALL_LEGS_UP_20",
-    "DOWN_05_DRIVE_BACKWARD_1600",
+    "DOWN_05_DRIVE_BACKWARD_800",
     "DOWN_06_ALL_LEGS_DOWN_30",
-    "DOWN_07_DRIVE_BACKWARD_260",
+    "DOWN_07_DRIVE_BACKWARD_130",
     "DOWN_08_FRONT_UP_200",
-    "DOWN_09_DRIVE_BACKWARD_500",
+    "DOWN_09_DRIVE_BACKWARD_250",
     "DOWN_10_ALL_LEGS_ZERO",
     "DOWN_11_ALL_LEGS_DOWN_10",
 ]
@@ -437,6 +437,9 @@ def _decode_climb_status(p: bytes) -> Dict[str, Any]:
     error_flags = _u8(p, 4)
     test_action = _u8(p, 7)
     flow = _u8(p, 64) if len(p) >= 65 else 0
+    status_flags = _u8(p, 65) if len(p) >= 68 else 0
+    leg_reached_mask = _u8(p, 66) if len(p) >= 68 else 0
+    drive_reached_mask = _u8(p, 67) if len(p) >= 68 else 0
     return {
         "state": state,
         "state_name": climb_state_name(state, flow),
@@ -457,6 +460,23 @@ def _decode_climb_status(p: bytes) -> Dict[str, Any]:
         "leg_target_mm": [_f32(p, 32), _f32(p, 36), _f32(p, 40), _f32(p, 44)],
         "drive_pos_mm": [_f32(p, 48), _f32(p, 52)],
         "drive_target_mm": [_f32(p, 56), _f32(p, 60)],
+        "status_flags": _flags(
+            status_flags,
+            [
+                "motor_output_active",
+                "leg_busy",
+                "drive_busy",
+                "test_chassis_active",
+                "pending_step",
+                "pending_auto",
+                "pending_test_action",
+                "ready_for_next",
+            ],
+        ),
+        "leg_reached_mask": leg_reached_mask,
+        "drive_reached_mask": drive_reached_mask,
+        "leg_reached": [bool(leg_reached_mask & (1 << i)) for i in range(4)],
+        "drive_reached": [bool(drive_reached_mask & (1 << i)) for i in range(2)],
     }
 
 
