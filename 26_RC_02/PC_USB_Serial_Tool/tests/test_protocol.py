@@ -3,7 +3,7 @@ import unittest
 
 from serial_tool.commands import build_usb_command
 from serial_tool.protocol import UsbStreamParser, bytes_to_hex, crc16_modbus, pack_usb_frame
-from serial_tool.status import decode_usb_frame
+from serial_tool.status import CLIMB_TEST_ACTIONS, decode_usb_frame
 from serial_tool.usart_remote import build_remote_frame
 
 
@@ -196,6 +196,11 @@ class ProtocolTests(unittest.TestCase):
         parsed = UsbStreamParser().feed(frame)[0]
         self.assertEqual(parsed.cmd, 0x57)
         self.assertAlmostEqual(struct.unpack_from("<f", parsed.payload, 0)[0], 16.0)
+
+        frame = build_usb_command("CLIMB_TEST_ACTION", [23.0])
+        parsed = UsbStreamParser().feed(frame)[0]
+        self.assertEqual(CLIMB_TEST_ACTIONS[23], "FRONT_220")
+        self.assertAlmostEqual(struct.unpack_from("<f", parsed.payload, 0)[0], 23.0)
 
     def test_climb_downstairs_command_frames(self):
         parsed = UsbStreamParser().feed(build_usb_command("CLIMB_UP_STEP"))[0]

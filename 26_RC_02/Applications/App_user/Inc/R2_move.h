@@ -111,8 +111,11 @@ typedef struct
     float pos_err_yaw;              /* 最近一次 yaw 误差 (rad) */
 
     /* ── IMU yaw 锁定 ── */
-    float world_lock_yaw;           /* WORLD_NO_YAW 模式锁定的绝对角度 (rad) */
-    uint8_t yaw_lock_valid;         /* 1=NO_YAW heading target has been captured */
+    float world_lock_yaw;           /* WORLD_NO_YAW 模式锁定的世界系目标角 (rad) */
+    float robot_lock_yaw;           /* ROBOT_NO_YAW 模式锁定的机器人系目标角 (rad) */
+    float robot_lock_origin_yaw;    /* 机器人系锁定参考朝向，对应世界系 yaw (rad) */
+    uint8_t yaw_lock_valid;         /* 1=NO_YAW heading target is valid */
+    uint8_t yaw_lock_frame;         /* 0=robot-frame lock, 1=world-frame lock */
 
     /* ── 运动参数上限 ── */
 
@@ -164,7 +167,8 @@ void R2_Move_SetMode(R2_Move_Ctrl_t *ctrl, R2_MoveMode_t mode);
  *   ROBOT 系：vx=右, vy=前, vw=CCW
  *   WORLD 系：vx=世界X, vy=世界Y, vw=CCW
  *
- * NO_YAW 模式下 vw 被忽略。
+ * NO_YAW 模式下 vw 被忽略，锁定角由 R2_Move_SetRobotLockYaw()
+ * 或 R2_Move_SetWorldLockYaw() 指定。
  */
 void R2_Move_SetVel(R2_Move_Ctrl_t *ctrl, float vx, float vy, float vw);
 
@@ -180,7 +184,8 @@ void R2_Move_SetVel(R2_Move_Ctrl_t *ctrl, float vx, float vy, float vw);
  * WORLD 模式下位移在启动瞬间转换到机器人系后规划，
  * 执行期间由位置 P 环闭环。
  *
- * NO_YAW 模式下 dyaw 被忽略。
+ * NO_YAW 模式下 dyaw 被忽略，锁定角由 R2_Move_SetRobotLockYaw()
+ * 或 R2_Move_SetWorldLockYaw() 指定。
  *
  * @return 0=成功, -1=已在运行中（需等待完成或手动Stop）
  */
@@ -229,13 +234,23 @@ void R2_Move_Update(R2_Move_Ctrl_t *ctrl, float now_sec);
 void R2_Move_Stop(R2_Move_Ctrl_t *ctrl);
 
 /**
+ * @brief 设定 ROBOT_NO_YAW 模式下的锁定朝向
+ * @param ctrl 控制器句柄
+ * @param yaw_rad 机器人系目标 yaw 角 (rad)
+ *
+ * yaw_rad 按机器人系解释；内部用进入 ROBOT_NO_YAW 时的参考朝向
+ * 换算为 IMU 角度闭环目标。
+ */
+void R2_Move_SetRobotLockYaw(R2_Move_Ctrl_t *ctrl, float yaw_rad);
+
+/**
  * @brief 设定 WORLD_NO_YAW 模式下的锁定朝向
  * @param ctrl 控制器句柄
  * @param yaw_rad 要锁定的绝对 yaw 角 (rad)
  *
  * 调用后 WORLD_NO_YAW_* 模式将用 Chassis_Yaw_World_Frame_Ctrl
  * 闭环维持此角度。
- * 若不显式调用，默认在 SetMode(WORLD_NO_YAW_*) 时自动快照当前 odom_yaw。
+ * 若不显式调用，默认沿用上一次有效目标角；上电初始值为 0 rad。
  */
 void R2_Move_SetWorldLockYaw(R2_Move_Ctrl_t *ctrl, float yaw_rad);
 

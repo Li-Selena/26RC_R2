@@ -62,7 +62,7 @@ static const R2_ClimbMainStep_t s_main_steps[R2_CLIMB_MAIN_STEP_COUNT] = {
     {"STEP_06_FRONT_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {-10.0f, 190.0f, 190.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
     {"STEP_07_DRIVE_FORWARD_180", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 190.0f, 190.0f, -10.0f}, 180.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(180.0f)},
     {"STEP_08_ALL_LEGS_UP_30", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {20.0f, 220.0f, 220.0f, 20.0f}, 0.0f, R2_CLIMB_STEP_LEG_30_TIMEOUT_MS},
-    {"STEP_09_DRIVE_FORWARD_765", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, 765.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(765.0f)},
+    {"STEP_09_DRIVE_FORWARD_820", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, 820.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(820.0f)},
     {"STEP_10_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
     {"STEP_11_REAR_DOWN_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {0.0f, -10.0f, -10.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
     {"STEP_12_CHASSIS_FORWARD_200", R2_CLIMB_MAIN_STEP_CHASSIS_DELTA, 0x00U, {0.0f, -10.0f, -10.0f, 0.0f}, 0.20f, R2_CLIMB_STEP_CHASSIS_200_TIMEOUT_MS},
@@ -73,9 +73,9 @@ static const R2_ClimbMainStep_t s_downstairs_steps[R2_CLIMB_DOWNSTAIRS_STEP_COUN
     {"DOWN_02_REAR_UP_200", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_REAR_LEG_MASK, {-10.0f, 200.0f, 200.0f, -10.0f}, 0.0f, R2_CLIMB_LEG_TIMEOUT_MS(200.0f)},
     {"DOWN_03_FRONT_UP_10", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {0.0f, 200.0f, 200.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LEG_10_TIMEOUT_MS},
     {"DOWN_04_ALL_LEGS_UP_20", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {20.0f, 220.0f, 220.0f, 20.0f}, 0.0f, R2_CLIMB_STEP_LEG_20_TIMEOUT_MS},
-    {"DOWN_05_DRIVE_BACKWARD_800", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, -800.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(800.0f)},
+    {"DOWN_05_DRIVE_BACKWARD_800", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {20.0f, 220.0f, 220.0f, 20.0f}, -850.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(850.0f)},
     {"DOWN_06_ALL_LEGS_DOWN_30", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {-10.0f, 190.0f, 190.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_30_TIMEOUT_MS},
-    {"DOWN_07_DRIVE_BACKWARD_130", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 190.0f, 190.0f, -10.0f}, -130.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(130.0f)},
+    {"DOWN_07_DRIVE_BACKWARD_160", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {-10.0f, 190.0f, 190.0f, -10.0f}, -160.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(160.0f)},
     {"DOWN_08_FRONT_UP_200", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, {190.0f, 190.0f, 190.0f, 190.0f}, 0.0f, R2_CLIMB_LEG_TIMEOUT_MS(200.0f)},
     {"DOWN_09_DRIVE_BACKWARD_250", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, {190.0f, 190.0f, 190.0f, 190.0f}, -250.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(250.0f)},
     {"DOWN_10_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
@@ -564,6 +564,12 @@ static uint32_t TestActionTimeoutMs(uint8_t action)
     case R2_CLIMB_TEST_CHASSIS_BACKWARD_300:
         return R2_CLIMB_TEST_CHASSIS_300_TIMEOUT_MS;
 
+    case R2_CLIMB_TEST_FRONT_220:
+    case R2_CLIMB_TEST_FRONT_MINUS_10:
+    case R2_CLIMB_TEST_REAR_220:
+    case R2_CLIMB_TEST_REAR_MINUS_10:
+        return R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS;
+
     default:
         break;
     }
@@ -892,6 +898,18 @@ static void BeginTestAction(R2_Climb_Ctrl_t *ctrl,
         SetFrontLegTarget(ctrl, R2_CLIMB_HOME_MM);
         break;
 
+    case R2_CLIMB_TEST_FRONT_220:
+        ClearLegPidByMask((uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                    (1U << LEG_FRONT_LEFT_IDX)));
+        SetFrontLegTarget(ctrl, R2_CLIMB_LIFT_HIGH_MM);
+        break;
+
+    case R2_CLIMB_TEST_FRONT_MINUS_10:
+        ClearLegPidByMask((uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
+                                    (1U << LEG_FRONT_LEFT_IDX)));
+        SetFrontLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        break;
+
     case R2_CLIMB_TEST_FRONT_UP_10:
         ClearLegPidByMask((uint8_t)((1U << LEG_FRONT_RIGHT_IDX) |
                                     (1U << LEG_FRONT_LEFT_IDX)));
@@ -961,6 +979,18 @@ static void BeginTestAction(R2_Climb_Ctrl_t *ctrl,
         SetRearLegTarget(ctrl, R2_CLIMB_HOME_MM);
         break;
 
+    case R2_CLIMB_TEST_REAR_220:
+        ClearLegPidByMask((uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                    (1U << LEG_REAR_LEFT_IDX)));
+        SetRearLegTarget(ctrl, R2_CLIMB_LIFT_HIGH_MM);
+        break;
+
+    case R2_CLIMB_TEST_REAR_MINUS_10:
+        ClearLegPidByMask((uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
+                                    (1U << LEG_REAR_LEFT_IDX)));
+        SetRearLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        break;
+
     case R2_CLIMB_TEST_REAR_UP_10:
         ClearLegPidByMask((uint8_t)((1U << LEG_REAR_RIGHT_IDX) |
                                     (1U << LEG_REAR_LEFT_IDX)));
@@ -1019,6 +1049,8 @@ static uint8_t TestActionReached(const R2_Climb_Ctrl_t *ctrl,
         return DrivesReached(ctrl);
 
     case R2_CLIMB_TEST_FRONT_ZERO:
+    case R2_CLIMB_TEST_FRONT_220:
+    case R2_CLIMB_TEST_FRONT_MINUS_10:
     case R2_CLIMB_TEST_FRONT_UP_10:
     case R2_CLIMB_TEST_FRONT_DOWN_10:
         return LegsReached(ctrl, front_mask);
@@ -1036,6 +1068,8 @@ static uint8_t TestActionReached(const R2_Climb_Ctrl_t *ctrl,
         return 0U;
 
     case R2_CLIMB_TEST_REAR_ZERO:
+    case R2_CLIMB_TEST_REAR_220:
+    case R2_CLIMB_TEST_REAR_MINUS_10:
     case R2_CLIMB_TEST_REAR_UP_10:
     case R2_CLIMB_TEST_REAR_DOWN_10:
         return LegsReached(ctrl, rear_mask);

@@ -47,8 +47,8 @@ SYS_SWITCH_SOURCE USART  A5 5A 10 02 00 00 00 00 00 00 00 00 00 00 00 00 00 00 0
 | `0x10` | `CHS_DISABLE` | 空或 4float | 底盘失能并停止 USB 底盘控制器 |
 | `0x11` | `CHS_ENABLE` | 空或 4float | 底盘使能 |
 | `0x12` | `CHS_SET_MODE` | `f0=mode` | 设置底盘模式 `0..7` |
-| `0x13` | `CHS_SET_VEL` | `f0=vx, f1=vy, f2=vw, f3=lock_yaw_deg` | 设置速度目标 |
-| `0x14` | `CHS_SET_POS` | `f0=dx, f1=dy, f2=dyaw, f3=0` | 设置一次位置位移目标 |
+| `0x13` | `CHS_SET_VEL` | `f0=vx, f1=vy, f2=yaw_data, f3=0` | 设置速度目标 |
+| `0x14` | `CHS_SET_POS` | `f0=dx, f1=dy, f2=yaw_data, f3=0` | 设置一次位置位移目标 |
 | `0x15` | `CHS_STOP` | 空或 4float | 停止 USB 底盘控制器 |
 | `0x16` | `CHS_GET_STATUS` | 空或 4float | 查询底盘状态 |
 
@@ -80,6 +80,7 @@ CHS_SET_POS dx=1m           A5 5A 10 14 00 00 80 3F 00 00 00 00 00 00 00 00 00 0
 
 - 速度控制要先设置 `mode=0..3`，再周期发送 `CHS_SET_VEL`。
 - 位置控制要先设置 `mode=4..7`，再发送一次 `CHS_SET_POS`。
+- `yaw_data` 复用：`ROBOT_NO_YAW` 下为机器人系 `target_yaw_robot_deg`，`WORLD_NO_YAW` 下为世界系 `target_yaw_world_deg`；其它速度模式为 `vw_rad_s`，其它位置模式为 `dyaw_rad`。
 - 速度控制有 `100ms` 看门狗，`CHS_SET_VEL` 发送间隔应小于 `100ms`。
 
 ## Arm 机械臂
@@ -218,6 +219,7 @@ Auto laser gate:
 - `CLIMB_GET_STATUS` 回包 `LEN=68`，末尾 `status_flags/leg_reached_mask/drive_reached_mask` 可直接用于自动化判断：`status_flags.bit7=ready_for_next` 表示无 pending 且腿/驱动到位后可发下一条，`leg_reached_mask.bit0..3` 对应 1..4 号立杆到位，`drive_reached_mask.bit0..1` 对应左右小驱动轮到位。
 - 从 `IDLE/DONE` 自动启动上台阶时会先进入 `UP_LASER_APPROACH_X_LT_35`，麦轮直线前进到 `x < 35mm` 后进入 `PREPARE_ALL_LEGS_MINUS_10`；上台阶还会继续进入 `UP_PREPARE_CHASSIS_FORWARD_30`，让麦轮底盘前进 `30mm` 后再进入 `STEP_01_*`。自动启动下台阶时会先进入 `DOWN_LASER_APPROACH_H_GT_65`，麦轮直线后退等待 `h > 65mm` 的突变，然后进入 `DOWN_PREPARE_CHASSIS_BACKWARD_5` 再后退 `5mm`，之后进入 `PREPARE_ALL_LEGS_MINUS_10` 和 `STEP_01_*`。
 - `CLIMB_TEST_ACTION` 不推进完整状态机，只单独执行指定动作；动作完成后看 `CLIMB_GET_STATUS.state_done` 和各目标/当前位置。
+- 新增前/后两根立杆绝对位置测试动作：`23=FRONT_220`，`24=FRONT_MINUS_10`，`25=REAR_220`，`26=REAR_MINUS_10`；上位机快捷命令对应 `climb_front_220`、`climb_front_minus_10`、`climb_rear_220`、`climb_rear_minus_10`。
 - `IDLE` 和 `DONE` 在上台阶使能后会让四根立杆位置环保持待机位：相对上电零位向上 `10mm`，即目标 `-10mm`。
 - USB 上/下台阶命令只有当前控制源为 USB 时生效；USART 上台阶命令只有 `UU_flag=0`、当前源为 USART 时写入控制器并输出到电机。
 - USART 自动执行发出 `climb_auto` 上升沿后，仍需持续发送 `UU_flag=0, climb_enable=1` 的保活帧；超过 `300ms` 无 USART 帧会触发看门狗停止。

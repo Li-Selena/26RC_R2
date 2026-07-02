@@ -55,13 +55,13 @@ chs_status      # 查询底盘状态
 底盘速度命令：
 
 ```text
-vel VX VY VW [LOCK_YAW_DEG]  # vx/vy/vw 速度指令，可选锁定 yaw 角度
+vel VX VY YAW_DATA           # ROBOT_NO_YAW: robot yaw deg；WORLD_NO_YAW: world yaw deg；其它速度模式: vw_rad_s
 ```
 
 底盘位置命令：
 
 ```text
-pos DX DY DYAW              # dx/dy/dyaw 位置指令
+pos DX DY YAW_DATA          # ROBOT_NO_YAW: robot yaw deg；WORLD_NO_YAW: world yaw deg；其它位置模式: dyaw_rad
 ```
 
 ## 机械臂
@@ -150,6 +150,8 @@ climb_drive_backward_30 [timeout_s] # 后驱动轮后退 30mm；带超时时间�
 climb_drive_forward_500 [timeout_s] # 后驱动轮前进 500mm；带超时时间则等待完成
 climb_drive_backward_500 [timeout_s] # 后驱动轮后退 500mm；带超时时间则等待完成
 climb_front_zero [timeout_s]    # 前腿回零；带超时时间则等待完成
+climb_front_220 [timeout_s]     # 前两根立杆目标到 220mm；带超时时间则等待完成
+climb_front_minus_10 [timeout_s] # 前两根立杆目标到 -10mm；带超时时间则等待完成
 climb_front_up_10 [timeout_s]   # 前腿上升 10mm；带超时时间则等待完成
 climb_front_down_10 [timeout_s] # 前腿下降 10mm；带超时时间则等待完成
 climb_chassis_forward_100 [timeout_s] # 底盘前进 100mm；带超时时间则等待完成
@@ -159,6 +161,8 @@ climb_chassis_backward_50 [timeout_s] # 底盘后退 50mm；带超时时间则�
 climb_chassis_forward_300 [timeout_s] # 底盘前进 300mm；带超时时间则等待完成
 climb_chassis_backward_300 [timeout_s] # 底盘后退 300mm；带超时时间则等待完成
 climb_rear_zero [timeout_s]     # 后腿回零；带超时时间则等待完成
+climb_rear_220 [timeout_s]      # 后两根立杆目标到 220mm；带超时时间则等待完成
+climb_rear_minus_10 [timeout_s] # 后两根立杆目标到 -10mm；带超时时间则等待完成
 climb_rear_up_10 [timeout_s]    # 后腿上升 10mm；带超时时间则等待完成
 climb_rear_down_10 [timeout_s]  # 后腿下降 10mm；带超时时间则等待完成
 climb_all_legs_zero [timeout_s] # 四条腿统一回到 0mm；带超时时间则等待完成

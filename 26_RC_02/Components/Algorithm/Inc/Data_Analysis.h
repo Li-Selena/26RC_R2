@@ -31,8 +31,8 @@
 #define USB_CMD_CHS_DISABLE         0x10U
 #define USB_CMD_CHS_ENABLE          0x11U
 #define USB_CMD_CHS_SET_MODE        0x12U  /* datas[0]: mode 0-7 */
-#define USB_CMD_CHS_SET_VEL         0x13U  /* 4 float LE: vx,vy,vw,lock_yaw(deg) */
-#define USB_CMD_CHS_SET_POS         0x14U  /* 3 float LE: dx,dy,dyaw */
+#define USB_CMD_CHS_SET_VEL         0x13U  /* 4 float LE: vx,vy,active-frame yaw_data,reserved */
+#define USB_CMD_CHS_SET_POS         0x14U  /* 4 float LE: dx,dy,active-frame yaw_data,reserved */
 #define USB_CMD_CHS_STOP            0x15U
 #define USB_CMD_CHS_GET_STATUS      0x16U
 

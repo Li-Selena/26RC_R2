@@ -257,7 +257,15 @@ static uint8_t TuneStartSegment(R2_Move_Ctrl_t *ctrl, uint32_t now_ms)
     R2_Move_SetMode(ctrl, seg->mode);
 
     if (R2_Move_IsNoYawMode(seg->mode) != 0U) {
-        R2_Move_SetWorldLockYaw(ctrl, s_tune.target_yaw_deg * TUNE_DEG_TO_RAD);
+        if (R2_Move_IsWorldMode(seg->mode) != 0U) {
+            R2_Move_SetWorldLockYaw(ctrl,
+                                    s_tune.target_yaw_deg * TUNE_DEG_TO_RAD);
+        } else {
+            R2_Move_SetRobotLockYaw(ctrl,
+                                    TuneWrapDeg(s_tune.target_yaw_deg -
+                                                s_tune.start_yaw_deg) *
+                                    TUNE_DEG_TO_RAD);
+        }
     }
 
     if (R2_Move_IsVelMode(seg->mode) != 0U) {

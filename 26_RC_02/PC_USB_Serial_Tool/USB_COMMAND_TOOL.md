@@ -52,6 +52,10 @@ climb_wait_then CLIMB_DOWN_STEP
 climb_tests
 climb_test CHASSIS_FORWARD_100
 climb_test_wait FRONT_UP_10 10
+climb_front_220 10
+climb_front_minus_10 10
+climb_rear_220 10
+climb_rear_minus_10 10
 climb_chassis_forward_100
 climb_chassis_backward_100
 climb_chassis_forward_300
@@ -155,10 +159,10 @@ send CHS_STOP
 `CHS_SET_VEL` 的 4 个参数是：
 
 ```text
-vx vy vw lock_yaw_deg
+vx vy yaw_data 0
 ```
 
-速度控制有 100ms 看门狗，持续运动时需要周期发送速度命令。
+`yaw_data` 是复用字段：`ROBOT_NO_YAW` 下表示机器人系 `target_yaw_robot_deg`，`WORLD_NO_YAW` 下表示世界系 `target_yaw_world_deg`，其它速度模式下表示 `vw_rad_s`。速度控制有 100ms 看门狗，持续运动时需要周期发送速度命令。
 
 ## 6. 单条命令发送
 

@@ -107,6 +107,8 @@ climb_drive_forward_500 [timeout_s]   # 后驱动轮前进 500mm
 climb_drive_backward_500 [timeout_s]  # 后驱动轮后退 500mm
 
 climb_front_zero [timeout_s]          # 前两根立杆回到 0 位
+climb_front_220 [timeout_s]           # 前两根立杆目标到 220mm
+climb_front_minus_10 [timeout_s]      # 前两根立杆目标到 -10mm
 climb_front_up_10 [timeout_s]         # 前两根立杆基于当前位置上升 10mm
 climb_front_down_10 [timeout_s]       # 前两根立杆基于当前位置下降 10mm
 
@@ -118,6 +120,8 @@ climb_chassis_forward_300 [timeout_s] # 底盘麦轮前进 300mm
 climb_chassis_backward_300 [timeout_s] # 底盘麦轮后退 300mm
 
 climb_rear_zero [timeout_s]           # 后两根立杆回到 0 位
+climb_rear_220 [timeout_s]            # 后两根立杆目标到 220mm
+climb_rear_minus_10 [timeout_s]       # 后两根立杆目标到 -10mm
 climb_rear_up_10 [timeout_s]          # 后两根立杆基于当前位置上升 10mm
 climb_rear_down_10 [timeout_s]        # 后两根立杆基于当前位置下降 10mm
 

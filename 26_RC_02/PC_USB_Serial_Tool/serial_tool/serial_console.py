@@ -249,12 +249,12 @@ class SerialShell:
             elif op == "chs_mode":
                 self._write(build_usb_command("CHS_SET_MODE", self._need_floats(args, 1, "chs_mode MODE")))
             elif op == "vel":
-                values = self._need_floats(args, 3, "vel VX VY VW [LOCK_YAW_DEG]")
+                values = self._need_floats(args, 3, "vel VX VY YAW_DATA")
                 if len(values) < 4:
                     values.append(0.0)
                 self._write(build_usb_command("CHS_SET_VEL", values))
             elif op == "pos":
-                self._write(build_usb_command("CHS_SET_POS", self._need_floats(args, 3, "pos DX DY DYAW")))
+                self._write(build_usb_command("CHS_SET_POS", self._need_floats(args, 3, "pos DX DY YAW_DATA")))
             elif op == "arm_enable":
                 self._write(build_usb_command("ARM_ENABLE"))
             elif op == "arm_disable":
@@ -836,7 +836,7 @@ class SerialShell:
                     "query ROBOT|TUNE|CLIMB|SYS|CHS|ARM|TOOL",
                     "raw A5 5A ...",
                     "usb | usart | enable | disable | stop | status",
-                    "chs_enable | chs_disable | chs_mode MODE | vel VX VY VW [LOCK] | pos DX DY DYAW | chs_stop | chs_status",
+                    "chs_enable | chs_disable | chs_mode MODE | vel VX VY YAW_DATA | pos DX DY YAW_DATA | chs_stop | chs_status",
                     "arm_enable | arm_disable | arm_target X Y Z | arm_stop | arm_status",
                     "tool_enable | tool_chuck/tool_clamp position | tool_open/tool_close legacy | tool_state DEV ACT | chuck_open/close | clamp_open/close | tool_status",
                     "climb_enable | climb_step | climb_up_auto/climb_auto | climb_ctrl ENABLE STEP AUTO | climb_stop | climb_status",

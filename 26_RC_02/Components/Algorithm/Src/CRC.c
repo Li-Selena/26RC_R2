@@ -161,7 +161,11 @@ static float read_float_le(const uint8_t *buf)
  * @param mode  0-7 运动模式
  * @param p1    VEL:vx(m/s) / POS:dx(m)
  * @param p2    VEL:vy(m/s) / POS:dy(m)
- * @param p3    VEL:vw(rad/s) / POS:dyaw(rad)
+ * @param p3    yaw_data:
+ *               ROBOT_NO_YAW: target_yaw_robot_deg
+ *               WORLD_NO_YAW: target_yaw_world_deg
+ *               other VEL: vw(rad/s)
+ *               other POS: dyaw(rad)
  */
 void R2_Chassis_Process(R2_Move_Ctrl_t *ctrl, uint8_t mode,
                         float p1, float p2, float p3)
@@ -188,6 +192,21 @@ void R2_Chassis_Process(R2_Move_Ctrl_t *ctrl, uint8_t mode,
         R2_Move_SetMode(ctrl, m);
     }
 
+    if (R2_Move_IsNoYawMode(m)) {
+        if (R2_Move_IsWorldMode(m)) {
+            R2_Move_SetWorldLockYaw(ctrl, p3 * 0.0174533f);
+        } else {
+            R2_Move_SetRobotLockYaw(ctrl, p3 * 0.0174533f);
+        }
+
+        if (R2_Move_IsVelMode(m)) {
+            R2_Move_SetVel(ctrl, p1, p2, 0.0f);
+        } else {
+            R2_Move_SetDist(ctrl, p1, p2, 0.0f);
+        }
+        return;
+    }
+
     if (R2_Move_IsVelMode(m)) {
         R2_Move_SetVel(ctrl, p1, p2, p3);
     } else {
@@ -203,6 +222,10 @@ void R2_Chassis_Process(R2_Move_Ctrl_t *ctrl, uint8_t mode,
  *   byte 0~12  : 控制字段（mode, arm, UU, tool position, clamp, chuck）
  *   byte 13~15 : climb_enable, climb_step, climb_auto
  *   byte 16~39 : 6 个 float（chassis×3 + arm×3）
+ *                 chassis param3 follows yaw_data:
+ *                 ROBOT_NO_YAW=target_yaw_robot_deg,
+ *                 WORLD_NO_YAW=target_yaw_world_deg,
+ *                 other VEL=vw(rad/s), other POS=dyaw(rad)
  */
 void BT_Data_MAC_Process(float *V_x, float *V_y, float *V_w, int8_t *cmd)
 {

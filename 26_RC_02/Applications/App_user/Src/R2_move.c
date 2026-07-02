@@ -44,6 +44,8 @@
 #define R2_POS_TIMEOUT_MULT       2.0f     /* 超时倍数：2×规划时长仍未到达 → 强制结束 */
 #define RAD_TO_DEG                57.29578f /* rad → ° */
 #define DEG_TO_RAD                0.0174533f/* ° → rad */
+#define R2_YAW_LOCK_FRAME_ROBOT   0U
+#define R2_YAW_LOCK_FRAME_WORLD   1U
 
 /*
  * 角度归一化到 [-π, +π]，用于 world_lock_yaw 存放前规整。
@@ -77,12 +79,43 @@ static void world_to_robot(float wx, float wy, float yaw,
     *ry = -wx * s + wy * c;
 }
 
-static void R2_Move_EnsureYawLock(R2_Move_Ctrl_t *ctrl)
+static void R2_Move_EnsureYawLockForMode(R2_Move_Ctrl_t *ctrl,
+                                         R2_MoveMode_t mode)
 {
-    if ((ctrl != NULL) && (ctrl->yaw_lock_valid == 0U)) {
-        ctrl->world_lock_yaw = wrap_pi(ctrl->odom_yaw);
+    if ((ctrl == NULL) || !R2_Move_IsNoYawMode(mode)) {
+        return;
+    }
+
+    if (R2_Move_IsWorldMode(mode)) {
+        ctrl->world_lock_yaw = wrap_pi(ctrl->world_lock_yaw);
+        ctrl->yaw_lock_frame = R2_YAW_LOCK_FRAME_WORLD;
+        ctrl->yaw_lock_valid = 1U;
+    } else {
+        if ((ctrl->yaw_lock_valid == 0U) ||
+            (ctrl->yaw_lock_frame != R2_YAW_LOCK_FRAME_ROBOT)) {
+            ctrl->robot_lock_origin_yaw = wrap_pi(ctrl->odom_yaw);
+        }
+        ctrl->robot_lock_yaw = wrap_pi(ctrl->robot_lock_yaw);
+        ctrl->yaw_lock_frame = R2_YAW_LOCK_FRAME_ROBOT;
         ctrl->yaw_lock_valid = 1U;
     }
+}
+
+static void R2_Move_EnsureYawLock(R2_Move_Ctrl_t *ctrl)
+{
+    if (ctrl == NULL) return;
+    R2_Move_EnsureYawLockForMode(ctrl, ctrl->mode);
+}
+
+static float R2_Move_GetNoYawTargetWorldYaw(R2_Move_Ctrl_t *ctrl)
+{
+    if (ctrl == NULL) return 0.0f;
+
+    R2_Move_EnsureYawLock(ctrl);
+    if (!R2_Move_IsWorldMode(ctrl->mode)) {
+        return wrap_pi(ctrl->robot_lock_origin_yaw + ctrl->robot_lock_yaw);
+    }
+    return wrap_pi(ctrl->world_lock_yaw);
 }
 
 static float R2_Move_ClampFloat(float x, float lo, float hi)
@@ -156,25 +189,41 @@ void R2_Move_SetLimits(R2_Move_Ctrl_t *ctrl, float v_max, float a_max, float j_m
 
 void R2_Move_SetMode(R2_Move_Ctrl_t *ctrl, R2_MoveMode_t mode)
 {
+    R2_MoveMode_t old_mode;
+    uint8_t old_no_yaw;
+    uint8_t new_no_yaw;
+    uint8_t frame_changed;
+
     if (ctrl == NULL) return;
+
+    old_mode = ctrl->mode;
+    old_no_yaw = R2_Move_IsNoYawMode(old_mode);
+    new_no_yaw = R2_Move_IsNoYawMode(mode);
+    frame_changed = (R2_Move_IsWorldMode(old_mode) != R2_Move_IsWorldMode(mode))
+                    ? 1U : 0U;
 
     /* 从 POS 切换到 VEL 时中止未完成的位置运动 */
     if (R2_Move_IsPosMode(ctrl->mode) && R2_Move_IsVelMode(mode)) {
         ctrl->pos_state = R2_POS_IDLE;
     }
 
-    /* NO_YAW modes hold the heading captured on entry. */
-    if (R2_Move_IsNoYawMode(mode)) {
-        ctrl->world_lock_yaw = wrap_pi(ctrl->odom_yaw);
-        ctrl->yaw_lock_valid = 1U;
+    ctrl->mode = mode;
+
+    /* NO_YAW modes keep the last commanded heading target in their own frame. */
+    if (new_no_yaw != 0U) {
+        if ((old_no_yaw == 0U) || (frame_changed != 0U)) {
+            ctrl->yaw_lock_valid = 0U;
+            if (!R2_Move_IsWorldMode(mode)) {
+                ctrl->robot_lock_yaw = 0.0f;
+            }
+        }
+        R2_Move_EnsureYawLockForMode(ctrl, mode);
     } else {
         ctrl->yaw_lock_valid = 0U;
     }
 
     /* 切换模式时清除 IMU yaw PID 历史，防止旧积分干扰 */
     Chassis_Yaw_PID_Clear();
-
-    ctrl->mode = mode;
 }
 
 /* ─── VEL 模式：速度设定 ────────────────────────────── */
@@ -316,12 +365,25 @@ R2_PosState_t R2_Move_GetPosState(const R2_Move_Ctrl_t *ctrl)
     return ctrl->pos_state;
 }
 
-/* ─── 世界系锁定朝向 ────────────────────────────────── */
+/* ─── NO_YAW 锁定朝向 ───────────────────────────────── */
+
+void R2_Move_SetRobotLockYaw(R2_Move_Ctrl_t *ctrl, float yaw_rad)
+{
+    if (ctrl == NULL) return;
+    if ((ctrl->yaw_lock_valid == 0U) ||
+        (ctrl->yaw_lock_frame != R2_YAW_LOCK_FRAME_ROBOT)) {
+        ctrl->robot_lock_origin_yaw = wrap_pi(ctrl->odom_yaw);
+    }
+    ctrl->robot_lock_yaw = wrap_pi(yaw_rad);
+    ctrl->yaw_lock_frame = R2_YAW_LOCK_FRAME_ROBOT;
+    ctrl->yaw_lock_valid = 1U;
+}
 
 void R2_Move_SetWorldLockYaw(R2_Move_Ctrl_t *ctrl, float yaw_rad)
 {
     if (ctrl == NULL) return;
     ctrl->world_lock_yaw = wrap_pi(yaw_rad);
+    ctrl->yaw_lock_frame = R2_YAW_LOCK_FRAME_WORLD;
     ctrl->yaw_lock_valid = 1U;
 }
 
@@ -426,17 +488,17 @@ static void R2_Move_Update_Vel(R2_Move_Ctrl_t *ctrl)
      *
      * PID 返回值是 °/s，乘 DEG_TO_RAD 转为 rad/s。
      *
-     * ROBOT_NO_YAW:     抑制 yaw 漂移 → Robot_Frame_Ctrl(0)
+     * ROBOT_NO_YAW:     机器人系锁定角 → World_Frame_Ctrl(换算后目标角)
      * ROBOT:            跟踪目标角速度 → Robot_Frame_Ctrl(vw °/s)
-     * WORLD_NO_YAW:     锁定绝对朝向    → World_Frame_Ctrl(locked °)
+     * WORLD_NO_YAW:     世界系锁定角    → World_Frame_Ctrl(目标角)
      * WORLD:            跟踪目标角速度 → Robot_Frame_Ctrl(vw °/s)
      */
     switch (ctrl->mode) {
 
     case R2_MODE_ROBOT_NO_YAW_VEL:
-        R2_Move_EnsureYawLock(ctrl);
         vw_robot = Chassis_Yaw_World_Frame_Ctrl(
-                       ctrl->world_lock_yaw * RAD_TO_DEG) * DEG_TO_RAD;
+                       R2_Move_GetNoYawTargetWorldYaw(ctrl) * RAD_TO_DEG)
+                   * DEG_TO_RAD;
         break;
 
     case R2_MODE_ROBOT_VEL:
@@ -445,9 +507,9 @@ static void R2_Move_Update_Vel(R2_Move_Ctrl_t *ctrl)
         break;
 
     case R2_MODE_WORLD_NO_YAW_VEL:
-        R2_Move_EnsureYawLock(ctrl);
         vw_robot = Chassis_Yaw_World_Frame_Ctrl(
-                       ctrl->world_lock_yaw * RAD_TO_DEG) * DEG_TO_RAD;
+                       R2_Move_GetNoYawTargetWorldYaw(ctrl) * RAD_TO_DEG)
+                   * DEG_TO_RAD;
         break;
 
     case R2_MODE_WORLD_VEL:
@@ -608,15 +670,20 @@ static void R2_Move_Update_Pos(R2_Move_Ctrl_t *ctrl, float now_sec)
      *
      * NO_YAW 模式：IMU 主动抑制 yaw 漂移 / 锁定绝对朝向。
      */
-    err_yaw = ref_yaw - delta_yaw;
+    if (R2_Move_IsNoYawMode(ctrl->mode)) {
+        err_yaw = wrap_pi(R2_Move_GetNoYawTargetWorldYaw(ctrl) -
+                          ctrl->odom_yaw);
+    } else {
+        err_yaw = wrap_pi(ref_yaw - delta_yaw);
+    }
     cmd_vw  = vff_yaw + ctrl->pos_kp_yaw * err_yaw;
 
     switch (ctrl->mode) {
 
     case R2_MODE_ROBOT_NO_YAW_POS:
-        R2_Move_EnsureYawLock(ctrl);
         cmd_vw = Chassis_Yaw_World_Frame_Ctrl(
-                     ctrl->world_lock_yaw * RAD_TO_DEG) * DEG_TO_RAD;
+                     R2_Move_GetNoYawTargetWorldYaw(ctrl) * RAD_TO_DEG)
+                 * DEG_TO_RAD;
         break;
 
     case R2_MODE_ROBOT_POS:
@@ -625,9 +692,9 @@ static void R2_Move_Update_Pos(R2_Move_Ctrl_t *ctrl, float now_sec)
         break;
 
     case R2_MODE_WORLD_NO_YAW_POS:
-        R2_Move_EnsureYawLock(ctrl);
         cmd_vw = Chassis_Yaw_World_Frame_Ctrl(
-                     ctrl->world_lock_yaw * RAD_TO_DEG) * DEG_TO_RAD;
+                     R2_Move_GetNoYawTargetWorldYaw(ctrl) * RAD_TO_DEG)
+                 * DEG_TO_RAD;
         break;
 
     case R2_MODE_WORLD_POS:

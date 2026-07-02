@@ -108,8 +108,8 @@ SYS_SWITCH_SOURCE USART
 | `0x10` | `CHS_DISABLE` | 空或 4float | 底盘失能并停止 USB 底盘控制器 |
 | `0x11` | `CHS_ENABLE` | 空或 4float | 底盘使能 |
 | `0x12` | `CHS_SET_MODE` | `f0=mode` | 设置底盘模式 `0..7` |
-| `0x13` | `CHS_SET_VEL` | `f0=vx, f1=vy, f2=vw, f3=lock_yaw_deg` | 设置速度目标 |
-| `0x14` | `CHS_SET_POS` | `f0=dx, f1=dy, f2=dyaw, f3=0` | 设置一次位置位移目标 |
+| `0x13` | `CHS_SET_VEL` | `f0=vx, f1=vy, f2=yaw_data, f3=0` | 设置速度目标 |
+| `0x14` | `CHS_SET_POS` | `f0=dx, f1=dy, f2=yaw_data, f3=0` | 设置一次位置位移目标 |
 | `0x15` | `CHS_STOP` | 空或 4float | 停止 USB 底盘控制器 |
 | `0x16` | `CHS_GET_STATUS` | 空或 4float | 查询底盘状态 |
 
@@ -125,6 +125,15 @@ SYS_SWITCH_SOURCE USART
 | `5` | `ROBOT_POS` | 机器人系 | 位置 | 可转向 |
 | `6` | `WORLD_NO_YAW_POS` | 世界系 | 位置 | 锁 yaw |
 | `7` | `WORLD_POS` | 世界系 | 位置 | 可转向 |
+
+`yaw_data` 复用规则：
+
+| 命令 | `ROBOT_NO_YAW` 模式 `0/4` | `WORLD_NO_YAW` 模式 `2/6` | 非 `NO_YAW` 模式 `1/3/5/7` |
+|---|---|---|---|
+| `CHS_SET_VEL` | `f2=target_yaw_robot_deg`，机器人系锁定角，`f3` 保留 | `f2=target_yaw_world_deg`，世界系锁定角，`f3` 保留 | `f2=vw_rad_s`，目标角速度，`f3` 保留 |
+| `CHS_SET_POS` | `f2=target_yaw_robot_deg`，机器人系锁定角，`f3` 保留 | `f2=target_yaw_world_deg`，世界系锁定角，`f3` 保留 | `f2=dyaw_rad`，目标相对旋转量，`f3` 保留 |
+
+注意：`NO_YAW` 不表示底盘内部 `vw` 永远为 0，而是上位机不再发送旋转速度/旋转位移；固件用当前模式坐标系下的 `target_yaw_*_deg` 和 IMU yaw 做闭环，抑制横移启停造成的累计偏航。
 
 常用帧：
 
@@ -143,8 +152,8 @@ CHS_SET_POS dx=1m           A5 5A 10 14 00 00 80 3F 00 00 00 00 00 00 00 00 00 0
 
 1. 切到 USB：`SYS_SWITCH_SOURCE USB`。
 2. 打开底盘：`CHS_ENABLE`，或直接 `SYS_ENABLE`。
-3. 速度控制：先 `CHS_SET_MODE` 到 `0..3`，再周期发送 `CHS_SET_VEL`。
-4. 位置控制：先 `CHS_SET_MODE` 到 `4..7`，再发送一次 `CHS_SET_POS`。
+3. 速度控制：先 `CHS_SET_MODE` 到 `0..3`，再周期发送 `CHS_SET_VEL`；若是 `NO_YAW` 模式，每帧 `f2` 填当前模式坐标系下的期望锁定 yaw 角。
+4. 位置控制：先 `CHS_SET_MODE` 到 `4..7`，再发送一次 `CHS_SET_POS`；若是 `NO_YAW` 模式，本帧 `f2` 填当前模式坐标系下的期望锁定 yaw 角。
 5. 速度控制有 `100ms` 看门狗，`CHS_SET_VEL` 发送间隔应小于 `100ms`。
 6. 位置运动执行中不要重复发送新位置命令，先查询 `pos_state`，或发 `CHS_STOP` 后再下新目标。
 
@@ -411,6 +420,10 @@ Auto laser gate:
 | `20` | `CHASSIS_BACKWARD_100` | 底盘麦轮后退 `100mm` |
 | `21` | `CHASSIS_FORWARD_300` | 底盘麦轮前进 `300mm` |
 | `22` | `CHASSIS_BACKWARD_300` | 底盘麦轮后退 `300mm` |
+| `23` | `FRONT_220` | 前两根立杆 ID1/ID4 目标到 `220mm` |
+| `24` | `FRONT_MINUS_10` | 前两根立杆 ID1/ID4 目标到 `-10mm` |
+| `25` | `REAR_220` | 后两根立杆 ID2/ID3 目标到 `220mm` |
+| `26` | `REAR_MINUS_10` | 后两根立杆 ID2/ID3 目标到 `-10mm` |
 
 尺度定义：
 
@@ -562,12 +575,14 @@ DATA 布局：
 | `15` | `climb_auto`，上升沿触发自动执行 |
 | `16..19` | `chassis param1`，VEL:`vx(m/s)` / POS:`dx(m)` |
 | `20..23` | `chassis param2`，VEL:`vy(m/s)` / POS:`dy(m)` |
-| `24..27` | `chassis param3`，VEL:`vw(rad/s)` / POS:`dyaw(rad)` |
+| `24..27` | `chassis yaw_data`，`ROBOT_NO_YAW`: `target_yaw_robot_deg`；`WORLD_NO_YAW`: `target_yaw_world_deg`；其它 VEL: `vw(rad/s)`；其它 POS: `dyaw(rad)` |
 | `28..31` | `arm_x(mm)` |
 | `32..35` | `arm_y(mm)` |
 | `36..39` | `arm_z(mm)` |
 
 USART 机械臂目标点同样不再做旧矩形 clamp。`UU_flag=0` 且 `arm_flag=1` 时，`arm_x/y/z` 必须通过当前 IK 安全空间检查后才会写入 USART 机械臂目标；检查失败时保持上一组输出，并通过机械臂 IK 状态回包返回错误原因。
+
+USART 底盘 `chassis yaw_data` 与 USB 的 `yaw_data` 复用规则一致。`ROBOT_NO_YAW` 下目标角按机器人系解释，固件用进入机器人系锁定模式时的参考朝向换算到 IMU 闭环目标；`WORLD_NO_YAW` 下目标角按世界系绝对 yaw 解释。
 
 USART 上台阶用法：
 

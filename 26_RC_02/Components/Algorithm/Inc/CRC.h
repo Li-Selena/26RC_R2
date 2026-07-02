@@ -34,6 +34,12 @@ typedef enum
 /* float 数据区在帧内的起始偏移 */
 #define BT_FRAME_FLOAT_OFFSET  16U
 
+/*
+ * USART chassis param3 follows the USB yaw_data rule:
+ * ROBOT_NO_YAW: target_yaw_robot_deg; WORLD_NO_YAW: target_yaw_world_deg;
+ * other VEL: vw(rad/s); other POS: dyaw(rad).
+ */
+
 #define USART_CONTROL_TIMEOUT_MS 300U
 
 extern ParseState BT_Uart10;

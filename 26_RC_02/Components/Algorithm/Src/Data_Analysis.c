@@ -75,9 +75,9 @@ uint8_t tool_dev = TOOL_DEV_CLAMP;  /* 0=夹爪 1=吸盘 */
  * 约定：上位机每次发送 16 字节数据区（4 个 float，小端），
  * 不同命令根据自身需求选择性取用 f[0]~f[3]，忽略不需要的。
  *
- *   f[0]  f[1]  f[2]  f[3]
- *   vx    vy    vw    lock_yaw   ← CHS_SET_VEL
- *   dx    dy    dyaw  (reserved) ← CHS_SET_POS
+ *   f[0]  f[1]  f[2]                            f[3]
+ *   vx    vy    vw/active-frame target_yaw_deg  (reserved) ← CHS_SET_VEL
+ *   dx    dy    dyaw/active-frame target_yaw_deg (reserved) ← CHS_SET_POS
  *   x     y     z     (reserved) ← ARM_SET_TARGET
  *   dev   act   —     —          ← TOOL_SET_STATE
  *   dev   —     —     —          ← TOOL_SET_MODE
@@ -183,36 +183,70 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
 
     case USB_CMD_CHS_SET_VEL:
         if (!USB_Read4FloatsChecked(d, len, f)) break;
-        /* f[0]=vx  f[1]=vy  f[2]=vw  f[3]=lock_yaw(deg) */
-        f[0] = Clamp(f[0], MEC_REMOTE_VX_MIN_MPS, MEC_REMOTE_VX_MAX_MPS);
-        f[1] = Clamp(f[1], MEC_REMOTE_VY_MIN_MPS, MEC_REMOTE_VY_MAX_MPS);
-        f[2] = Clamp(f[2], MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
-        total_vel_USB.vx = f[0]; total_vel_USB.vy = f[1]; total_vel_USB.vw = f[2];
-        if (USB_Task_flag && Mecanum_control_flag) {
-            taskENTER_CRITICAL();
-            R2_YawAutoTune_Stop();
-            if (g_r2_ctrl_usb.mode == R2_MODE_WORLD_NO_YAW_VEL ||
-                g_r2_ctrl_usb.mode == R2_MODE_WORLD_NO_YAW_POS)
-                R2_Move_SetWorldLockYaw(&g_r2_ctrl_usb, f[3] * 0.0174533f);
-            R2_Move_SetVel(&g_r2_ctrl_usb, f[0], f[1], f[2]);
-            taskEXIT_CRITICAL();
-            USB_ChassisWatchdog_Feed();
+        {
+            uint8_t no_yaw_mode = R2_Move_IsNoYawMode(g_r2_ctrl_usb.mode);
+            float yaw_data = f[2];
+
+            f[0] = Clamp(f[0], MEC_REMOTE_VX_MIN_MPS, MEC_REMOTE_VX_MAX_MPS);
+            f[1] = Clamp(f[1], MEC_REMOTE_VY_MIN_MPS, MEC_REMOTE_VY_MAX_MPS);
+            if (no_yaw_mode == 0U) {
+                f[2] = Clamp(f[2], MEC_REMOTE_VW_MIN_RAD_S, MEC_REMOTE_VW_MAX_RAD_S);
+            }
+            total_vel_USB.vx = f[0];
+            total_vel_USB.vy = f[1];
+            total_vel_USB.vw = (no_yaw_mode != 0U) ? 0.0f : f[2];
+
+            if (USB_Task_flag && Mecanum_control_flag) {
+                taskENTER_CRITICAL();
+                R2_YawAutoTune_Stop();
+                if (no_yaw_mode != 0U) {
+                    if (R2_Move_IsWorldMode(g_r2_ctrl_usb.mode)) {
+                        R2_Move_SetWorldLockYaw(&g_r2_ctrl_usb,
+                                                yaw_data * 0.0174533f);
+                    } else {
+                        R2_Move_SetRobotLockYaw(&g_r2_ctrl_usb,
+                                                yaw_data * 0.0174533f);
+                    }
+                    R2_Move_SetVel(&g_r2_ctrl_usb, f[0], f[1], 0.0f);
+                } else {
+                    R2_Move_SetVel(&g_r2_ctrl_usb, f[0], f[1], f[2]);
+                }
+                taskEXIT_CRITICAL();
+                USB_ChassisWatchdog_Feed();
+            }
         }
         break;
 
     case USB_CMD_CHS_SET_POS:
         if (!USB_Read4FloatsChecked(d, len, f)) break;
-        /* f[0]=dx  f[1]=dy  f[2]=dyaw */
-        total_vel_USB.vx = f[0]; total_vel_USB.vy = f[1]; total_vel_USB.vw = f[2];
-        if (USB_Task_flag && Mecanum_control_flag) {
-            int8_t set_result;
+        {
+            uint8_t no_yaw_mode = R2_Move_IsNoYawMode(g_r2_ctrl_usb.mode);
+            float yaw_data = f[2];
 
-            taskENTER_CRITICAL();
-            R2_YawAutoTune_Stop();
-            set_result = R2_Move_SetDist(&g_r2_ctrl_usb, f[0], f[1], f[2]);
-            taskEXIT_CRITICAL();
-            if (set_result == 0) {
-                USB_ChassisWatchdog_Disarm();
+            total_vel_USB.vx = f[0];
+            total_vel_USB.vy = f[1];
+            total_vel_USB.vw = (no_yaw_mode != 0U) ? 0.0f : f[2];
+            if (USB_Task_flag && Mecanum_control_flag) {
+                int8_t set_result;
+
+                taskENTER_CRITICAL();
+                R2_YawAutoTune_Stop();
+                if (no_yaw_mode != 0U) {
+                    if (R2_Move_IsWorldMode(g_r2_ctrl_usb.mode)) {
+                        R2_Move_SetWorldLockYaw(&g_r2_ctrl_usb,
+                                                yaw_data * 0.0174533f);
+                    } else {
+                        R2_Move_SetRobotLockYaw(&g_r2_ctrl_usb,
+                                                yaw_data * 0.0174533f);
+                    }
+                    set_result = R2_Move_SetDist(&g_r2_ctrl_usb, f[0], f[1], 0.0f);
+                } else {
+                    set_result = R2_Move_SetDist(&g_r2_ctrl_usb, f[0], f[1], f[2]);
+                }
+                taskEXIT_CRITICAL();
+                if (set_result == 0) {
+                    USB_ChassisWatchdog_Disarm();
+                }
             }
         }
         break;
