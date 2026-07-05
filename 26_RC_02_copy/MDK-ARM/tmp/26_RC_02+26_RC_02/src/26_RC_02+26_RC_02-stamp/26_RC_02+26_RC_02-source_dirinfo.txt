@@ -1,0 +1,9 @@
+# This is a generated file and its contents are an internal implementation detail.
+# The download step will be re-executed if anything in this file changes.
+# No other meaning or use of this file is supported.
+
+method=source_dir
+command=
+source_dir=F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02
+work_dir=
+

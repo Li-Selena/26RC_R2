@@ -607,9 +607,71 @@ USART 上台阶用法：
 | 4 | u8 | `Tool_control_flag` |
 | 5 | u8 | 底盘电机在线数 |
 | 6 | u8 | USB 超时标志，bit0 底盘，bit1 机械臂，bit2 工具 |
-| 7 | u8 | `test_action`，最近一次/当前独立调试动作 ID，`0=NONE` |
+| 7 | u8 | reserved |
 
-### 6.2 `ARM_GET_STATUS` 回包 `0x26`, `LEN=40`
+### 6.2 `CHS_GET_STATUS` 回包 `0x16`, `LEN=112`
+
+| offset | 类型 | 含义 |
+|---:|---|---|
+| 0 | u8 | `mode`，见底盘 8 种模式表 |
+| 1 | u8 | `pos_state`，`0=IDLE, 1=RUNNING, 2=DONE` |
+| 2 | u8 | `emergency_stop` |
+| 3 | u8 | reserved |
+| 4 | f32 | `robot_vel.vx`，当前执行速度，m/s |
+| 8 | f32 | `robot_vel.vy`，当前执行速度，m/s |
+| 12 | f32 | `robot_vel.vw`，当前执行角速度，rad/s |
+| 16 | f32 | `odom_x`，当前里程计，m |
+| 20 | f32 | `odom_y`，当前里程计，m |
+| 24 | f32 | `odom_yaw`，当前里程计 yaw，rad |
+| 28 | f32 | `v_max` |
+| 32 | f32 | `a_max` |
+| 36 | f32 | `j_max` |
+| 40 | f32 | `pos_progress` |
+| 44 | f32 | `pos_err_x` |
+| 48 | f32 | `pos_err_y` |
+| 52 | f32 | `pos_err_yaw` |
+| 56 | f32 | `nav.x_m` |
+| 60 | f32 | `nav.y_m` |
+| 64 | f32 | `nav.yaw_rad` |
+| 68 | f32 | `nav.yaw_total_rad` |
+| 72 | f32 | `nav.vx_mps` |
+| 76 | f32 | `nav.vy_mps` |
+| 80 | f32 | `nav.wz_radps` |
+| 84 | u8 | `imu_online` |
+| 85 | u8 | USB 超时标志，bit0 底盘，bit1 机械臂，bit2 工具 |
+| 86 | u8 | `status_flags`，见下表 |
+| 87 | u8 | `error_flags`，见下表 |
+| 88 | f32 | `target_vx`，当前目标速度，m/s |
+| 92 | f32 | `target_vy`，当前目标速度，m/s |
+| 96 | f32 | `target_vw`，当前目标角速度，rad/s |
+| 100 | f32 | `target_dx`，当前位置目标，m |
+| 104 | f32 | `target_dy`，当前位置目标，m |
+| 108 | f32 | `target_dyaw`，当前位置目标，rad |
+
+`CHS_GET_STATUS.status_flags`：
+
+| bit | 含义 |
+|---:|---|
+| 0 | 底盘使能 |
+| 1 | 当前为速度模式 |
+| 2 | 当前为位置模式 |
+| 3 | 位置运动执行中 |
+| 4 | 底盘正在运动 |
+| 5 | 位置运动完成 |
+| 6 | IMU 在线 |
+| 7 | 底盘电机全部在线 |
+
+`CHS_GET_STATUS.error_flags`：
+
+| bit | 含义 |
+|---:|---|
+| 0 | USB 底盘看门狗超时 |
+| 1 | IMU 离线 |
+| 2 | 底盘急停 |
+| 3 | 底盘电机全部离线 |
+| 4 | 底盘电机部分离线 |
+
+### 6.3 `ARM_GET_STATUS` 回包 `0x26`, `LEN=64`
 
 | offset | 类型 | 含义 |
 |---:|---|---|
@@ -620,14 +682,51 @@ USART 上台阶用法：
 | 4 | f32 | `model_theta1(rad)` |
 | 8 | f32 | `model_theta2(rad)` |
 | 12 | f32 | `model_theta3(rad)` |
-| 16 | f32 | `motor_j1_target(deg)` |
-| 20 | f32 | `motor_j2_target(deg)` |
-| 24 | f32 | `motor_j3_target(deg)` |
-| 28 | f32 | `actual_j1_deg` |
-| 32 | f32 | `actual_j2_deg` |
-| 36 | f32 | `actual_j3_deg` |
+| 16 | f32 | `motor_j1_target(deg)`，当前电机目标值 |
+| 20 | f32 | `motor_j2_target(deg)`，当前电机目标值 |
+| 24 | f32 | `motor_j3_target(deg)`，当前电机目标值 |
+| 28 | f32 | `actual_j1_deg`，当前实际执行值 |
+| 32 | f32 | `actual_j2_deg`，当前实际执行值 |
+| 36 | f32 | `actual_j3_deg`，当前实际执行值 |
+| 40 | f32 | `requested_x(mm)`，最近一次上位机请求目标 |
+| 44 | f32 | `requested_y(mm)`，最近一次上位机请求目标 |
+| 48 | f32 | `requested_z(mm)`，最近一次上位机请求目标 |
+| 52 | u8 | `reachable` |
+| 53 | u8 | `safe` |
+| 54 | u8 | `unsafe_reason`，`0=NONE, 1=THETA2_RANGE, 2=J3_RANGE, 3=WORKSPACE_MARGIN, 4=J1_LOCK_PLANE` |
+| 55 | u8 | `actual_motor_valid` |
+| 56 | u8 | FDCAN3 机械臂电机在线数，统计 ID1..3 |
+| 57 | u8 | `status_flags`，见下表 |
+| 58 | u8 | `error_flags`，见下表 |
+| 59 | u8 | USB 超时标志，bit0 底盘，bit1 机械臂，bit2 工具 |
+| 60 | f32 | `max_abs_err_deg`，三关节目标/实际最大绝对误差 |
 
-### 6.3 `TOOL_GET_STATUS` 回包 `0x36`, `LEN=16`
+`ARM_GET_STATUS.status_flags`：
+
+| bit | 含义 |
+|---:|---|
+| 0 | 机械臂使能 |
+| 1 | 机械臂仍在向目标运动 |
+| 2 | 机械臂电机全部在线 |
+| 3 | 实际关节角有效 |
+| 4 | 最近目标几何可达 |
+| 5 | 最近目标安全 |
+| 6 | 存在历史安全目标 |
+| 7 | IK 状态为 OK |
+
+`ARM_GET_STATUS.error_flags`：
+
+| bit | 含义 |
+|---:|---|
+| 0 | IK 非 OK |
+| 1 | 几何不可达 |
+| 2 | 不满足安全空间 |
+| 3 | 参数/数据错误 |
+| 4 | USB 机械臂看门狗超时 |
+| 5 | 机械臂电机离线 |
+| 6 | 实际关节角无效 |
+
+### 6.4 `TOOL_GET_STATUS` 回包 `0x36`, `LEN=32`
 
 | offset | 类型 | 含义 |
 |---:|---|---|
@@ -635,23 +734,53 @@ USART 上台阶用法：
 | 1 | u8 | `clamp.state` |
 | 2 | u8 | `clamp.run_status`，`0=IDLE, 1=MOVING, 2=ERROR` |
 | 3 | u8 | `clamp.safe_flag` |
-| 4 | f32 | `clamp.real_angle` |
+| 4 | f32 | `clamp.real_angle`，当前实际执行值 |
 | 8 | u8 | `chuck.state` |
 | 9 | u8 | `chuck.run_status` |
 | 10 | u8 | `chuck.safe_flag` |
 | 11 | u8 | active source，`0=USART, 1=USB` |
-| 12 | f32 | `chuck.real_angle` |
+| 12 | f32 | `chuck.real_angle`，当前实际执行值 |
+| 16 | f32 | `clamp.target_angle`，当前目标值 |
+| 20 | f32 | `chuck.target_angle`，当前目标值 |
+| 24 | u8 | `status_flags`，见下表 |
+| 25 | u8 | `error_flags`，见下表 |
+| 26 | u8 | `clamp.pending_state` |
+| 27 | u8 | `chuck.pending_state` |
+| 28 | u8 | USB 超时标志，bit0 底盘，bit1 机械臂，bit2 工具 |
+| 29..31 | u8 | reserved |
 
-### 6.4 `ROBOT_GET_STATUS` 回包 `0x46`, `LEN=160`
+`TOOL_GET_STATUS.status_flags`：
+
+| bit | 含义 |
+|---:|---|
+| 0 | 工具使能 |
+| 1 | 夹爪执行中 |
+| 2 | 吸盘执行中 |
+| 3 | 当前选中工具执行中 |
+| 4 | 夹爪到位/安全 |
+| 5 | 吸盘到位/安全 |
+| 6 | 当前控制源为 USB |
+
+`TOOL_GET_STATUS.error_flags`：
+
+| bit | 含义 |
+|---:|---|
+| 0 | 夹爪状态机错误 |
+| 1 | 吸盘状态机错误 |
+| 2 | USB 工具看门狗超时 |
+| 3 | 当前选中工具停止后仍未到位/不安全 |
+| 4 | 当前控制源不是 USB |
+
+### 6.5 `ROBOT_GET_STATUS` 回包 `0x46`, `LEN=240`
 
 | offset | 类型 | 含义 |
 |---:|---|---|
-| 0 | u8 | 协议版本，当前为 `1` |
+| 0 | u8 | 协议版本，当前为 `3` |
 | 1 | u8 | active source，`0=USART, 1=USB, 2=none` |
-| 2 | u8 | enable flags，bit0 底盘，bit1 机械臂，bit2 工具 |
-| 3 | u8 | executing flags，bit0 底盘运动，bit1 位置运动，bit2 机械臂运动，bit3 工具运动，bit4 任一执行中 |
+| 2 | u8 | enable flags，bit0 底盘，bit1 机械臂，bit2 工具，bit3 上/下台阶 |
+| 3 | u8 | executing flags，bit0 底盘运动，bit1 位置运动，bit2 机械臂运动，bit3 工具运动，bit4 台阶电机输出，bit5 yaw 自动调参，bit7 任一执行中 |
 | 4 | u8 | error flags |
-| 5 | u8 | online flags，bit0 USB近期有命令，bit1 USART近期有命令，bit2 IMU在线，bit3底盘电机在线，bit4机械臂电机在线 |
+| 5 | u8 | online flags，bit0 USB近期有命令，bit1 USART近期有命令，bit2 IMU在线，bit3底盘电机在线，bit4机械臂电机在线，bit5台阶电机在线，bit6激光在线 |
 | 6 | u8 | USB 最近命令 CMD |
 | 7 | u8 | USB 最近命令 LEN |
 | 8 | u32 | USB 命令计数 |
@@ -713,6 +842,29 @@ USART 上台阶用法：
 | 148 | u32 | yaw tune segment elapsed ms |
 | 152 | f32 | yaw tune yaw error deg |
 | 156 | f32 | yaw tune score |
+| 160 | f32 | `chassis.target_vx` |
+| 164 | f32 | `chassis.target_vy` |
+| 168 | f32 | `chassis.target_vw` |
+| 172 | f32 | `chassis.target_dx` |
+| 176 | f32 | `chassis.target_dy` |
+| 180 | f32 | `chassis.target_dyaw` |
+| 184 | f32 | `arm.target_x_mm` |
+| 188 | f32 | `arm.target_y_mm` |
+| 192 | f32 | `arm.target_z_mm` |
+| 196 | f32 | `arm.motor_j1_target_deg` |
+| 200 | f32 | `arm.motor_j2_target_deg` |
+| 204 | f32 | `arm.motor_j3_target_deg` |
+| 208 | f32 | `arm.actual_j1_deg` |
+| 212 | f32 | `arm.actual_j2_deg` |
+| 216 | f32 | `arm.actual_j3_deg` |
+| 220 | f32 | `tool.clamp_target_angle` |
+| 224 | f32 | `tool.clamp_real_angle` |
+| 228 | f32 | `tool.chuck_target_angle` |
+| 232 | f32 | `tool.chuck_real_angle` |
+| 236 | u8 | 机械臂电机在线数 |
+| 237 | u8 | 工具错误，`0/1` |
+| 238 | u8 | climb `error_flags` 摘要 |
+| 239 | u8 | `active_source_stale` |
 
 `ROBOT_GET_STATUS.error_flags`：
 
@@ -727,7 +879,7 @@ USART 上台阶用法：
 | 6 | 工具错误 |
 | 7 | 当前控制源命令不新鲜 |
 
-### 6.5 `CLIMB_GET_STATUS` 回包 `0x56`, `LEN=68`
+### 6.6 `CLIMB_GET_STATUS` 回包 `0x56`, `LEN=68`
 
 | offset | 类型 | 含义 |
 |---:|---|---|
@@ -772,6 +924,29 @@ USART 上台阶用法：
 - 手动步进时，通常等待 `state_done=1` 后再发下一次 step 命令。
 - 上台阶步进用 `CLIMB_UP_STEP`，下台阶步进用 `CLIMB_DOWN_STEP`。
 - 如果你明确要强制推进，step 命令会直接进入下一状态，不要求 `state_done=1`。
+
+### 6.7 上位机错误处理建议
+
+通用原则：上位机收到任一 `error_flags != 0` 后，应先停止继续下发新的运动目标，再按模块查询专属状态包确认目标值、实际值和状态位。`ROBOT_GET_STATUS` 适合做 10..50Hz 总览轮询；出现异常时再补查 `CHS/ARM/TOOL/CLIMB_GET_STATUS`。
+
+| 错误来源 | 触发字段 | 上位机建议处理 |
+|---|---|---|
+| USB 底盘超时 | `ROBOT.error_flags.bit0` 或 `CHS.error_flags.bit0` | 立即停止发速度目标，发送 `CHS_STOP` 或 `SYS_STOP`；确认 USB 链路恢复后，重新 `SYS_SWITCH_SOURCE USB`、`CHS_ENABLE`，速度模式下保持 `<100ms` 周期发送 `CHS_SET_VEL`。 |
+| IMU 离线 | `ROBOT.error_flags.bit3` 或 `CHS.error_flags.bit1` | 禁止继续使用 `WORLD_*`、`NO_YAW` 锁航向和自动台阶流程；提示检查 IMU/INS，必要时切到机器人系低速手动模式。 |
+| 底盘急停 | `ROBOT.error_flags.bit4` 或 `CHS.error_flags.bit2` | 显示急停状态；若是用户主动停止，可等待下一条 `CHS_SET_VEL`/`CHS_SET_POS` 解除；若非主动停止，先人工确认现场安全。 |
+| 底盘电机离线 | `CHS.error_flags.bit3/bit4` | 停止底盘运动；提示检查 FDCAN1 电机反馈、电源和 ID，在线数恢复前不要进入自动流程。 |
+| 机械臂 IK 不可达 | `ARM.ik_status=1` 或 `ARM.error_flags.bit1` | 不要重发同一目标；根据工作空间重新规划 `x/y/z`，界面上标出请求目标与限制边界。固件会保持上一安全目标或当前位置。 |
+| 机械臂安全限制 | `ARM.ik_status=2` 或 `ARM.error_flags.bit2` | 按 `unsafe_reason` 处理：关节范围或联动超限时降低高度/改路径；`WORKSPACE_MARGIN` 时把目标向工作空间内缩；`J1_LOCK_PLANE` 时低位目标保持 `|y|<=5mm` 或抬高到 `z>250mm`。 |
+| 机械臂参数/实际值异常 | `ARM.ik_status=3`、`ARM.error_flags.bit3/bit6` | 停止机械臂命令，提示检查输入是否为 NaN/Inf、机械臂 IK 初始化和编码器反馈；实际值无效时不要用目标/实际误差判定到位。 |
+| 机械臂超时/电机离线 | `ARM.error_flags.bit4/bit5` | 发送 `ARM_STOP`，检查 FDCAN3 ID1..3 在线数和 `max_abs_err_deg`；恢复后重新发送安全目标。 |
+| 工具状态机错误 | `TOOL.error_flags.bit0/bit1` 或 `run_status=ERROR` | 发送 `TOOL_STOP` 或 `TOOL_DISABLE`，提示检查夹爪/吸盘是否卡滞；人工排除后 `TOOL_ENABLE` 再重试。 |
+| 工具超时/停止后仍未到位 | `TOOL.error_flags.bit2/bit3` | 停止当前动作，比较 `target_angle` 与 `real_angle`；若误差持续不收敛，提示机械卡阻或限位异常。 |
+| 工具控制源不一致 | `TOOL.error_flags.bit4` | 先发送 `SYS_SWITCH_SOURCE USB`，再重新下发工具命令；不要同时让 USART 和 USB 控制工具。 |
+| 上/下台阶超时 | `CLIMB.error_flags.bit0` | 发送 `CLIMB_STOP`；检查 `state`、`elapsed_ms`、`leg/drive target-pos` 和激光有效位，确认卡滞或传感器问题后从安全状态重新开始。 |
+| 上/下台阶参数未配置 | `CLIMB.error_flags.bit1` | 禁止执行台阶流程；提示检查 `R2_CLIMB_PARAM_CONFIGURED`、count/mm、方向宏和机械参数。 |
+| 上/下台阶测试动作错误 | `CLIMB.error_flags.bit2` | 检查 `test_action` 是否合法，以及该动作是否需要底盘控制器/激光条件；发送 `CLIMB_STOP` 后重新选择动作。 |
+| 上/下台阶流程切换错误 | `CLIMB.error_flags.bit3` | 当前流程未结束时不要从上台阶切到下台阶或反向切换；先 `CLIMB_STOP`，等待 `state=IDLE` 后再启动目标流程。 |
+| 当前控制源不新鲜 | `ROBOT.error_flags.bit7` | 提示当前控制源保活不足；若使用 USB，恢复周期发送命令或切换到 USART；自动流程中不要忽略此位。 |
 
 ## 7. 最小可用流程汇总
 

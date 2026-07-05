@@ -75,11 +75,11 @@ void FDCAN_Start(FDCAN_HandleTypeDef *hfdcan)
         Error_Handler();
     }
 
-    if (hfdcan == &hfdcan1)
+    if ((hfdcan == &hfdcan1) || (hfdcan == &hfdcan2))
     {
         notification = FDCAN_IT_RX_FIFO0_NEW_MESSAGE;
     }
-    else if ((hfdcan == &hfdcan2) || (hfdcan == &hfdcan3))
+    else if (hfdcan == &hfdcan3)
     {
         notification = FDCAN_IT_RX_FIFO1_NEW_MESSAGE;
     }
@@ -101,7 +101,7 @@ void FDCAN1_Filter_Init(void)
 
 void FDCAN2_Filter_Init(void)
 {
-    FDCAN_Motor_Filter_Init(&hfdcan2, FDCAN_FILTER_TO_RXFIFO1);
+    FDCAN_Motor_Filter_Init(&hfdcan2, FDCAN_FILTER_TO_RXFIFO0);
 }
 
 void FDCAN3_Filter_Init(void)
@@ -118,9 +118,18 @@ void FDCAN_Motor_Start_All(void)
 
 void HAL_FDCAN_RxFifo0Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo0ITs)
 {
-    if ((hfdcan == &hfdcan1) && ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) != RESET))
+    if ((RxFifo0ITs & FDCAN_IT_RX_FIFO0_NEW_MESSAGE) == RESET)
+    {
+        return;
+    }
+
+    if (hfdcan == &hfdcan1)
     {
         FDCAN_Process_Motor_Rx(hfdcan, FDCAN_RX_FIFO0, motor_fdcan1);
+    }
+    else if (hfdcan == &hfdcan2)
+    {
+        FDCAN_Process_Motor_Rx(hfdcan, FDCAN_RX_FIFO0, motor_fdcan2);
     }
 }
 
@@ -131,11 +140,7 @@ void HAL_FDCAN_RxFifo1Callback(FDCAN_HandleTypeDef *hfdcan, uint32_t RxFifo1ITs)
         return;
     }
 
-    if (hfdcan == &hfdcan2)
-    {
-        FDCAN_Process_Motor_Rx(hfdcan, FDCAN_RX_FIFO1, motor_fdcan2);
-    }
-    else if (hfdcan == &hfdcan3)
+    if (hfdcan == &hfdcan3)
     {
         FDCAN_Process_Motor_Rx(hfdcan, FDCAN_RX_FIFO1, motor_fdcan3);
     }

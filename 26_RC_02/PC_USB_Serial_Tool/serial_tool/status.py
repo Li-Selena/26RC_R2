@@ -260,6 +260,36 @@ def _decode_chassis_status(p: bytes) -> Dict[str, Any]:
                 },
                 "imu_online": bool(_u8(p, 84)),
                 "usb_timeout_flags": _flags(timeout, ["chassis", "arm", "tool"]),
+                "status_flags": _flags(
+                    _u8(p, 86),
+                    [
+                        "enabled",
+                        "vel_mode",
+                        "pos_mode",
+                        "pos_running",
+                        "moving",
+                        "pos_done",
+                        "imu_online",
+                        "motors_online",
+                    ],
+                ),
+                "error_flags": _flags(
+                    _u8(p, 87),
+                    [
+                        "usb_chassis_timeout",
+                        "imu_offline",
+                        "emergency_stop",
+                        "all_motors_offline",
+                        "partial_motor_offline",
+                    ],
+                ),
+            }
+        )
+    if len(p) >= 112:
+        data.update(
+            {
+                "target_vel": {"vx": _f32(p, 88), "vy": _f32(p, 92), "vw": _f32(p, 96)},
+                "target_pos": {"dx": _f32(p, 100), "dy": _f32(p, 104), "dyaw": _f32(p, 108)},
             }
         )
     return data
@@ -269,7 +299,7 @@ def _decode_arm_status(p: bytes) -> Dict[str, Any]:
     _need(p, 40)
     ik = _u8(p, 1)
     action = _u8(p, 2)
-    return {
+    data: Dict[str, Any] = {
         "has_last_valid": bool(_u8(p, 0)),
         "ik_status": ik,
         "ik_status_name": IK_STATUS.get(ik, "UNKNOWN"),
@@ -279,12 +309,54 @@ def _decode_arm_status(p: bytes) -> Dict[str, Any]:
         "motor_target_deg": [_f32(p, 16), _f32(p, 20), _f32(p, 24)],
         "actual_joint_deg": [_f32(p, 28), _f32(p, 32), _f32(p, 36)],
     }
+    if len(p) >= 64:
+        status_flags = _u8(p, 57)
+        error_flags = _u8(p, 58)
+        data.update(
+            {
+                "requested_xyz_mm": [_f32(p, 40), _f32(p, 44), _f32(p, 48)],
+                "reachable": bool(_u8(p, 52)),
+                "safe": bool(_u8(p, 53)),
+                "unsafe_reason": _u8(p, 54),
+                "unsafe_reason_name": IK_UNSAFE_REASON.get(_u8(p, 54), "UNKNOWN"),
+                "actual_motor_valid": bool(_u8(p, 55)),
+                "motor_online_count": _u8(p, 56),
+                "status_flags": _flags(
+                    status_flags,
+                    [
+                        "enabled",
+                        "moving",
+                        "motors_online",
+                        "actual_valid",
+                        "reachable",
+                        "safe",
+                        "has_last_valid",
+                        "ik_ok",
+                    ],
+                ),
+                "error_flags": _flags(
+                    error_flags,
+                    [
+                        "ik_not_ok",
+                        "unreachable",
+                        "unsafe",
+                        "param_error",
+                        "usb_arm_timeout",
+                        "motor_offline",
+                        "actual_invalid",
+                    ],
+                ),
+                "usb_timeout_flags": _flags(_u8(p, 59), ["chassis", "arm", "tool"]),
+                "max_abs_err_deg": _f32(p, 60),
+            }
+        )
+    return data
 
 
 def _decode_tool_status(p: bytes) -> Dict[str, Any]:
     _need(p, 16)
     dev = _u8(p, 0)
-    return {
+    data: Dict[str, Any] = {
         "selected_tool": dev,
         "selected_tool_name": TOOL_DEV.get(dev, "UNKNOWN"),
         "clamp": {
@@ -304,6 +376,39 @@ def _decode_tool_status(p: bytes) -> Dict[str, Any]:
         "active_source": _u8(p, 11),
         "active_source_name": SOURCE_NAMES.get(_u8(p, 11), "UNKNOWN"),
     }
+    if len(p) >= 32:
+        status_flags = _u8(p, 24)
+        error_flags = _u8(p, 25)
+        data["clamp"].update({"target_angle": _f32(p, 16), "pending_state": _u8(p, 26)})
+        data["chuck"].update({"target_angle": _f32(p, 20), "pending_state": _u8(p, 27)})
+        data.update(
+            {
+                "status_flags": _flags(
+                    status_flags,
+                    [
+                        "enabled",
+                        "clamp_moving",
+                        "chuck_moving",
+                        "selected_moving",
+                        "clamp_safe",
+                        "chuck_safe",
+                        "usb_source",
+                    ],
+                ),
+                "error_flags": _flags(
+                    error_flags,
+                    [
+                        "clamp_error",
+                        "chuck_error",
+                        "usb_tool_timeout",
+                        "selected_stopped_unsafe",
+                        "active_source_not_usb",
+                    ],
+                ),
+                "usb_timeout_flags": _flags(_u8(p, 28), ["chassis", "arm", "tool"]),
+            }
+        )
+    return data
 
 
 def _decode_robot_status(p: bytes) -> Dict[str, Any]:
@@ -430,6 +535,33 @@ def _decode_robot_status(p: bytes) -> Dict[str, Any]:
                 },
             }
         )
+
+    if len(p) >= 240:
+        data["chassis"].update(
+            {
+                "target_vel": {"vx": _f32(p, 160), "vy": _f32(p, 164), "vw": _f32(p, 168)},
+                "target_pos": {"dx": _f32(p, 172), "dy": _f32(p, 176), "dyaw": _f32(p, 180)},
+            }
+        )
+        data["arm"].update(
+            {
+                "target_xyz_mm": [_f32(p, 184), _f32(p, 188), _f32(p, 192)],
+                "motor_target_deg": [_f32(p, 196), _f32(p, 200), _f32(p, 204)],
+                "actual_joint_deg": [_f32(p, 208), _f32(p, 212), _f32(p, 216)],
+                "motor_online_count": _u8(p, 236),
+            }
+        )
+        data["tool"].update(
+            {
+                "clamp_target_angle": _f32(p, 220),
+                "clamp_real_angle": _f32(p, 224),
+                "chuck_target_angle": _f32(p, 228),
+                "chuck_real_angle": _f32(p, 232),
+                "error": bool(_u8(p, 237)),
+            }
+        )
+        data["climb_summary_error_flags"] = _flags(_u8(p, 238), ["timeout", "param_not_configured", "test_action", "flow_switch"])
+        data["active_source_stale"] = bool(_u8(p, 239))
 
     return data
 

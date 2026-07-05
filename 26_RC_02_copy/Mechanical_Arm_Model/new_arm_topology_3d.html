@@ -1,0 +1,794 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>New Mechanical Arm 3D Topology</title>
+  <style>
+    :root {
+      --bg: #0b0f14;
+      --panel: #121923;
+      --panel-2: #182231;
+      --text: #edf4ff;
+      --muted: #9fb0c6;
+      --line: #2a394d;
+      --x: #ff5d62;
+      --y: #57d889;
+      --z: #5da2ff;
+      --arm: #d9e3f2;
+      --s1: #33d6d0;
+      --s2: #ffbd4f;
+      --g: #e67cff;
+      --base: #7a8aa0;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Microsoft YaHei UI", "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
+    }
+
+    body {
+      display: grid;
+      grid-template-rows: auto 1fr;
+    }
+
+    .toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      min-height: 58px;
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(18, 25, 35, 0.96);
+      backdrop-filter: blur(10px);
+    }
+
+    .title {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 260px;
+      margin-right: 8px;
+    }
+
+    .title strong {
+      font-size: 15px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .title span {
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    button,
+    select,
+    label.toggle {
+      height: 34px;
+      border: 1px solid #314158;
+      border-radius: 6px;
+      background: #182231;
+      color: var(--text);
+      font-size: 13px;
+      font-family: inherit;
+    }
+
+    button,
+    select {
+      padding: 0 10px;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    button:hover,
+    select:hover,
+    label.toggle:hover {
+      border-color: #506887;
+      background: #1d2a3a;
+    }
+
+    label.toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 10px;
+      white-space: nowrap;
+    }
+
+    input[type="checkbox"] {
+      accent-color: #5da2ff;
+    }
+
+    .layout {
+      display: grid;
+      min-height: 0;
+      grid-template-columns: minmax(0, 1fr) 360px;
+    }
+
+    .stage {
+      position: relative;
+      min-width: 0;
+      min-height: 0;
+      background:
+        radial-gradient(circle at 20% 18%, rgba(93, 162, 255, 0.12), transparent 28%),
+        linear-gradient(180deg, #0d131b 0%, #070a0f 100%);
+    }
+
+    #viewport {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: grab;
+    }
+
+    #viewport:active {
+      cursor: grabbing;
+    }
+
+    .hud {
+      position: absolute;
+      left: 16px;
+      bottom: 14px;
+      display: grid;
+      gap: 7px;
+      max-width: min(560px, calc(100% - 32px));
+      padding: 10px 12px;
+      border: 1px solid rgba(124, 146, 176, 0.28);
+      border-radius: 8px;
+      background: rgba(10, 14, 20, 0.72);
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.45;
+      backdrop-filter: blur(8px);
+    }
+
+    .hud b {
+      color: var(--text);
+      font-weight: 650;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .dot {
+      width: 9px;
+      height: 9px;
+      border-radius: 50%;
+      background: var(--text);
+    }
+
+    aside {
+      min-height: 0;
+      overflow: auto;
+      border-left: 1px solid var(--line);
+      background: var(--panel);
+    }
+
+    .panel-section {
+      padding: 16px 16px 14px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    h2 {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 700;
+    }
+
+    p,
+    li {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.58;
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+
+    th,
+    td {
+      padding: 7px 6px;
+      border-bottom: 1px solid #223046;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    th {
+      color: #cdd9eb;
+      font-weight: 650;
+      background: var(--panel-2);
+    }
+
+    td {
+      color: var(--muted);
+    }
+
+    code {
+      color: #dbe8ff;
+      font-family: "Cascadia Mono", Consolas, monospace;
+      font-size: 11px;
+    }
+
+    .axis-x { color: var(--x); }
+    .axis-y { color: var(--y); }
+    .axis-z { color: var(--z); }
+
+    @media (max-width: 980px) {
+      body {
+        overflow: auto;
+      }
+
+      .toolbar {
+        flex-wrap: wrap;
+      }
+
+      .layout {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(560px, 68vh) auto;
+      }
+
+      aside {
+        border-left: 0;
+        border-top: 1px solid var(--line);
+      }
+    }
+  </style>
+</head>
+<body>
+  <header class="toolbar">
+    <div class="title">
+      <strong>新机械臂三维拓扑图</strong>
+      <span>单位 mm；X0 右、Y0 前、Z0 上；拖拽旋转，滚轮缩放</span>
+    </div>
+    <button id="viewIso" type="button">等轴视图</button>
+    <button id="viewFront" type="button">前视 Y-Z</button>
+    <button id="viewTop" type="button">俯视 X-Y</button>
+    <button id="viewReset" type="button">重置</button>
+    <select id="poseSelect" aria-label="工具姿态">
+      <option value="stow">默认 / 收纳姿态</option>
+      <option value="s1_use">吸盘1 使用姿态</option>
+      <option value="s2_use">吸盘2 使用姿态</option>
+      <option value="g_use">夹爪 使用姿态</option>
+    </select>
+    <label class="toggle"><input id="showLabels" type="checkbox" checked>标签</label>
+    <label class="toggle"><input id="showFrames" type="checkbox" checked>坐标系</label>
+    <label class="toggle"><input id="showTools" type="checkbox" checked>工具</label>
+    <label class="toggle"><input id="showGrid" type="checkbox" checked>底盘平面</label>
+  </header>
+
+  <main class="layout">
+    <section class="stage">
+      <canvas id="viewport"></canvas>
+      <div class="hud">
+        <div><b>底盘移动方向：</b><span class="axis-y">+Y0 前进</span>，<span class="axis-x">+X0 右移</span>，-Y0 后退，-X0 左移；绕 <span class="axis-z">+Z0</span> 为 yaw 旋转。</div>
+        <div><b>工具姿态：</b><span id="poseHint">收纳时 joint4 的 +Z 竖直向上，工具坐标系默认平行 joint0。</span></div>
+        <div class="legend">
+          <span class="chip"><span class="dot" style="background:var(--x)"></span>X 轴</span>
+          <span class="chip"><span class="dot" style="background:var(--y)"></span>Y 轴</span>
+          <span class="chip"><span class="dot" style="background:var(--z)"></span>Z 轴</span>
+          <span class="chip"><span class="dot" style="background:var(--s1)"></span>吸盘1</span>
+          <span class="chip"><span class="dot" style="background:var(--s2)"></span>吸盘2</span>
+          <span class="chip"><span class="dot" style="background:var(--g)"></span>夹爪</span>
+        </div>
+      </div>
+    </section>
+
+    <aside>
+      <section class="panel-section">
+        <h2>关节与原点</h2>
+        <table>
+          <thead><tr><th>点</th><th>坐标</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>J1 / O0</td><td><code>(0, 0, 0)</code></td><td>物理 joint1 与底盘/world 原点</td></tr>
+            <tr><td>O1_mdh</td><td><code>(0, 0, 98.18)</code></td><td>严格 MDH frame 1 原点</td></tr>
+            <tr><td>J2 / O2</td><td><code>(0, 42.64, 98.18)</code></td><td>相对 O1 前向偏置 42.64</td></tr>
+            <tr><td>J3 / J4</td><td><code>(0, 42.64, 482.109445)</code></td><td>joint3 与 joint4/tool 原点重合</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel-section">
+        <h2>零位坐标系</h2>
+        <table>
+          <thead><tr><th>Frame</th><th>X</th><th>Y</th><th>Z</th></tr></thead>
+          <tbody>
+            <tr><td>joint0</td><td><code>+X0</code></td><td><code>+Y0</code></td><td><code>+Z0</code></td></tr>
+            <tr><td>MDH 1</td><td><code>+Y0</code></td><td><code>-X0</code></td><td><code>+Z0</code></td></tr>
+            <tr><td>joint2</td><td><code>+Z0</code></td><td><code>-Y0</code></td><td><code>+X0</code></td></tr>
+            <tr><td>joint3</td><td><code>-Y0</code></td><td><code>-Z0</code></td><td><code>+X0</code></td></tr>
+            <tr><td>joint4</td><td><code>+X0</code></td><td><code>+Y0</code></td><td><code>+Z0</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel-section">
+        <h2>工具坐标</h2>
+        <table>
+          <thead><tr><th>工具</th><th>joint4 坐标</th><th>零位世界坐标</th></tr></thead>
+          <tbody>
+            <tr><td>吸盘1 S1</td><td><code>(0, -46.79, 45.5)</code></td><td><code>(0, -4.15, 527.609445)</code></td></tr>
+            <tr><td>吸盘2 S2</td><td><code>(0, 92.6, 0)</code></td><td><code>(0, 135.24, 482.109445)</code></td></tr>
+            <tr><td>夹爪 G</td><td><code>(103, -92, 10.3)</code></td><td><code>(103, -49.36, 492.409445)</code></td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="panel-section">
+        <h2>使用姿态约束</h2>
+        <ul>
+          <li>收纳/停止：joint4 的 <code>+Z4</code> 竖直向上。</li>
+          <li>吸盘1使用：S1 坐标系 <code>+Z</code> 竖直向下。</li>
+          <li>吸盘2使用：S2 坐标系 <code>+Y</code> 竖直向下。</li>
+          <li>夹爪使用：G 坐标系 <code>-Y</code> 指向底盘前方。</li>
+        </ul>
+      </section>
+    </aside>
+  </main>
+
+  <script>
+    "use strict";
+
+    const canvas = document.getElementById("viewport");
+    const ctx = canvas.getContext("2d");
+    const dpr = Math.max(1, window.devicePixelRatio || 1);
+
+    const css = getComputedStyle(document.documentElement);
+    const color = {
+      x: css.getPropertyValue("--x").trim(),
+      y: css.getPropertyValue("--y").trim(),
+      z: css.getPropertyValue("--z").trim(),
+      arm: css.getPropertyValue("--arm").trim(),
+      muted: css.getPropertyValue("--muted").trim(),
+      line: css.getPropertyValue("--line").trim(),
+      s1: css.getPropertyValue("--s1").trim(),
+      s2: css.getPropertyValue("--s2").trim(),
+      g: css.getPropertyValue("--g").trim(),
+      base: css.getPropertyValue("--base").trim(),
+      white: "#edf4ff",
+      dark: "rgba(8, 12, 18, 0.78)"
+    };
+
+    const V = (x, y, z) => ({ x, y, z });
+    const add = (a, b) => V(a.x + b.x, a.y + b.y, a.z + b.z);
+    const sub = (a, b) => V(a.x - b.x, a.y - b.y, a.z - b.z);
+    const mul = (a, s) => V(a.x * s, a.y * s, a.z * s);
+    const len = (a) => Math.hypot(a.x, a.y, a.z);
+    const norm = (a) => {
+      const l = len(a) || 1;
+      return V(a.x / l, a.y / l, a.z / l);
+    };
+
+    const points = {
+      j1: V(0, 0, 0),
+      o1: V(0, 0, 98.18),
+      j2: V(0, 42.64, 98.18),
+      j3: V(0, 42.64, 482.109445)
+    };
+    points.j4 = points.j3;
+
+    const worldFrame = {
+      x: V(1, 0, 0),
+      y: V(0, 1, 0),
+      z: V(0, 0, 1)
+    };
+
+    const frames = [
+      { index: "0", name: "joint0/base", origin: points.j1, axes: worldFrame, size: 90 },
+      { index: "1", name: "MDH1", origin: points.o1, axes: { x: V(0, 1, 0), y: V(-1, 0, 0), z: V(0, 0, 1) }, size: 58 },
+      { index: "2", name: "joint2", origin: points.j2, axes: { x: V(0, 0, 1), y: V(0, -1, 0), z: V(1, 0, 0) }, size: 58 },
+      { index: "3", name: "joint3", origin: points.j3, axes: { x: V(0, -1, 0), y: V(0, 0, -1), z: V(1, 0, 0) }, size: 54 },
+      { index: "4", name: "joint4/tool", origin: points.j4, axes: worldFrame, size: 78 }
+    ];
+
+    const toolOffsets = {
+      s1: V(0, -46.79, 45.5),
+      s2: V(0, 92.6, 0),
+      g: V(103, -92, 10.3)
+    };
+
+    const tools = [
+      { key: "s1", label: "S1 吸盘1", origin: add(points.j4, toolOffsets.s1), color: color.s1 },
+      { key: "s2", label: "S2 吸盘2", origin: add(points.j4, toolOffsets.s2), color: color.s2 },
+      { key: "g", label: "G 夹爪", origin: add(points.j4, toolOffsets.g), color: color.g }
+    ];
+
+    const toolFrames = {
+      stow: {
+        hint: "收纳时 joint4 的 +Z 竖直向上，工具坐标系默认平行 joint0。",
+        s1: worldFrame,
+        s2: worldFrame,
+        g: worldFrame
+      },
+      s1_use: {
+        hint: "吸盘1使用：S1 坐标系 +Z 竖直向下；此处用 X=+X0, Y=-Y0, Z=-Z0 显示姿态约束。",
+        s1: { x: V(1, 0, 0), y: V(0, -1, 0), z: V(0, 0, -1) },
+        s2: worldFrame,
+        g: worldFrame
+      },
+      s2_use: {
+        hint: "吸盘2使用：S2 坐标系 +Y 竖直向下；此处用 X=+X0, Y=-Z0, Z=+Y0 显示姿态约束。",
+        s1: worldFrame,
+        s2: { x: V(1, 0, 0), y: V(0, 0, -1), z: V(0, 1, 0) },
+        g: worldFrame
+      },
+      g_use: {
+        hint: "夹爪使用：G 坐标系 -Y 指向底盘前方 +Y0；此处用 X=+X0, Y=-Y0, Z=-Z0 显示姿态约束。",
+        s1: worldFrame,
+        s2: worldFrame,
+        g: { x: V(1, 0, 0), y: V(0, -1, 0), z: V(0, 0, -1) }
+      }
+    };
+
+    const state = {
+      yaw: -0.72,
+      pitch: 0.62,
+      scale: 1,
+      panX: 0,
+      panY: 0,
+      target: V(16, 64, 260),
+      dragging: false,
+      lastX: 0,
+      lastY: 0,
+      pose: "stow",
+      showLabels: true,
+      showFrames: true,
+      showTools: true,
+      showGrid: true
+    };
+
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.max(1, Math.floor(rect.width * dpr));
+      canvas.height = Math.max(1, Math.floor(rect.height * dpr));
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      state.scale = Math.min(rect.width / 650, rect.height / 620) * 0.92;
+      draw();
+    }
+
+    function cameraPoint(p) {
+      const q = sub(p, state.target);
+      const cy = Math.cos(state.yaw);
+      const sy = Math.sin(state.yaw);
+      const cp = Math.cos(state.pitch);
+      const sp = Math.sin(state.pitch);
+      const x1 = cy * q.x - sy * q.y;
+      const y1 = sy * q.x + cy * q.y;
+      const z1 = q.z;
+      return {
+        x: x1,
+        y: cp * y1 - sp * z1,
+        z: sp * y1 + cp * z1
+      };
+    }
+
+    function project(p) {
+      const rect = canvas.getBoundingClientRect();
+      const c = cameraPoint(p);
+      return {
+        x: rect.width * 0.5 + state.panX + c.x * state.scale,
+        y: rect.height * 0.52 + state.panY - c.y * state.scale,
+        z: c.z
+      };
+    }
+
+    function line(a, b, stroke, width = 1, dash = []) {
+      const pa = project(a);
+      const pb = project(b);
+      ctx.save();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.setLineDash(dash);
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function arrow(a, b, stroke, width = 2, label = "", labelOffset = V(0, 0, 0), dash = []) {
+      const pa = project(a);
+      const pb = project(b);
+      const dx = pb.x - pa.x;
+      const dy = pb.y - pa.y;
+      const angle = Math.atan2(dy, dx);
+      const head = Math.max(8, Math.min(15, 10 * state.scale));
+
+      ctx.save();
+      ctx.strokeStyle = stroke;
+      ctx.fillStyle = stroke;
+      ctx.lineWidth = width;
+      ctx.setLineDash(dash);
+      ctx.beginPath();
+      ctx.moveTo(pa.x, pa.y);
+      ctx.lineTo(pb.x, pb.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.beginPath();
+      ctx.moveTo(pb.x, pb.y);
+      ctx.lineTo(pb.x - head * Math.cos(angle - 0.48), pb.y - head * Math.sin(angle - 0.48));
+      ctx.lineTo(pb.x - head * Math.cos(angle + 0.48), pb.y - head * Math.sin(angle + 0.48));
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      if (label && state.showLabels) {
+        const lp = project(add(b, labelOffset));
+        labelBox(label, lp.x, lp.y, stroke);
+      }
+    }
+
+    function circle3D(p, radius, fill, stroke = "rgba(255,255,255,0.7)") {
+      const pp = project(p);
+      ctx.save();
+      ctx.fillStyle = fill;
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.2;
+      ctx.beginPath();
+      ctx.arc(pp.x, pp.y, radius, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function labelBox(text, x, y, accent = color.white, align = "left") {
+      const lines = String(text).split("\n");
+      ctx.save();
+      ctx.font = "12px 'Microsoft YaHei UI', 'Microsoft YaHei', sans-serif";
+      const widths = lines.map((t) => ctx.measureText(t).width);
+      const w = Math.max(...widths) + 12;
+      const h = lines.length * 16 + 8;
+      let bx = align === "right" ? x - w : x;
+      let by = y - h * 0.5;
+      ctx.fillStyle = color.dark;
+      ctx.strokeStyle = "rgba(154, 176, 205, 0.28)";
+      roundedRect(bx, by, w, h, 5);
+      ctx.fill();
+      ctx.stroke();
+      ctx.fillStyle = accent;
+      lines.forEach((lineText, i) => {
+        ctx.fillText(lineText, bx + 6, by + 16 + i * 16);
+      });
+      ctx.restore();
+    }
+
+    function roundedRect(x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+      ctx.lineTo(x + r, y + h);
+      ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+      ctx.lineTo(x, y + r);
+      ctx.quadraticCurveTo(x, y, x + r, y);
+      ctx.closePath();
+    }
+
+    function drawGrid() {
+      if (!state.showGrid) return;
+      const extent = 240;
+      const step = 40;
+      for (let v = -extent; v <= extent; v += step) {
+        line(V(-extent, v, 0), V(extent, v, 0), "rgba(122, 138, 160, 0.18)", v === 0 ? 1.4 : 1);
+        line(V(v, -extent, 0), V(v, extent, 0), "rgba(122, 138, 160, 0.18)", v === 0 ? 1.4 : 1);
+      }
+
+      const z = 2;
+      const baseW = 150;
+      const baseL = 210;
+      const corners = [
+        V(-baseW / 2, -baseL / 2, z),
+        V(baseW / 2, -baseL / 2, z),
+        V(baseW / 2, baseL / 2, z),
+        V(-baseW / 2, baseL / 2, z)
+      ];
+      ctx.save();
+      ctx.strokeStyle = "rgba(205, 217, 235, 0.36)";
+      ctx.fillStyle = "rgba(93, 162, 255, 0.055)";
+      ctx.lineWidth = 1.4;
+      const first = project(corners[0]);
+      ctx.beginPath();
+      ctx.moveTo(first.x, first.y);
+      corners.slice(1).forEach((c) => {
+        const p = project(c);
+        ctx.lineTo(p.x, p.y);
+      });
+      ctx.closePath();
+      ctx.fill();
+      ctx.stroke();
+      ctx.restore();
+
+      arrow(V(0, 0, 6), V(118, 0, 6), color.x, 2, "+X0 右移", V(10, -8, 0));
+      arrow(V(0, 0, 6), V(-118, 0, 6), "rgba(255,93,98,0.65)", 1.6, "-X0 左移", V(-70, -6, 0), [5, 5]);
+      arrow(V(0, 0, 8), V(0, 142, 8), color.y, 2, "+Y0 前进", V(5, 12, 0));
+      arrow(V(0, 0, 8), V(0, -142, 8), "rgba(87,216,137,0.65)", 1.6, "-Y0 后退", V(10, -28, 0), [5, 5]);
+      drawYawRing(V(0, 0, 12), 75);
+    }
+
+    function drawYawRing(center, radius) {
+      const samples = [];
+      for (let i = 0; i <= 42; i += 1) {
+        const a = (Math.PI * 1.7 * i) / 42 + Math.PI * 0.15;
+        samples.push(add(center, V(Math.cos(a) * radius, Math.sin(a) * radius, 0)));
+      }
+      for (let i = 0; i < samples.length - 1; i += 1) {
+        line(samples[i], samples[i + 1], "rgba(93, 162, 255, 0.44)", 1.4);
+      }
+      const end = samples[samples.length - 1];
+      const prev = samples[samples.length - 3];
+      arrow(prev, end, "rgba(93, 162, 255, 0.72)", 1.4, "yaw 绕 +Z0", V(15, 10, 8));
+    }
+
+    function drawArm() {
+      line(points.j1, points.o1, "rgba(217, 227, 242, 0.55)", 3, [5, 5]);
+      line(points.o1, points.j2, color.arm, 4);
+      line(points.j2, points.j3, color.arm, 5);
+      line(points.j1, points.j2, "rgba(217, 227, 242, 0.24)", 1.5);
+
+      circle3D(points.j1, 7, "#243248");
+      circle3D(points.o1, 5, "#56677f");
+      circle3D(points.j2, 7, "#d9e3f2", "#0b0f14");
+      circle3D(points.j3, 8, "#d9e3f2", "#0b0f14");
+
+      if (state.showLabels) {
+        labelBox("J1 / O0\n(0,0,0)", project(add(points.j1, V(-18, -40, -8))).x, project(add(points.j1, V(-18, -40, -8))).y, color.white, "right");
+        labelBox("O1_mdh\n(0,0,98.18)", project(add(points.o1, V(-36, -22, 8))).x, project(add(points.o1, V(-36, -22, 8))).y, color.muted, "right");
+        labelBox("J2 / O2\n(0,42.64,98.18)", project(add(points.j2, V(18, 24, 0))).x, project(add(points.j2, V(18, 24, 0))).y, color.white);
+        labelBox("J3=J4 / O3=O4\n(0,42.64,482.109445)", project(add(points.j3, V(18, 26, 26))).x, project(add(points.j3, V(18, 26, 26))).y, color.white);
+        labelBox("J2->J3 = 383.929445mm\n零位竖直 +Z0", project(V(-48, 50, 290)).x, project(V(-48, 50, 290)).y, color.z, "right");
+      }
+    }
+
+    function drawFrame(frame) {
+      const o = frame.origin;
+      const s = frame.size;
+      arrow(o, add(o, mul(norm(frame.axes.x), s)), color.x, 2, `X${frame.index}`, mul(norm(frame.axes.x), 10));
+      arrow(o, add(o, mul(norm(frame.axes.y), s)), color.y, 2, `Y${frame.index}`, mul(norm(frame.axes.y), 10));
+      arrow(o, add(o, mul(norm(frame.axes.z), s)), color.z, 2, `Z${frame.index}`, mul(norm(frame.axes.z), 10));
+    }
+
+    function drawTools() {
+      if (!state.showTools) return;
+
+      for (const tool of tools) {
+        line(points.j4, tool.origin, tool.color, 2.2, [6, 4]);
+        circle3D(tool.origin, 6.5, tool.color, "rgba(255,255,255,0.75)");
+        if (state.showLabels) {
+          const p = project(add(tool.origin, V(10, 8, 12)));
+          labelBox(`${tool.label}\n(${fmt(tool.origin.x)}, ${fmt(tool.origin.y)}, ${fmt(tool.origin.z)})`, p.x, p.y, tool.color);
+        }
+      }
+
+      if (state.showFrames) {
+        const active = toolFrames[state.pose];
+        for (const tool of tools) {
+          const axes = active[tool.key];
+          const activeTool =
+            (state.pose === "s1_use" && tool.key === "s1") ||
+            (state.pose === "s2_use" && tool.key === "s2") ||
+            (state.pose === "g_use" && tool.key === "g");
+          drawToolFrame(tool.origin, axes, activeTool ? 56 : 42, tool.label, activeTool);
+        }
+      }
+    }
+
+    function drawToolFrame(origin, axes, size, label, active) {
+      const w = active ? 2.4 : 1.5;
+      const dash = active ? [] : [4, 4];
+      const short = label.split(" ")[0];
+      arrow(origin, add(origin, mul(norm(axes.x), size)), color.x, w, active ? `${short} X` : "", mul(norm(axes.x), 8), dash);
+      arrow(origin, add(origin, mul(norm(axes.y), size)), color.y, w, active ? `${short} Y` : "", mul(norm(axes.y), 8), dash);
+      arrow(origin, add(origin, mul(norm(axes.z), size)), color.z, w, active ? `${short} Z` : "", mul(norm(axes.z), 8), dash);
+    }
+
+    function fmt(n) {
+      const rounded = Math.round(n * 1000000) / 1000000;
+      return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(6).replace(/0+$/, "").replace(/\.$/, "");
+    }
+
+    function draw() {
+      const rect = canvas.getBoundingClientRect();
+      ctx.clearRect(0, 0, rect.width, rect.height);
+
+      drawGrid();
+      drawArm();
+      if (state.showFrames) frames.forEach(drawFrame);
+      drawTools();
+    }
+
+    function setView(yaw, pitch, panX = 0, panY = 0) {
+      state.yaw = yaw;
+      state.pitch = pitch;
+      state.panX = panX;
+      state.panY = panY;
+      draw();
+    }
+
+    canvas.addEventListener("pointerdown", (event) => {
+      state.dragging = true;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      canvas.setPointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("pointermove", (event) => {
+      if (!state.dragging) return;
+      const dx = event.clientX - state.lastX;
+      const dy = event.clientY - state.lastY;
+      state.lastX = event.clientX;
+      state.lastY = event.clientY;
+      state.yaw += dx * 0.007;
+      state.pitch = Math.max(-1.45, Math.min(1.45, state.pitch + dy * 0.007));
+      draw();
+    });
+
+    canvas.addEventListener("pointerup", (event) => {
+      state.dragging = false;
+      canvas.releasePointerCapture(event.pointerId);
+    });
+
+    canvas.addEventListener("wheel", (event) => {
+      event.preventDefault();
+      const factor = Math.exp(-event.deltaY * 0.001);
+      state.scale = Math.max(0.35, Math.min(3.2, state.scale * factor));
+      draw();
+    }, { passive: false });
+
+    document.getElementById("viewIso").addEventListener("click", () => setView(-0.72, 0.62));
+    document.getElementById("viewFront").addEventListener("click", () => setView(0, 0, 0, -12));
+    document.getElementById("viewTop").addEventListener("click", () => setView(0, 1.445, 0, 0));
+    document.getElementById("viewReset").addEventListener("click", () => {
+      state.panX = 0;
+      state.panY = 0;
+      resize();
+    });
+
+    document.getElementById("poseSelect").addEventListener("change", (event) => {
+      state.pose = event.target.value;
+      document.getElementById("poseHint").textContent = toolFrames[state.pose].hint;
+      draw();
+    });
+
+    for (const id of ["showLabels", "showFrames", "showTools", "showGrid"]) {
+      document.getElementById(id).addEventListener("change", (event) => {
+        state[id] = event.target.checked;
+        draw();
+      });
+    }
+
+    window.addEventListener("resize", resize);
+    resize();
+  </script>
+</body>
+</html>

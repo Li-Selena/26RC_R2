@@ -1,0 +1,25 @@
+26_rc_02/svmfunctions.o: \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\SVMFunctions.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_linear_init_f32.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Include\dsp\svm_functions.h \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Include\arm_math_types.h \
+  ..\Drivers\CMSIS\Include\cmsis_compiler.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\stdint.h \
+  ..\Drivers\CMSIS\Include\cmsis_armclang.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\arm_compat.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\arm_acle.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\string.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\math.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\float.h \
+  E:\ProgramingDownload\Keil5Download\core\ARM\ARMCLANG\include\limits.h \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Include\arm_math_memory.h \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Include\dsp\none.h \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Include\dsp\utils.h \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Include\dsp\svm_defines.h \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_linear_predict_f32.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_polynomial_init_f32.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_polynomial_predict_f32.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_rbf_init_f32.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_rbf_predict_f32.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_sigmoid_init_f32.c \
+  E:\ProgramingDownload\Keil5Download\pack\ARM\CMSIS-DSP\1.16.2\Source\SVMFunctions\arm_svm_sigmoid_predict_f32.c

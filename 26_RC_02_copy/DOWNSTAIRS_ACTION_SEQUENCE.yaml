@@ -1,0 +1,166 @@
+# R2 downstairs action sequence
+#
+# Source export:
+#   PC_USB_Serial_Tool/downstairs_v4.json
+# Compression:
+#   Consecutive identical debug actions are merged into one firmware step.
+#   Drive and chassis repeat blocks use summed relative deltas.
+#   Leg repeat blocks use their final absolute targets.
+#
+# Source actions: 79
+# Primitive actions used by firmware input: 79
+# Firmware states after compression: 15
+
+version: 2
+source_flow: downstairs_v4
+source_step_count: 79
+primitive_step_count: 79
+firmware_step_count: 15
+compression:
+  merge_consecutive_identical_actions: true
+  drive_timeout_speed_mm_s: 80.0
+  drive_timeout_margin_ms: 1500
+execution_mode: compressed_downstairs_v4_blocks
+
+debug_sequence:
+  - index: 1
+    state: DOWN_01_FRONT_UP_10_X23
+    action: FRONT_UP_10
+    compressed_repeats: 23
+    timeout_ms: 8750
+    expected_leg_target_mm: [200.0, -30.0, -30.0, 200.0]
+    drive_group: all
+    source_index_range: [1, 23]
+
+  - index: 2
+    state: DOWN_02_REAR_ZERO
+    action: REAR_ZERO
+    compressed_repeats: 1
+    timeout_ms: 3750
+    expected_leg_target_mm: [200.0, 0.0, 0.0, 200.0]
+    drive_group: all
+    source_index: 24
+
+  - index: 3
+    state: DOWN_03_REAR_UP_10
+    action: REAR_UP_10
+    compressed_repeats: 1
+    timeout_ms: 3250
+    expected_leg_target_mm: [200.0, 10.0, 10.0, 200.0]
+    drive_group: all
+    source_index: 25
+
+  - index: 4
+    state: DOWN_04_ALL_LEGS_UP_10
+    action: ALL_LEGS_UP_10
+    compressed_repeats: 1
+    timeout_ms: 3250
+    expected_leg_target_mm: [210.0, 20.0, 20.0, 210.0]
+    drive_group: all
+    source_index: 26
+
+  - index: 5
+    state: DOWN_05_ALL_DRIVE_FORWARD_500
+    action: ALL_DRIVE_FORWARD_500
+    compressed_repeats: 1
+    timeout_ms: 7750
+    expected_leg_target_mm: [210.0, 20.0, 20.0, 210.0]
+    drive_group: all
+    drive_delta_mm: 500.0
+    source_index: 27
+
+  - index: 6
+    state: DOWN_06_ALL_DRIVE_FORWARD_30_X11
+    action: ALL_DRIVE_FORWARD_30
+    compressed_repeats: 11
+    timeout_ms: 5625
+    expected_leg_target_mm: [210.0, 20.0, 20.0, 210.0]
+    drive_group: all
+    drive_delta_mm: 330.0
+    source_index_range: [28, 38]
+
+  - index: 7
+    state: DOWN_07_ALL_DRIVE_FORWARD_10_X2
+    action: ALL_DRIVE_FORWARD_10
+    compressed_repeats: 2
+    timeout_ms: 1750
+    expected_leg_target_mm: [210.0, 20.0, 20.0, 210.0]
+    drive_group: all
+    drive_delta_mm: 20.0
+    source_index_range: [39, 40]
+
+  - index: 8
+    state: DOWN_08_ALL_LEGS_DOWN_10_X6
+    action: ALL_LEGS_DOWN_10
+    compressed_repeats: 6
+    timeout_ms: 4500
+    expected_leg_target_mm: [150.0, -30.0, -30.0, 150.0]
+    drive_group: all
+    source_index_range: [41, 46]
+
+  - index: 9
+    state: DOWN_09_ALL_DRIVE_FORWARD_30_X3
+    action: ALL_DRIVE_FORWARD_30
+    compressed_repeats: 3
+    timeout_ms: 2625
+    expected_leg_target_mm: [150.0, -30.0, -30.0, 150.0]
+    drive_group: all
+    drive_delta_mm: 90.0
+    source_index_range: [47, 49]
+
+  - index: 10
+    state: DOWN_10_ALL_DRIVE_FORWARD_10
+    action: ALL_DRIVE_FORWARD_10
+    compressed_repeats: 1
+    timeout_ms: 1625
+    expected_leg_target_mm: [150.0, -30.0, -30.0, 150.0]
+    drive_group: all
+    drive_delta_mm: 10.0
+    source_index: 50
+
+  - index: 11
+    state: DOWN_11_REAR_UP_10_X19
+    action: REAR_UP_10
+    compressed_repeats: 19
+    timeout_ms: 7750
+    expected_leg_target_mm: [150.0, 160.0, 160.0, 150.0]
+    drive_group: all
+    source_index_range: [52, 70]
+
+  - index: 12
+    state: DOWN_12_ALL_DRIVE_FORWARD_30_X4
+    action: ALL_DRIVE_FORWARD_30
+    compressed_repeats: 4
+    timeout_ms: 3000
+    expected_leg_target_mm: [150.0, 160.0, 160.0, 150.0]
+    drive_group: all
+    drive_delta_mm: 120.0
+    source_index_range: [71, 74]
+
+  - index: 13
+    state: DOWN_13_ALL_LEGS_ZERO
+    action: ALL_LEGS_ZERO
+    compressed_repeats: 1
+    timeout_ms: 9500
+    expected_leg_target_mm: [0.0, 0.0, 0.0, 0.0]
+    drive_group: all
+    source_index: 75
+
+  - index: 14
+    state: DOWN_14_ALL_LEGS_DOWN_10_X3
+    action: ALL_LEGS_DOWN_10
+    compressed_repeats: 3
+    timeout_ms: 3750
+    expected_leg_target_mm: [-30.0, -30.0, -30.0, -30.0]
+    drive_group: all
+    source_index_range: [76, 78]
+
+  - index: 15
+    state: DOWN_15_CHASSIS_FORWARD_100
+    action: CHASSIS_FORWARD_100
+    compressed_repeats: 1
+    timeout_ms: 5000
+    expected_leg_target_mm: [-30.0, -30.0, -30.0, -30.0]
+    drive_group: all
+    chassis_delta_m: 0.10
+    source_index: 79

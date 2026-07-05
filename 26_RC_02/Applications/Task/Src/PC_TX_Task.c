@@ -137,9 +137,13 @@ static uint8_t MotorOnline(const motor_measure_t *m, uint8_t n)
     return cnt;
 }
 
+#define PC_TX_CHASSIS_VEL_MOVE_TOL  0.01f
+#define PC_TX_CHASSIS_WZ_MOVE_TOL   0.01f
+#define PC_TX_ARM_MOVE_TOL_DEG      2.0f
+
 
 /* ═══════════════════════════════════════════════════════
- *  System 状态回传 (cmd=0x06) — LEN=8
+ *  System 状态回传 (cmd=0x06) - LEN=8
  * ═══════════════════════════════════════════════════════
  *
  *  [0] USB_Task_flag
@@ -166,11 +170,12 @@ static void SendSysStatus(void)
 
 
 /* ═══════════════════════════════════════════════════════
- *  Chassis 状态回传 (cmd=0x16) — LEN=56
+ *  Chassis 状态回传 (cmd=0x16) - LEN=112
  * ═══════════════════════════════════════════════════════
  *
  *  当前模式 / 运动状态 / 实时速度 / 实时里程计 / 运动限制 / 世界系朝向
  *  / POS 诊断（进度 + 位置误差，供上位机判断真实到位）
+ *  / 目标速度与目标位移
  *
  *  [0]     mode            (uint8, 0~7)
  *  [1]     pos_state       (uint8, 0=IDLE 1=RUNNING 2=DONE)
@@ -189,8 +194,14 @@ static void SendSysStatus(void)
  *  [44..47]pos_err_x       (float LE, m,    位置误差)
  *  [48..51]pos_err_y       (float LE, m)
  *  [52..55]pos_err_yaw     (float LE, rad,  yaw 误差)
+ *  [56..83]INS nav         (x/y/yaw/yaw_total/vx/vy/wz)
+ *  [84]    imu_online      (uint8)
+ *  [85]    timeout_flags   (uint8, bit0=USB chassis, bit1=USB arm, bit2=USB tool)
+ *  [86]    status_flags    (uint8)
+ *  [87]    error_flags     (uint8)
+ *  [88..111]target_vx/vy/vw, target_dx/dy/dyaw (float LE)
  */
-#define CHS_STATUS_LEN  88U
+#define CHS_STATUS_LEN  112U
 
 static void SendChsStatus(void)
 {
@@ -198,11 +209,41 @@ static void SendChsStatus(void)
     R2_Move_Ctrl_t snapshot;
     const R2_Move_Ctrl_t *c = &snapshot;
     INS_NavState_t nav;
+    uint8_t chassis_motor_online;
+    uint8_t pos_running;
+    uint8_t moving;
+    uint8_t timeout_flags;
+    uint8_t status_flags;
+    uint8_t error_flags;
 
     taskENTER_CRITICAL();
     snapshot = g_r2_ctrl_usb;
     taskEXIT_CRITICAL();
     INS_GetState(&nav);
+
+    chassis_motor_online = MotorOnline(motor_fdcan1, CHASSIS_MOTOR_COUNT);
+    pos_running = (c->pos_state == R2_POS_RUNNING) ? 1U : 0U;
+    moving = ((pos_running != 0U) ||
+              (AbsF(c->robot_vel.vx) > PC_TX_CHASSIS_VEL_MOVE_TOL) ||
+              (AbsF(c->robot_vel.vy) > PC_TX_CHASSIS_VEL_MOVE_TOL) ||
+              (AbsF(c->robot_vel.vw) > PC_TX_CHASSIS_WZ_MOVE_TOL)) ? 1U : 0U;
+    timeout_flags = USB_ControlWatchdog_TimeoutFlags();
+    status_flags =
+        ((Mecanum_control_flag != 0U) ? 0x01U : 0U) |
+        ((R2_Move_IsVelMode(c->mode) != 0U) ? 0x02U : 0U) |
+        ((R2_Move_IsPosMode(c->mode) != 0U) ? 0x04U : 0U) |
+        ((pos_running != 0U) ? 0x08U : 0U) |
+        ((moving != 0U) ? 0x10U : 0U) |
+        ((c->pos_state == R2_POS_DONE) ? 0x20U : 0U) |
+        ((nav.imu_online != 0U) ? 0x40U : 0U) |
+        ((chassis_motor_online >= CHASSIS_MOTOR_COUNT) ? 0x80U : 0U);
+    error_flags =
+        (((timeout_flags & 0x01U) != 0U) ? 0x01U : 0U) |
+        ((nav.imu_online == 0U) ? 0x02U : 0U) |
+        ((c->emergency_stop != 0U) ? 0x04U : 0U) |
+        ((chassis_motor_online == 0U) ? 0x08U : 0U) |
+        (((chassis_motor_online > 0U) &&
+          (chassis_motor_online < CHASSIS_MOTOR_COUNT)) ? 0x10U : 0U);
 
     buf[0] = (uint8_t)c->mode;
     buf[1] = (uint8_t)c->pos_state;
@@ -230,16 +271,22 @@ static void SendChsStatus(void)
     PackFloatLE(nav.vy_mps,      buf, 76);
     PackFloatLE(nav.wz_radps,    buf, 80);
     buf[84] = nav.imu_online;
-    buf[85] = USB_ControlWatchdog_TimeoutFlags();
-    buf[86] = 0U;
-    buf[87] = 0U;
+    buf[85] = timeout_flags;
+    buf[86] = status_flags;
+    buf[87] = error_flags;
+    PackFloatLE(c->target_vx,    buf,  88);
+    PackFloatLE(c->target_vy,    buf,  92);
+    PackFloatLE(c->target_vw,    buf,  96);
+    PackFloatLE(c->target_dx,    buf, 100);
+    PackFloatLE(c->target_dy,    buf, 104);
+    PackFloatLE(c->target_dyaw,  buf, 108);
 
     Send_Cmd_Data(USB_CMD_CHS_GET_STATUS, buf, CHS_STATUS_LEN);
 }
 
 
 /* ═══════════════════════════════════════════════════════
- *  Arm 状态回传 (cmd=0x26) — LEN=40
+ *  Arm 状态回传 (cmd=0x26) - LEN=64
  * ═══════════════════════════════════════════════════════
  *
  *  逆解结果 / 命令采纳 / 电机目标值 / 电机实际编码器（物理闭环）
@@ -257,8 +304,18 @@ static void SendChsStatus(void)
  *  [28..31]actual_j1_deg    (float LE, deg) — 编码器实际值（物理闭环）
  *  [32..35]actual_j2_deg    (float LE, deg)
  *  [36..39]actual_j3_deg    (float LE, deg)
+ *  [40..51]requested_x/y/z  (float LE, mm)
+ *  [52]    reachable        (uint8)
+ *  [53]    safe             (uint8)
+ *  [54]    unsafe_reason    (uint8)
+ *  [55]    actual_valid     (uint8)
+ *  [56]    motor_online     (uint8, FDCAN3 ID1..3)
+ *  [57]    status_flags     (uint8)
+ *  [58]    error_flags      (uint8)
+ *  [59]    timeout_flags    (uint8)
+ *  [60..63]max_abs_err_deg  (float LE)
  */
-#define ARM_STATUS_LEN  40U
+#define ARM_STATUS_LEN  64U
 
 /*
  * 编码器 → 关节角换算系数（与 CAN_Task 一致）。
@@ -272,6 +329,11 @@ static void SendArmStatus(void)
     uint8_t buf[ARM_STATUS_LEN];
     const ArmIK_FullState_t *arm_state;
     float actual_j1, actual_j2, actual_j3;
+    float err_j1, err_j2, err_j3, max_err;
+    uint8_t arm_motor_online;
+    uint8_t timeout_flags;
+    uint8_t status_flags;
+    uint8_t error_flags;
 
     actual_j1 = -(float)motor_fdcan3[0].total_angle * ARM_TNUM1;
     actual_j2 =  (float)motor_fdcan3[1].total_angle * ARM_TNUM23;
@@ -288,6 +350,33 @@ static void SendArmStatus(void)
         Send_Cmd_Data(USB_CMD_ARM_GET_STATUS, buf, ARM_STATUS_LEN);
         return;
     }
+
+    arm_motor_online = MotorOnline(motor_fdcan3, 3U);
+    timeout_flags = USB_ControlWatchdog_TimeoutFlags();
+    err_j1 = AbsF(arm_state->actual_motor_deg.j1_deg - arm_state->active_motor_deg.j1_deg);
+    err_j2 = AbsF(arm_state->actual_motor_deg.j2_deg - arm_state->active_motor_deg.j2_deg);
+    err_j3 = AbsF(arm_state->actual_motor_deg.j3_deg - arm_state->active_motor_deg.j3_deg);
+    max_err = err_j1;
+    if (err_j2 > max_err) max_err = err_j2;
+    if (err_j3 > max_err) max_err = err_j3;
+    status_flags =
+        ((Arm_control_flag != 0U) ? 0x01U : 0U) |
+        (((max_err > PC_TX_ARM_MOVE_TOL_DEG) &&
+          (Arm_control_flag != 0U)) ? 0x02U : 0U) |
+        ((arm_motor_online >= 3U) ? 0x04U : 0U) |
+        ((arm_state->actual_motor_valid != 0U) ? 0x08U : 0U) |
+        ((arm_state->reachable != 0U) ? 0x10U : 0U) |
+        ((arm_state->safe != 0U) ? 0x20U : 0U) |
+        ((arm_state->has_last_valid != 0U) ? 0x40U : 0U) |
+        ((arm_state->last_status_code == ARM_IK_RESULT_OK) ? 0x80U : 0U);
+    error_flags =
+        ((arm_state->last_status_code != ARM_IK_RESULT_OK) ? 0x01U : 0U) |
+        ((arm_state->last_status_code == ARM_IK_RESULT_UNREACHABLE) ? 0x02U : 0U) |
+        ((arm_state->last_status_code == ARM_IK_RESULT_UNSAFE) ? 0x04U : 0U) |
+        ((arm_state->last_status_code == ARM_IK_RESULT_PARAM_ERR) ? 0x08U : 0U) |
+        (((timeout_flags & 0x02U) != 0U) ? 0x10U : 0U) |
+        ((arm_motor_online < 3U) ? 0x20U : 0U) |
+        ((arm_state->actual_motor_valid == 0U) ? 0x40U : 0U);
 
     buf[0] = arm_state->has_last_valid;
     buf[1] = arm_state->last_status_code;
@@ -308,13 +397,25 @@ static void SendArmStatus(void)
     PackFloatLE(arm_state->actual_motor_deg.j1_deg, buf, 28);
     PackFloatLE(arm_state->actual_motor_deg.j2_deg, buf, 32);
     PackFloatLE(arm_state->actual_motor_deg.j3_deg, buf, 36);
+    PackFloatLE(arm_state->requested_pt.x, buf, 40);
+    PackFloatLE(arm_state->requested_pt.y, buf, 44);
+    PackFloatLE(arm_state->requested_pt.z, buf, 48);
+    buf[52] = arm_state->reachable;
+    buf[53] = arm_state->safe;
+    buf[54] = (uint8_t)arm_state->unsafe_reason;
+    buf[55] = arm_state->actual_motor_valid;
+    buf[56] = arm_motor_online;
+    buf[57] = status_flags;
+    buf[58] = error_flags;
+    buf[59] = timeout_flags;
+    PackFloatLE(max_err, buf, 60);
 
     Send_Cmd_Data(USB_CMD_ARM_GET_STATUS, buf, ARM_STATUS_LEN);
 }
 
 
 /* ═══════════════════════════════════════════════════════
- *  Tool 状态回传 (cmd=0x36) — LEN=16
+ *  Tool 状态回传 (cmd=0x36) - LEN=32
  * ═══════════════════════════════════════════════════════
  *
  *  当前状态 / 实体状态 / 真实角度 / 安全标志
@@ -329,14 +430,26 @@ static void SendArmStatus(void)
  *  [10]    chuck.safe_flag (uint8)
  *  [11]    active_source   (uint8, 0=USART 1=USB)
  *  [12..15]chuck.real_angle(float LE)
+ *  [16..19]clamp.target_angle(float LE)
+ *  [20..23]chuck.target_angle(float LE)
+ *  [24]    status_flags    (uint8)
+ *  [25]    error_flags     (uint8)
+ *  [26]    clamp.pending_state(uint8)
+ *  [27]    chuck.pending_state(uint8)
+ *  [28]    timeout_flags   (uint8)
+ *  [29..31]reserved
  */
-#define TOOL_STATUS_LEN  16U
+#define TOOL_STATUS_LEN  32U
 
 static void SendToolStatus(void)
 {
     uint8_t buf[TOOL_STATUS_LEN];
     uint8_t source;
     uint8_t selected_dev;
+    uint8_t selected_moving;
+    uint8_t timeout_flags;
+    uint8_t status_flags;
+    uint8_t error_flags;
     clamp_Handle_t clamp_snapshot;
     chuck_Handle_t chuck_snapshot;
 
@@ -358,6 +471,42 @@ static void SendToolStatus(void)
     buf[10] = chuck_snapshot.safe_flag;
     buf[11] = source;
     PackFloatLE(chuck_snapshot.real_angle, buf, 12);
+    PackFloatLE(clamp_snapshot.target_angle, buf, 16);
+    PackFloatLE(chuck_snapshot.target_angle, buf, 20);
+
+    timeout_flags = USB_ControlWatchdog_TimeoutFlags();
+    selected_moving =
+        (((selected_dev == TOOL_DEV_CHUCK) &&
+          (chuck_snapshot.run_status == TOOL_STATUS_MOVING)) ||
+         ((selected_dev == TOOL_DEV_CLAMP) &&
+          (clamp_snapshot.run_status == TOOL_STATUS_MOVING))) ? 1U : 0U;
+    status_flags =
+        ((Tool_control_flag != 0U) ? 0x01U : 0U) |
+        ((clamp_snapshot.run_status == TOOL_STATUS_MOVING) ? 0x02U : 0U) |
+        ((chuck_snapshot.run_status == TOOL_STATUS_MOVING) ? 0x04U : 0U) |
+        ((selected_moving != 0U) ? 0x08U : 0U) |
+        ((clamp_snapshot.safe_flag != 0U) ? 0x10U : 0U) |
+        ((chuck_snapshot.safe_flag != 0U) ? 0x20U : 0U) |
+        ((source == TOOL_USB_SOURCE) ? 0x40U : 0U);
+    error_flags =
+        ((clamp_snapshot.run_status == TOOL_STATUS_ERROR) ? 0x01U : 0U) |
+        ((chuck_snapshot.run_status == TOOL_STATUS_ERROR) ? 0x02U : 0U) |
+        (((timeout_flags & 0x04U) != 0U) ? 0x04U : 0U) |
+        (((selected_dev == TOOL_DEV_CHUCK) &&
+          (chuck_snapshot.safe_flag == 0U) &&
+          (chuck_snapshot.run_status != TOOL_STATUS_MOVING)) ? 0x08U : 0U) |
+        (((selected_dev == TOOL_DEV_CLAMP) &&
+          (clamp_snapshot.safe_flag == 0U) &&
+          (clamp_snapshot.run_status != TOOL_STATUS_MOVING)) ? 0x08U : 0U) |
+        ((source != TOOL_USB_SOURCE) ? 0x10U : 0U);
+    buf[24] = status_flags;
+    buf[25] = error_flags;
+    buf[26] = clamp_snapshot.pending_state;
+    buf[27] = chuck_snapshot.pending_state;
+    buf[28] = timeout_flags;
+    buf[29] = 0U;
+    buf[30] = 0U;
+    buf[31] = 0U;
 
     Send_Cmd_Data(USB_CMD_TOOL_GET_STATUS, buf, TOOL_STATUS_LEN);
 }
@@ -549,8 +698,8 @@ static void SendYawTuneStatus(void)
     Send_Cmd_Data(USB_CMD_YAW_TUNE_GET_STATUS, buf, YAW_TUNE_STATUS_LEN);
 }
 
-#define ROBOT_STATUS_PROTOCOL_VERSION 2U
-#define ROBOT_STATUS_LEN        160U
+#define ROBOT_STATUS_PROTOCOL_VERSION 3U
+#define ROBOT_STATUS_LEN        240U
 #define ROBOT_CMD_RECENT_MS     500U
 #define ROBOT_ARM_MOVE_TOL_DEG  2.0f
 #define ROBOT_VEL_MOVE_TOL      0.01f
@@ -1002,6 +1151,30 @@ static void SendRobotStatus(void)
     PackU32LE(view->yaw_tune.segment_elapsed_ms,  buf, 148);
     PackFloatLE(view->yaw_tune.yaw_error_deg,     buf, 152);
     PackFloatLE(view->yaw_tune.score,             buf, 156);
+
+    PackFloatLE(view->chassis.target_vx,           buf, 160);
+    PackFloatLE(view->chassis.target_vy,           buf, 164);
+    PackFloatLE(view->chassis.target_vw,           buf, 168);
+    PackFloatLE(view->chassis.target_dx,           buf, 172);
+    PackFloatLE(view->chassis.target_dy,           buf, 176);
+    PackFloatLE(view->chassis.target_dyaw,         buf, 180);
+    PackFloatLE(view->arm.target_xyz_mm[0],        buf, 184);
+    PackFloatLE(view->arm.target_xyz_mm[1],        buf, 188);
+    PackFloatLE(view->arm.target_xyz_mm[2],        buf, 192);
+    PackFloatLE(view->arm.target_deg[0],           buf, 196);
+    PackFloatLE(view->arm.target_deg[1],           buf, 200);
+    PackFloatLE(view->arm.target_deg[2],           buf, 204);
+    PackFloatLE(view->arm.actual_deg[0],           buf, 208);
+    PackFloatLE(view->arm.actual_deg[1],           buf, 212);
+    PackFloatLE(view->arm.actual_deg[2],           buf, 216);
+    PackFloatLE(view->tool.clamp_target_angle,     buf, 220);
+    PackFloatLE(view->tool.clamp_real_angle,       buf, 224);
+    PackFloatLE(view->tool.chuck_target_angle,     buf, 228);
+    PackFloatLE(view->tool.chuck_real_angle,       buf, 232);
+    buf[236] = view->arm.motor_online;
+    buf[237] = view->tool.error;
+    buf[238] = view->climb.error_flags;
+    buf[239] = view->summary.active_source_stale;
 
     Send_Cmd_Data(USB_CMD_ROBOT_GET_STATUS, buf, ROBOT_STATUS_LEN);
 }

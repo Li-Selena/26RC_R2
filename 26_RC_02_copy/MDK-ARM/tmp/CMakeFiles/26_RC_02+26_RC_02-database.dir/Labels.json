@@ -1,0 +1,37 @@
+{
+	"sources" : 
+	[
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/CMakeFiles/26_RC_02+26_RC_02-database"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/CMakeFiles/26_RC_02+26_RC_02-database.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02/src/26_RC_02+26_RC_02-stamp/26_RC_02+26_RC_02-database.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02/src/26_RC_02+26_RC_02-stamp/26_RC_02+26_RC_02-configure.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02/src/26_RC_02+26_RC_02-stamp/26_RC_02+26_RC_02-patch.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02/src/26_RC_02+26_RC_02-stamp/26_RC_02+26_RC_02-update.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02/src/26_RC_02+26_RC_02-stamp/26_RC_02+26_RC_02-download.rule"
+		},
+		{
+			"file" : "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02/src/26_RC_02+26_RC_02-stamp/26_RC_02+26_RC_02-mkdir.rule"
+		}
+	],
+	"target" : 
+	{
+		"labels" : 
+		[
+			"26_RC_02+26_RC_02"
+		],
+		"name" : "26_RC_02+26_RC_02-database"
+	}
+}

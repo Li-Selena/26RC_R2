@@ -132,6 +132,92 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(decoded["payload"]["active_mode_name"], "WORLD_VEL")
         self.assertEqual(decoded["payload"]["phase_name"], "RUN")
 
+    def test_decode_extended_mechanism_status_payloads(self):
+        chassis = bytearray(112)
+        chassis[0] = 3
+        chassis[1] = 1
+        chassis[84] = 1
+        chassis[86] = 0b11010011
+        chassis[87] = 0b10000
+        struct.pack_into("<f", chassis, 88, 0.4)
+        struct.pack_into("<f", chassis, 100, 1.25)
+        frame = pack_usb_frame(0x16, bytes(chassis))
+        decoded = decode_usb_frame(UsbStreamParser().feed(frame)[0])["payload"]
+        self.assertEqual(decoded["mode_name"], "WORLD_VEL")
+        self.assertTrue(decoded["status_flags"]["moving"])
+        self.assertTrue(decoded["error_flags"]["partial_motor_offline"])
+        self.assertAlmostEqual(decoded["target_vel"]["vx"], 0.4)
+        self.assertAlmostEqual(decoded["target_pos"]["dx"], 1.25)
+
+        arm = bytearray(64)
+        arm[0] = 1
+        arm[1] = 2
+        arm[2] = 1
+        arm[52] = 1
+        arm[53] = 0
+        arm[54] = 3
+        arm[55] = 1
+        arm[56] = 3
+        arm[57] = 0b01011111
+        arm[58] = 0b00000101
+        struct.pack_into("<f", arm, 16, 10.0)
+        struct.pack_into("<f", arm, 28, 8.0)
+        struct.pack_into("<f", arm, 40, 200.0)
+        struct.pack_into("<f", arm, 60, 2.0)
+        frame = pack_usb_frame(0x26, bytes(arm))
+        decoded = decode_usb_frame(UsbStreamParser().feed(frame)[0])["payload"]
+        self.assertEqual(decoded["ik_status_name"], "UNSAFE")
+        self.assertEqual(decoded["unsafe_reason_name"], "WORKSPACE_MARGIN")
+        self.assertTrue(decoded["error_flags"]["unsafe"])
+        self.assertAlmostEqual(decoded["requested_xyz_mm"][0], 200.0)
+        self.assertAlmostEqual(decoded["max_abs_err_deg"], 2.0)
+
+        tool = bytearray(32)
+        tool[0] = 1
+        tool[2] = 1
+        tool[9] = 2
+        tool[11] = 1
+        tool[24] = 0b01001101
+        tool[25] = 0b00000110
+        tool[26] = 1
+        tool[27] = 0
+        struct.pack_into("<f", tool, 16, 180.0)
+        struct.pack_into("<f", tool, 20, 330.0)
+        frame = pack_usb_frame(0x36, bytes(tool))
+        decoded = decode_usb_frame(UsbStreamParser().feed(frame)[0])["payload"]
+        self.assertEqual(decoded["selected_tool_name"], "CHUCK")
+        self.assertTrue(decoded["status_flags"]["selected_moving"])
+        self.assertTrue(decoded["error_flags"]["chuck_error"])
+        self.assertAlmostEqual(decoded["clamp"]["target_angle"], 180.0)
+        self.assertAlmostEqual(decoded["chuck"]["target_angle"], 330.0)
+
+    def test_decode_robot_status_v3_targets(self):
+        payload = bytearray(240)
+        payload[0] = 3
+        payload[1] = 1
+        struct.pack_into("<f", payload, 160, 0.4)
+        struct.pack_into("<f", payload, 172, 1.25)
+        struct.pack_into("<f", payload, 184, 200.0)
+        struct.pack_into("<f", payload, 196, 10.0)
+        struct.pack_into("<f", payload, 208, 8.0)
+        struct.pack_into("<f", payload, 220, 180.0)
+        struct.pack_into("<f", payload, 224, 175.0)
+        payload[236] = 3
+        payload[237] = 1
+        payload[238] = 0x08
+        payload[239] = 1
+        frame = pack_usb_frame(0x46, bytes(payload))
+        decoded = decode_usb_frame(UsbStreamParser().feed(frame)[0])["payload"]
+        self.assertEqual(decoded["protocol_version"], 3)
+        self.assertAlmostEqual(decoded["chassis"]["target_vel"]["vx"], 0.4)
+        self.assertAlmostEqual(decoded["chassis"]["target_pos"]["dx"], 1.25)
+        self.assertAlmostEqual(decoded["arm"]["target_xyz_mm"][0], 200.0)
+        self.assertAlmostEqual(decoded["arm"]["actual_joint_deg"][0], 8.0)
+        self.assertAlmostEqual(decoded["tool"]["clamp_real_angle"], 175.0)
+        self.assertTrue(decoded["tool"]["error"])
+        self.assertTrue(decoded["climb_summary_error_flags"]["flow_switch"])
+        self.assertTrue(decoded["active_source_stale"])
+
     def test_decode_climb_status_payload(self):
         payload = bytearray(64)
         payload[0] = 5
