@@ -5,16 +5,16 @@ events:
     kind: "message-v1"
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineSystem.cmake:200 (message)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       The target system is: Generic -  - 
-      The host system is: Windows - 10.0.22621 - AMD64
+      The host system is: Windows - 10.0.22621 - 
   -
     kind: "message-v1"
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:1250 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Checking whether the ASM compiler is GNU using "--version" did not match "(GNU assembler)|(GCC)|(Free Software Foundation)":
       Product: Keil MDK Community (non-commercial free of charge)
@@ -27,7 +27,7 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:1250 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Checking whether the ASM compiler is AppleClang using "--version" did not match "(Apple (clang|LLVM) version)":
       Product: Keil MDK Community (non-commercial free of charge)
@@ -40,7 +40,7 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:1250 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Checking whether the ASM compiler is Clang using "--version" did not match "(clang version)":
       Product: Keil MDK Community (non-commercial free of charge)
@@ -53,7 +53,7 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:1237 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineASMCompiler.cmake:135 (CMAKE_DETERMINE_COMPILER_ID_VENDOR)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Checking whether the ASM compiler is ARMClang using "--version" matched "armclang":
       Product: Keil MDK Community (non-commercial free of charge)
@@ -67,10 +67,10 @@ events:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCCompiler.cmake:123 (CMAKE_DETERMINE_COMPILER_ID)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Compiling the C compiler identification source file "CMakeCCompilerId.c" succeeded.
-      Compiler: c:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armclang.exe 
+      Compiler: C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armclang.exe 
       Build flags: --target=arm-arm-none-eabi;-mcpu=Cortex-M7;-mfpu=fpv5-d16;-mfloat-abi=hard
       Id flags: -c;--target=arm-arm-none-eabi 
       
@@ -89,10 +89,10 @@ events:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:17 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerId.cmake:64 (__determine_compiler_id_test)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCXXCompiler.cmake:126 (CMAKE_DETERMINE_COMPILER_ID)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Compiling the CXX compiler identification source file "CMakeCXXCompilerId.cpp" succeeded.
-      Compiler: c:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armclang.exe 
+      Compiler: C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armclang.exe 
       Build flags: --target=arm-arm-none-eabi;-mcpu=Cortex-M7;-mfpu=fpv5-d16;-mfloat-abi=hard
       Id flags: -c;--target=arm-arm-none-eabi 
       
@@ -110,40 +110,40 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     checks:
       - "Detecting C compiler ABI info"
     directories:
-      source: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dg4xiu"
-      binary: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dg4xiu"
+      source: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-maeaqh"
+      binary: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-maeaqh"
     cmakeVariables:
       CMAKE_CXX_COMPILER_TARGET: "arm-arm-none-eabi"
       CMAKE_C_COMPILER_TARGET: "arm-arm-none-eabi"
       CMAKE_C_FLAGS: "--target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard"
       CMAKE_C_FLAGS_DEBUG: "-g"
       CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "C:/Users/Lenovo/.vscode/extensions/arm.cmsis-csolution-1.68.0-win32-x64/tools/cmsis-toolbox/etc/CMakeASM"
+      CMAKE_MODULE_PATH: "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.open.cmsis.pack.cmsis.toolbox/2.12.0/etc/CMakeASM"
     buildResult:
       variable: "CMAKE_C_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dg4xiu'
+        Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-maeaqh'
         
-        Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_5fdfc
-        [1/2] c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -MF CMakeFiles\\cmTC_5fdfc.dir\\CMakeCCompilerABI.o.d -o CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c
+        Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_50ae9
+        [1/2] C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -MF CMakeFiles\\cmTC_50ae9.dir\\CMakeCCompilerABI.o.d -o CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c
         Product: Keil MDK Community (non-commercial free of charge)
         Component: Arm Compiler for Embedded 6.24
         Tool: armclang [5f371800]
         
         Target: arm-arm-none-eabi
          (in-process)
-         "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign,preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-dg4xiu" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-dg4xiu" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_5fdfc.dir\\\\CMakeCCompilerABI.o.d" -MT CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -sys-header-deps -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fsuppress-licensing -aggressive-jump-threading -o CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -x c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c
+         "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign,preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-maeaqh" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-maeaqh" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_50ae9.dir\\\\CMakeCCompilerABI.o.d" -MT CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -sys-header-deps -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fsuppress-licensing -aggressive-jump-threading -o CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -x c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c
         Arm Compiler for Embedded 6.24 -cc1 default target aarch64-arm-none-eabi
         #include "..." search starts here:
         #include <...> search starts here:
          C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\..\\include\x0d
         End of search list.\x0d
-        [2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_5fdfc.a  CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o && cd ."
+        [2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_50ae9.a  CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o && cd ."
         
       exitCode: 0
   -
@@ -151,7 +151,7 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:182 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Parsed C implicit include dir info: rv=done
         found start of include info
@@ -167,28 +167,28 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeTestCCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Parsed C implicit link information:
         link line regex: [^( *|.*[/\\])(armlink\\.exe|;ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(armlink\\.exe|;ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
-        ignore line: [Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dg4xiu']
+        ignore line: [Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-maeaqh']
         ignore line: []
-        ignore line: [Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_5fdfc]
-        ignore line: [[1/2] c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -MF CMakeFiles\\cmTC_5fdfc.dir\\CMakeCCompilerABI.o.d -o CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c]
+        ignore line: [Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_50ae9]
+        ignore line: [[1/2] C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -MF CMakeFiles\\cmTC_50ae9.dir\\CMakeCCompilerABI.o.d -o CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c]
         ignore line: [Product: Keil MDK Community (non-commercial free of charge)]
         ignore line: [Component: Arm Compiler for Embedded 6.24]
         ignore line: [Tool: armclang [5f371800]]
         ignore line: []
         ignore line: [Target: arm-arm-none-eabi]
         ignore line: [ (in-process)]
-        ignore line: [ "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-dg4xiu" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-dg4xiu" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_5fdfc.dir\\\\CMakeCCompilerABI.o.d" -MT CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -sys-header-deps -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fsuppress-licensing -aggressive-jump-threading -o CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o -x c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c]
+        ignore line: [ "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCCompilerABI.c -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-maeaqh" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-maeaqh" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_50ae9.dir\\\\CMakeCCompilerABI.o.d" -MT CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -sys-header-deps -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fsuppress-licensing -aggressive-jump-threading -o CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o -x c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCCompilerABI.c]
         ignore line: [Arm Compiler for Embedded 6.24 -cc1 default target aarch64-arm-none-eabi]
         ignore line: [#include "..." search starts here:]
         ignore line: [#include <...> search starts here:]
         ignore line: [ C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\..\\include\x0d]
         ignore line: [End of search list.\x0d]
-        ignore line: [[2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_5fdfc.a  CMakeFiles/cmTC_5fdfc.dir/CMakeCCompilerABI.o && cd ."]
+        ignore line: [[2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_50ae9.a  CMakeFiles/cmTC_50ae9.dir/CMakeCCompilerABI.o && cd ."]
         ignore line: []
         ignore line: []
         implicit libs: []
@@ -202,12 +202,12 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:74 (try_compile)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     checks:
       - "Detecting CXX compiler ABI info"
     directories:
-      source: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-cyq71i"
-      binary: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-cyq71i"
+      source: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-asb76d"
+      binary: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-asb76d"
     cmakeVariables:
       CMAKE_CXX_COMPILER_TARGET: "arm-arm-none-eabi"
       CMAKE_CXX_FLAGS: "--target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard"
@@ -215,29 +215,29 @@ events:
       CMAKE_CXX_SCAN_FOR_MODULES: "OFF"
       CMAKE_C_COMPILER_TARGET: "arm-arm-none-eabi"
       CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "C:/Users/Lenovo/.vscode/extensions/arm.cmsis-csolution-1.68.0-win32-x64/tools/cmsis-toolbox/etc/CMakeASM"
+      CMAKE_MODULE_PATH: "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.open.cmsis.pack.cmsis.toolbox/2.12.0/etc/CMakeASM"
     buildResult:
       variable: "CMAKE_CXX_ABI_COMPILED"
       cached: true
       stdout: |
-        Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-cyq71i'
+        Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-asb76d'
         
-        Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_1ba97
-        [1/2] c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -MF CMakeFiles\\cmTC_1ba97.dir\\CMakeCXXCompilerABI.o.d -o CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp
+        Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_cea78
+        [1/2] C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -MF CMakeFiles\\cmTC_cea78.dir\\CMakeCXXCompilerABI.o.d -o CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp
         Product: Keil MDK Community (non-commercial free of charge)
         Component: Arm Compiler for Embedded 6.24
         Tool: armclang [5f371800]
         
         Target: arm-arm-none-eabi
          (in-process)
-         "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -Werror=return-type -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign,preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-cyq71i" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-cyq71i" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_1ba97.dir\\\\CMakeCXXCompilerABI.o.d" -MT CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -sys-header-deps -D__ARMCOMPILER_LIBCXX=1 -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include\\\\libcxx" -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -fdeprecated-macro -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -fsuppress-licensing -aggressive-jump-threading -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -x c++ C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp\x0d
+         "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -Werror=return-type -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign,preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-asb76d" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-asb76d" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_cea78.dir\\\\CMakeCXXCompilerABI.o.d" -MT CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -sys-header-deps -D__ARMCOMPILER_LIBCXX=1 -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include\\\\libcxx" -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -fdeprecated-macro -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -fsuppress-licensing -aggressive-jump-threading -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -x c++ C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp\x0d
         Arm Compiler for Embedded 6.24 -cc1 default target aarch64-arm-none-eabi\x0d
         #include "..." search starts here:\x0d
         #include <...> search starts here:\x0d
          C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\..\\include\\libcxx\x0d
          C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\..\\include\x0d
         End of search list.\x0d
-        [2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_1ba97.a  CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o && cd ."
+        [2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_cea78.a  CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o && cd ."
         
       exitCode: 0
   -
@@ -245,7 +245,7 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:182 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Parsed CXX implicit include dir info: rv=done
         found start of include info
@@ -263,29 +263,29 @@ events:
     backtrace:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerABI.cmake:218 (message)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:26 (CMAKE_DETERMINE_COMPILER_ABI)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     message: |
       Parsed CXX implicit link information:
         link line regex: [^( *|.*[/\\])(armlink\\.exe|;ld[0-9]*(\\.[a-z]+)?|CMAKE_LINK_STARTFILE-NOTFOUND|([^/\\]+-)?ld|collect2)[^/\\]*( |$)]
         linker tool regex: [^[ 	]*(->|")?[ 	]*(([^"]*[/\\])?(armlink\\.exe|;ld[0-9]*(\\.[a-z]+)?))("|,| |$)]
-        ignore line: [Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-cyq71i']
+        ignore line: [Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-asb76d']
         ignore line: []
-        ignore line: [Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_1ba97]
-        ignore line: [[1/2] c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -MF CMakeFiles\\cmTC_1ba97.dir\\CMakeCXXCompilerABI.o.d -o CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp]
+        ignore line: [Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_cea78]
+        ignore line: [[1/2] C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard    -v -MD -MT CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -MF CMakeFiles\\cmTC_cea78.dir\\CMakeCXXCompilerABI.o.d -o CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -c C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp]
         ignore line: [Product: Keil MDK Community (non-commercial free of charge)]
         ignore line: [Component: Arm Compiler for Embedded 6.24]
         ignore line: [Tool: armclang [5f371800]]
         ignore line: []
         ignore line: [Target: arm-arm-none-eabi]
         ignore line: [ (in-process)]
-        ignore line: [ "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -Werror=return-type -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-cyq71i" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-cyq71i" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_1ba97.dir\\\\CMakeCXXCompilerABI.o.d" -MT CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -sys-header-deps -D__ARMCOMPILER_LIBCXX=1 -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include\\\\libcxx" -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -fdeprecated-macro -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -fsuppress-licensing -aggressive-jump-threading -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o -x c++ C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp\x0d]
+        ignore line: [ "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\armclang.exe" -cc1 -triple thumbv7em-arm-none-eabihf -emit-obj -disable-free -clear-ast-before-backend -disable-llvm-verifier -discard-value-names -main-file-name CMakeCXXCompilerABI.cpp -Werror=return-type -mrelocation-model static -mframe-pointer=none -menable-no-infs -menable-no-nans -fmath-errno -fno-signed-zeros -fdenormal-fp-math=preserve-sign preserve-sign -ffp-contract=on -fno-rounding-math -ffinite-math-only -mconstructor-aliases -target-cpu cortex-m7 -target-feature +vfp2 -target-feature +vfp2sp -target-feature -vfp3 -target-feature +vfp3d16 -target-feature +vfp3d16sp -target-feature -vfp3sp -target-feature +fp16 -target-feature -vfp4 -target-feature +vfp4d16 -target-feature +vfp4d16sp -target-feature -vfp4sp -target-feature -fp-armv8 -target-feature +fp-armv8d16 -target-feature +fp-armv8d16sp -target-feature -fp-armv8sp -target-feature -fullfp16 -target-feature +fp64 -target-feature -d32 -target-feature -neon -target-feature -sha2 -target-feature -aes -target-feature -fp16fml -target-feature -mve.fp -target-abi aapcs -mfloat-abi hard -debugger-tuning=gdb -fforce-dwarf-frame "-fdebug-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-asb76d" -v -ffunction-sections -fdata-sections "-fcoverage-compilation-dir=F:\\\\spareE\\\\Vinci_Robocon_2026\\\\26_RC_Projects\\\\26_RC_02_copy\\\\MDK-ARM\\\\tmp\\\\1\\\\CMakeFiles\\\\CMakeScratch\\\\TryCompile-asb76d" -resource-dir "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\lib\\\\clang\\\\20" -dependency-file "CMakeFiles\\\\cmTC_cea78.dir\\\\CMakeCXXCompilerABI.o.d" -MT CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -sys-header-deps -D__ARMCOMPILER_LIBCXX=1 -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include\\\\libcxx" -internal-isystem "C:\\\\Users\\\\Lenovo\\\\.vcpkg\\\\artifacts\\\\2139c4c6\\\\compilers.arm.armclang\\\\6.24.0\\\\bin\\\\..\\\\include" -nobuiltininc -fdeprecated-macro -ferror-limit 19 -fvisibility=hidden -fno-signed-char -fgnuc-version=4.2.1 -fskip-odr-check-in-gmf -fcxx-exceptions -fexceptions -fsuppress-licensing -aggressive-jump-threading -D__GCC_HAVE_DWARF2_CFI_ASM=1 -o CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o -x c++ C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeCXXCompilerABI.cpp\x0d]
         ignore line: [Arm Compiler for Embedded 6.24 -cc1 default target aarch64-arm-none-eabi\x0d]
         ignore line: [#include "..." search starts here:\x0d]
         ignore line: [#include <...> search starts here:\x0d]
         ignore line: [ C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\..\\include\\libcxx\x0d]
         ignore line: [ C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\..\\include\x0d]
         ignore line: [End of search list.\x0d]
-        ignore line: [[2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_1ba97.a  CMakeFiles/cmTC_1ba97.dir/CMakeCXXCompilerABI.o && cd ."]
+        ignore line: [[2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_cea78.a  CMakeFiles/cmTC_cea78.dir/CMakeCXXCompilerABI.o && cd ."]
         ignore line: []
         ignore line: []
         implicit libs: []
@@ -301,28 +301,28 @@ events:
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/Compiler/Clang.cmake:315 (_record_compiler_features)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeDetermineCompilerSupport.cmake:70 (cmake_record_cxx_compile_features)"
       - "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/share/cmake-3.31/Modules/CMakeTestCXXCompiler.cmake:83 (CMAKE_DETERMINE_COMPILER_SUPPORT)"
-      - "CMakeLists.txt:30 (project)"
+      - "CMakeLists.txt:23 (project)"
     checks:
       - "Detecting CXX compile features"
     directories:
-      source: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dbcuon"
-      binary: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dbcuon"
+      source: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-z2p30l"
+      binary: "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-z2p30l"
     cmakeVariables:
       CMAKE_CXX_COMPILER_TARGET: "arm-arm-none-eabi"
       CMAKE_CXX_FLAGS: "--target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard"
       CMAKE_CXX_FLAGS_DEBUG: "-g"
       CMAKE_C_COMPILER_TARGET: "arm-arm-none-eabi"
       CMAKE_EXE_LINKER_FLAGS: ""
-      CMAKE_MODULE_PATH: "C:/Users/Lenovo/.vscode/extensions/arm.cmsis-csolution-1.68.0-win32-x64/tools/cmsis-toolbox/etc/CMakeASM"
+      CMAKE_MODULE_PATH: "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.open.cmsis.pack.cmsis.toolbox/2.12.0/etc/CMakeASM"
     buildResult:
       variable: "CMAKE_CXX_FEATURE_TEST"
       cached: true
       stdout: |
-        Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dbcuon'
+        Change Dir: 'F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-z2p30l'
         
-        Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_352d2
-        [1/2] c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard -MD -MT CMakeFiles/cmTC_352d2.dir/feature_tests.o -MF CMakeFiles\\cmTC_352d2.dir\\feature_tests.o.d -o CMakeFiles/cmTC_352d2.dir/feature_tests.o -c F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-dbcuon/feature_tests.cxx
-        [2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && c:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_352d2.a  CMakeFiles/cmTC_352d2.dir/feature_tests.o && cd ."
+        Run Build Command(s): C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.ninja.build.ninja/1.12.1/ninja.exe -v cmTC_2b63e
+        [1/2] C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armclang.exe --target=arm-arm-none-eabi   --target=arm-arm-none-eabi -mcpu=Cortex-M7 -mfpu=fpv5-d16 -mfloat-abi=hard -MD -MT CMakeFiles/cmTC_2b63e.dir/feature_tests.o -MF CMakeFiles\\cmTC_2b63e.dir\\feature_tests.o.d -o CMakeFiles/cmTC_2b63e.dir/feature_tests.o -c F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1/CMakeFiles/CMakeScratch/TryCompile-z2p30l/feature_tests.cxx
+        [2/2] C:\\Windows\\system32\\cmd.exe /C "cd . && C:\\Users\\Lenovo\\.vcpkg\\artifacts\\2139c4c6\\compilers.arm.armclang\\6.24.0\\bin\\armar.exe --create -cr libcmTC_2b63e.a  CMakeFiles/cmTC_2b63e.dir/feature_tests.o && cd ."
         
       exitCode: 0
 ...

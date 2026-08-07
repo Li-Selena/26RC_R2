@@ -91,6 +91,10 @@ void CAN_Task(void const * argument){
             climb_cmd.leg[1] = (int16_t)PID_velocity_realize_2(0.0f, 2);
             climb_cmd.leg[2] = (int16_t)PID_velocity_realize_2(0.0f, 3);
             climb_cmd.leg[3] = (int16_t)PID_velocity_realize_2(0.0f, 4);
+            climb_cmd.front_drive[0] = (int16_t)PID_velocity_realize_1(0.0f, 5);
+            climb_cmd.front_drive[1] = (int16_t)PID_velocity_realize_1(0.0f, 6);
+            climb_cmd.front_drive[2] = 0;
+            climb_cmd.front_drive[3] = 0;
             climb_cmd.drive[0] = (int16_t)PID_velocity_realize_2(0.0f, 5);
             climb_cmd.drive[1] = (int16_t)PID_velocity_realize_2(0.0f, 6);
             climb_cmd.drive[2] = 0;
@@ -100,8 +104,16 @@ void CAN_Task(void const * argument){
         R2_Climb_SetDebugMotorCurrent(climb_debug_source, &climb_cmd);
 
         /*
+         * FDCAN1: front climb drive wheels 5..6
          * FDCAN2: climbing legs 1..4 and rear drive wheels 5..6
          */
+        FDCAN1_CMD_2(
+            climb_cmd.front_drive[0],
+            climb_cmd.front_drive[1],
+            0,
+            0
+        );
+
         FDCAN2_CMD_1(
             climb_cmd.leg[0],
             climb_cmd.leg[1],

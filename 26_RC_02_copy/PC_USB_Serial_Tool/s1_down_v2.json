@@ -1,0 +1,890 @@
+{
+  "type": "r2_block_flow",
+  "version": 3,
+  "name": "s1_down_v2",
+  "created_at": "2026-07-10 03:22:19",
+  "step_count": 12,
+  "steps": [
+    {
+      "index": 1,
+      "block_id": "climb_down_auto_pause",
+      "category": "climb",
+      "label": "Climb down auto pause",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_DOWN_AUTO_PAUSE",
+          "cmd": 93,
+          "values": [],
+          "has_float_payload": false
+        }
+      ],
+      "doc": "Run full downstairs auto and pause after DOWN_05_ALL_DRIVE_FORWARD_500.",
+      "note": "Run firmware downstairs auto to the v2 pause point.",
+      "helper_commands": {
+        "usb_shell": [
+          "send SYS_SWITCH_SOURCE 1",
+          "send CLIMB_ENABLE",
+          "send CLIMB_DOWN_AUTO_PAUSE"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "A5 5A 00 51 07 C3 FF",
+          "A5 5A 00 5D 02 C3 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "raw A5 5A 00 51 07 C3 FF",
+          "raw A5 5A 00 5D 02 C3 FF"
+        ],
+        "serial_tool_shell": [
+          "climb_down_auto_pause"
+        ]
+      }
+    },
+    {
+      "index": 2,
+      "block_id": "arm_j3_cw_90deg",
+      "category": "arm_joint",
+      "label": "J3 CW 90 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -90.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "helper_commands": {
+        "usb_shell": [
+          "send ARM_JOINT_JOG 3 -90"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 2B 00 00 40 40 00 00 B4 C2 00 00 00 00 00 00 00 00 F8 E0 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 2B 00 00 40 40 00 00 B4 C2 00 00 00 00 00 00 00 00 F8 E0 FF"
+        ],
+        "serial_tool_shell": [
+          "arm_j3_cw_90deg"
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "block_id": "arm_j3_cw_10deg",
+      "category": "arm_joint",
+      "label": "J3 CW 10 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -10.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "helper_commands": {
+        "usb_shell": [
+          "send ARM_JOINT_JOG 3 -10"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+        ],
+        "serial_tool_shell": [
+          "arm_j3_cw_10deg"
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "block_id": "climb_all_legs_down_10",
+      "category": "climb",
+      "label": "Climb all legs down 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            3.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "helper_commands": {
+        "usb_shell": [
+          "send SYS_SWITCH_SOURCE 1",
+          "send CLIMB_ENABLE",
+          "send CLIMB_TEST_ACTION 3"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "A5 5A 00 51 07 C3 FF",
+          "A5 5A 10 57 00 00 40 40 00 00 00 00 00 00 00 00 00 00 00 00 87 0F FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "raw A5 5A 00 51 07 C3 FF",
+          "raw A5 5A 10 57 00 00 40 40 00 00 00 00 00 00 00 00 00 00 00 00 87 0F FF"
+        ],
+        "serial_tool_shell": [
+          "climb_all_legs_down_10"
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "block_id": "arm_j2_cw_90deg",
+      "category": "arm_joint",
+      "label": "J2 CW 90 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            -90.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "helper_commands": {
+        "usb_shell": [
+          "send ARM_JOINT_JOG 2 -90"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 2B 00 00 00 40 00 00 B4 C2 00 00 00 00 00 00 00 00 78 A1 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 2B 00 00 00 40 00 00 B4 C2 00 00 00 00 00 00 00 00 78 A1 FF"
+        ],
+        "serial_tool_shell": [
+          "arm_j2_cw_90deg"
+        ]
+      }
+    },
+    {
+      "index": 6,
+      "block_id": "arm_j3_cw_10deg",
+      "category": "arm_joint",
+      "label": "J3 CW 10 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -10.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "helper_commands": {
+        "usb_shell": [
+          "send ARM_JOINT_JOG 3 -10"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+        ],
+        "serial_tool_shell": [
+          "arm_j3_cw_10deg"
+        ]
+      }
+    },
+    {
+      "index": 7,
+      "block_id": "arm_j3_cw_5deg",
+      "category": "arm_joint",
+      "label": "J3 CW 5 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -5.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "helper_commands": {
+        "usb_shell": [
+          "send ARM_JOINT_JOG 3 -5"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 2B 00 00 40 40 00 00 A0 C0 00 00 00 00 00 00 00 00 D8 B9 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 2B 00 00 40 40 00 00 A0 C0 00 00 00 00 00 00 00 00 D8 B9 FF"
+        ],
+        "serial_tool_shell": [
+          "arm_j3_cw_5deg"
+        ]
+      }
+    },
+    {
+      "index": 8,
+      "block_id": "arm_j2_cw_5deg",
+      "category": "arm_joint",
+      "label": "J2 CW 5 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            -5.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "helper_commands": {
+        "usb_shell": [
+          "send ARM_JOINT_JOG 2 -5"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 2B 00 00 00 40 00 00 A0 C0 00 00 00 00 00 00 00 00 58 F8 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 2B 00 00 00 40 00 00 A0 C0 00 00 00 00 00 00 00 00 58 F8 FF"
+        ],
+        "serial_tool_shell": [
+          "arm_j2_cw_5deg"
+        ]
+      }
+    },
+    {
+      "index": 9,
+      "block_id": "tool_s2_on",
+      "category": "tool",
+      "label": "Suction 2 on (PE13)",
+      "record_status": false,
+      "wait_kind": "settle",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "TOOL_ENABLE",
+          "cmd": 49,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "interface": "suction_2_pe13_active_high",
+      "helper_commands": {
+        "usb_shell": [
+          "send TOOL_ENABLE 1"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 31 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 C7 AF FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 31 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 C7 AF FF"
+        ],
+        "serial_tool_shell": [
+          "tool_s2_on"
+        ]
+      }
+    },
+    {
+      "index": 10,
+      "block_id": "arm_j2_ccw_90deg",
+      "category": "arm_joint",
+      "label": "J2 CCW 90 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            90.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CCW viewed on YOZ plane with X+ out of screen.",
+      "helper_commands": {
+        "usb_shell": [
+          "send ARM_JOINT_JOG 2 90"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 2B 00 00 00 40 00 00 B4 42 00 00 00 00 00 00 00 00 BE C0 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 2B 00 00 00 40 00 00 B4 42 00 00 00 00 00 00 00 00 BE C0 FF"
+        ],
+        "serial_tool_shell": [
+          "arm_j2_ccw_90deg"
+        ]
+      }
+    },
+    {
+      "index": 11,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "helper_commands": {
+        "usb_shell": [
+          "send SYS_SWITCH_SOURCE 1",
+          "send CLIMB_ENABLE",
+          "send CLIMB_TEST_ACTION 2"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "A5 5A 00 51 07 C3 FF",
+          "A5 5A 10 57 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 07 4E FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "raw A5 5A 00 51 07 C3 FF",
+          "raw A5 5A 10 57 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 07 4E FF"
+        ],
+        "serial_tool_shell": [
+          "climb_all_legs_up_10"
+        ]
+      }
+    },
+    {
+      "index": 12,
+      "block_id": "climb_auto_resume",
+      "category": "climb",
+      "label": "Climb auto resume",
+      "record_status": false,
+      "wait_kind": "climb_final",
+      "timeout_s": 180.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_AUTO_RESUME",
+          "cmd": 94,
+          "values": [],
+          "has_float_payload": false
+        }
+      ],
+      "doc": "Resume the paused climb auto flow and wait for final DONE.",
+      "note": "Resume firmware climb auto after arm actions.",
+      "helper_commands": {
+        "usb_shell": [
+          "send SYS_SWITCH_SOURCE 1",
+          "send CLIMB_ENABLE",
+          "send CLIMB_AUTO_RESUME"
+        ],
+        "serial_assistant_hex": [
+          "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "A5 5A 00 51 07 C3 FF",
+          "A5 5A 00 5E 03 83 FF"
+        ],
+        "serial_tool_raw": [
+          "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+          "raw A5 5A 00 51 07 C3 FF",
+          "raw A5 5A 00 5E 03 83 FF"
+        ],
+        "serial_tool_shell": [
+          "climb_auto_resume"
+        ]
+      }
+    }
+  ],
+  "metadata": {
+    "source": "s1_down_v2 full flow; post-J2-CW90 J3 trim is now arm_j3_cw_10deg + arm_j3_cw_5deg, total 15 deg.",
+    "verified_status": "updated_after_working_version",
+    "verified_note": "Based on the confirmed working 12-step flow; adjusted steps 06-07 from J3 CW 20 deg total to J3 CW 15 deg total.",
+    "auto_pause_block": "climb_down_auto_pause",
+    "auto_resume_block": "climb_auto_resume",
+    "empty_slot_scaffold_retained": false,
+    "removed_empty_slot_scaffold_count": 100,
+    "requires_s1_prefix": null,
+    "tool_interface_policy": "S2 suction is active-high on PE13 and is enabled at step 9.",
+    "suction_interface_steps": [
+      9
+    ],
+    "arm_startup_state": {
+      "reference": "arm enable command end pose",
+      "note": "s1_down_v2 starts from the pose reached when arm enable completes."
+    },
+    "arm_motion_summary": {
+      "sequence_compact": [
+        "arm_j3_cw_90deg",
+        "arm_j3_cw_10deg",
+        "climb_all_legs_down_10",
+        "arm_j2_cw_90deg",
+        "arm_j3_cw_10deg",
+        "arm_j3_cw_5deg",
+        "arm_j2_cw_5deg",
+        "tool_s2_on",
+        "arm_j2_ccw_90deg",
+        "climb_all_legs_up_10"
+      ],
+      "joint_delta_from_enable_end_deg": {
+        "j1": 0.0,
+        "j2": -5.0,
+        "j3": -115.0
+      },
+      "human_readable_delta_from_enable_end": "J2 CW 5 deg, J3 CW 115 deg",
+      "climb_delta": "climb_all_legs_down_10 lowers all legs by 10 mm, then climb_all_legs_up_10 raises all legs by 10 mm before auto resume; net climb test offset is 0 mm.",
+      "sign_convention": "ARM_JOINT_JOG payload: CCW positive, CW negative; human labels use CW/CCW command names."
+    },
+    "arm_end_state": {
+      "reference": "s1_down_v2 arm end pose before climb_auto_resume",
+      "relative_to_enable_end_deg": {
+        "j1": 0.0,
+        "j2": -5.0,
+        "j3": -115.0
+      },
+      "human_readable_relative_to_enable_end": "J2 CW 5 deg, J3 CW 115 deg"
+    }
+  },
+  "execution_commands": {
+    "serial_tool_shell": {
+      "open": "python -m serial_tool shell --port COM30 --baud 115200",
+      "commands": [
+        "usb",
+        "block_flow_run s1_down_v2.json 40 2.0"
+      ]
+    },
+    "serial_tool_cli": {
+      "run": "python -m serial_tool block-flow-run --port COM30 --baud 115200 s1_down_v2.json --timeout 40 --arm-settle 2.0",
+      "note": "arm-settle is now a minimum settle time; serial_tool additionally waits for selected arm joint feedback to reach the target before continuing."
+    },
+    "manual_command_fields": {
+      "serial_tool_shell": "Block shortcut accepted in serial_tool shell.",
+      "usb_shell": "Low-level serial_tool shell send command.",
+      "serial_assistant_hex": "Raw HEX frame for a generic serial assistant.",
+      "serial_tool_raw": "Raw HEX frame wrapped for serial_tool shell.",
+      "skip_on_run": "When true, keep the step as an interface marker but do not send frames at runtime."
+    }
+  },
+  "state_machine": {
+    "type": "linear_compact_state_machine",
+    "initial_state": "S00_AUTO_PAUSE",
+    "terminal_state": "DONE",
+    "states": [
+      {
+        "state": "S00_AUTO_PAUSE",
+        "kind": "auto_pause",
+        "step_index": 1,
+        "block_id": "climb_down_auto_pause",
+        "label": "Climb down auto pause",
+        "wait_kind": "climb",
+        "timeout_s": 40.0,
+        "commands": {
+          "usb_shell": [
+            "send SYS_SWITCH_SOURCE 1",
+            "send CLIMB_ENABLE",
+            "send CLIMB_DOWN_AUTO_PAUSE"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "A5 5A 00 51 07 C3 FF",
+            "A5 5A 00 5D 02 C3 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "raw A5 5A 00 51 07 C3 FF",
+            "raw A5 5A 00 5D 02 C3 FF"
+          ],
+          "serial_tool_shell": [
+            "climb_down_auto_pause"
+          ]
+        },
+        "next_state": "S01_ARM_J3_CW_90DEG"
+      },
+      {
+        "state": "S01_ARM_J3_CW_90DEG",
+        "kind": "arm_move",
+        "step_index": 2,
+        "block_id": "arm_j3_cw_90deg",
+        "label": "J3 CW 90 deg",
+        "wait_kind": "arm",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send ARM_JOINT_JOG 3 -90"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 2B 00 00 40 40 00 00 B4 C2 00 00 00 00 00 00 00 00 F8 E0 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 2B 00 00 40 40 00 00 B4 C2 00 00 00 00 00 00 00 00 F8 E0 FF"
+          ],
+          "serial_tool_shell": [
+            "arm_j3_cw_90deg"
+          ]
+        },
+        "next_state": "S02_ARM_J3_CW_10DEG"
+      },
+      {
+        "state": "S02_ARM_J3_CW_10DEG",
+        "kind": "arm_move",
+        "step_index": 3,
+        "block_id": "arm_j3_cw_10deg",
+        "label": "J3 CW 10 deg",
+        "wait_kind": "arm",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send ARM_JOINT_JOG 3 -10"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+          ],
+          "serial_tool_shell": [
+            "arm_j3_cw_10deg"
+          ]
+        },
+        "next_state": "S03_CLIMB_ALL_LEGS_DOWN_10"
+      },
+      {
+        "state": "S03_CLIMB_ALL_LEGS_DOWN_10",
+        "kind": "climb_move",
+        "step_index": 4,
+        "block_id": "climb_all_legs_down_10",
+        "label": "Climb all legs down 10",
+        "wait_kind": "climb",
+        "timeout_s": 40.0,
+        "commands": {
+          "usb_shell": [
+            "send SYS_SWITCH_SOURCE 1",
+            "send CLIMB_ENABLE",
+            "send CLIMB_TEST_ACTION 3"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "A5 5A 00 51 07 C3 FF",
+            "A5 5A 10 57 00 00 40 40 00 00 00 00 00 00 00 00 00 00 00 00 87 0F FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "raw A5 5A 00 51 07 C3 FF",
+            "raw A5 5A 10 57 00 00 40 40 00 00 00 00 00 00 00 00 00 00 00 00 87 0F FF"
+          ],
+          "serial_tool_shell": [
+            "climb_all_legs_down_10"
+          ]
+        },
+        "next_state": "S04_ARM_J2_CW_90DEG"
+      },
+      {
+        "state": "S04_ARM_J2_CW_90DEG",
+        "kind": "arm_move",
+        "step_index": 5,
+        "block_id": "arm_j2_cw_90deg",
+        "label": "J2 CW 90 deg",
+        "wait_kind": "arm",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send ARM_JOINT_JOG 2 -90"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 2B 00 00 00 40 00 00 B4 C2 00 00 00 00 00 00 00 00 78 A1 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 2B 00 00 00 40 00 00 B4 C2 00 00 00 00 00 00 00 00 78 A1 FF"
+          ],
+          "serial_tool_shell": [
+            "arm_j2_cw_90deg"
+          ]
+        },
+        "next_state": "S05_ARM_J3_CW_10DEG"
+      },
+      {
+        "state": "S05_ARM_J3_CW_10DEG",
+        "kind": "arm_move",
+        "step_index": 6,
+        "block_id": "arm_j3_cw_10deg",
+        "label": "J3 CW 10 deg",
+        "wait_kind": "arm",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send ARM_JOINT_JOG 3 -10"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+          ],
+          "serial_tool_shell": [
+            "arm_j3_cw_10deg"
+          ]
+        },
+        "next_state": "S06_ARM_J3_CW_5DEG"
+      },
+      {
+        "state": "S06_ARM_J3_CW_5DEG",
+        "kind": "arm_move",
+        "step_index": 7,
+        "block_id": "arm_j3_cw_5deg",
+        "label": "J3 CW 5 deg",
+        "wait_kind": "arm",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send ARM_JOINT_JOG 3 -5"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 2B 00 00 40 40 00 00 A0 C0 00 00 00 00 00 00 00 00 D8 B9 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 2B 00 00 40 40 00 00 A0 C0 00 00 00 00 00 00 00 00 D8 B9 FF"
+          ],
+          "serial_tool_shell": [
+            "arm_j3_cw_5deg"
+          ]
+        },
+        "next_state": "S07_ARM_J2_CW_5DEG"
+      },
+      {
+        "state": "S07_ARM_J2_CW_5DEG",
+        "kind": "arm_move",
+        "step_index": 8,
+        "block_id": "arm_j2_cw_5deg",
+        "label": "J2 CW 5 deg",
+        "wait_kind": "arm",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send ARM_JOINT_JOG 2 -5"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 2B 00 00 00 40 00 00 A0 C0 00 00 00 00 00 00 00 00 58 F8 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 2B 00 00 00 40 00 00 A0 C0 00 00 00 00 00 00 00 00 58 F8 FF"
+          ],
+          "serial_tool_shell": [
+            "arm_j2_cw_5deg"
+          ]
+        },
+        "next_state": "S08_TOOL_S2_ON"
+      },
+      {
+        "state": "S08_TOOL_S2_ON",
+        "kind": "tool",
+        "step_index": 9,
+        "block_id": "tool_s2_on",
+        "label": "Suction 2 on (PE13)",
+        "wait_kind": "settle",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send TOOL_ENABLE 1"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 31 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 C7 AF FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 31 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 C7 AF FF"
+          ],
+          "serial_tool_shell": [
+            "tool_s2_on"
+          ]
+        },
+        "next_state": "S09_ARM_J2_CCW_90DEG"
+      },
+      {
+        "state": "S09_ARM_J2_CCW_90DEG",
+        "kind": "arm_move",
+        "step_index": 10,
+        "block_id": "arm_j2_ccw_90deg",
+        "label": "J2 CCW 90 deg",
+        "wait_kind": "arm",
+        "timeout_s": 1.0,
+        "commands": {
+          "usb_shell": [
+            "send ARM_JOINT_JOG 2 90"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 2B 00 00 00 40 00 00 B4 42 00 00 00 00 00 00 00 00 BE C0 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 2B 00 00 00 40 00 00 B4 42 00 00 00 00 00 00 00 00 BE C0 FF"
+          ],
+          "serial_tool_shell": [
+            "arm_j2_ccw_90deg"
+          ]
+        },
+        "next_state": "S10_CLIMB_ALL_LEGS_UP_10"
+      },
+      {
+        "state": "S10_CLIMB_ALL_LEGS_UP_10",
+        "kind": "climb_move",
+        "step_index": 11,
+        "block_id": "climb_all_legs_up_10",
+        "label": "Climb all legs up 10",
+        "wait_kind": "climb",
+        "timeout_s": 40.0,
+        "commands": {
+          "usb_shell": [
+            "send SYS_SWITCH_SOURCE 1",
+            "send CLIMB_ENABLE",
+            "send CLIMB_TEST_ACTION 2"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "A5 5A 00 51 07 C3 FF",
+            "A5 5A 10 57 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 07 4E FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "raw A5 5A 00 51 07 C3 FF",
+            "raw A5 5A 10 57 00 00 00 40 00 00 00 00 00 00 00 00 00 00 00 00 07 4E FF"
+          ],
+          "serial_tool_shell": [
+            "climb_all_legs_up_10"
+          ]
+        },
+        "next_state": "S11_AUTO_RESUME"
+      },
+      {
+        "state": "S11_AUTO_RESUME",
+        "kind": "auto_resume",
+        "step_index": 12,
+        "block_id": "climb_auto_resume",
+        "label": "Climb auto resume",
+        "wait_kind": "climb_final",
+        "timeout_s": 180.0,
+        "commands": {
+          "usb_shell": [
+            "send SYS_SWITCH_SOURCE 1",
+            "send CLIMB_ENABLE",
+            "send CLIMB_AUTO_RESUME"
+          ],
+          "serial_assistant_hex": [
+            "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "A5 5A 00 51 07 C3 FF",
+            "A5 5A 00 5E 03 83 FF"
+          ],
+          "serial_tool_raw": [
+            "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+            "raw A5 5A 00 51 07 C3 FF",
+            "raw A5 5A 00 5E 03 83 FF"
+          ],
+          "serial_tool_shell": [
+            "climb_auto_resume"
+          ]
+        },
+        "next_state": "DONE"
+      }
+    ]
+  }
+}

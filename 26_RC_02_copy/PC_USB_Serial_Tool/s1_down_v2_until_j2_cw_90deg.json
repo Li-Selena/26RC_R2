@@ -1,0 +1,247 @@
+{
+    "type":  "r2_block_flow",
+    "version":  3,
+    "name":  "s1_down_v2_until_j2_cw_90deg",
+    "created_at":  "2026-07-10 03:22:19",
+    "step_count":  5,
+    "steps":  [
+                  {
+                      "index":  1,
+                      "block_id":  "climb_down_auto_pause",
+                      "category":  "climb",
+                      "label":  "Climb down auto pause",
+                      "record_status":  false,
+                      "wait_kind":  "climb",
+                      "timeout_s":  40.0,
+                      "frames":  [
+                                     {
+                                         "command":  "SYS_SWITCH_SOURCE",
+                                         "cmd":  2,
+                                         "values":  [
+                                                        1.0
+                                                    ],
+                                         "has_float_payload":  true
+                                     },
+                                     {
+                                         "command":  "CLIMB_ENABLE",
+                                         "cmd":  81,
+                                         "values":  [
+
+                                                    ],
+                                         "has_float_payload":  false
+                                     },
+                                     {
+                                         "command":  "CLIMB_DOWN_AUTO_PAUSE",
+                                         "cmd":  93,
+                                         "values":  [
+
+                                                    ],
+                                         "has_float_payload":  false
+                                     }
+                                 ],
+                      "doc":  "Run full downstairs auto and pause after DOWN_05_ALL_DRIVE_FORWARD_500.",
+                      "note":  "Run firmware downstairs auto to the v2 pause point.",
+                      "helper_commands":  {
+                                              "usb_shell":  [
+                                                                "send SYS_SWITCH_SOURCE 1",
+                                                                "send CLIMB_ENABLE",
+                                                                "send CLIMB_DOWN_AUTO_PAUSE"
+                                                            ],
+                                              "serial_assistant_hex":  [
+                                                                           "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+                                                                           "A5 5A 00 51 07 C3 FF",
+                                                                           "A5 5A 00 5D 02 C3 FF"
+                                                                       ],
+                                              "serial_tool_raw":  [
+                                                                      "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+                                                                      "raw A5 5A 00 51 07 C3 FF",
+                                                                      "raw A5 5A 00 5D 02 C3 FF"
+                                                                  ],
+                                              "serial_tool_shell":  [
+                                                                        "climb_down_auto_pause"
+                                                                    ]
+                                          }
+                  },
+                  {
+                      "index":  2,
+                      "block_id":  "arm_j3_cw_90deg",
+                      "category":  "arm_joint",
+                      "label":  "J3 CW 90 deg",
+                      "record_status":  false,
+                      "wait_kind":  "arm",
+                      "timeout_s":  1.0,
+                      "frames":  [
+                                     {
+                                         "command":  "ARM_JOINT_JOG",
+                                         "cmd":  43,
+                                         "values":  [
+                                                        3.0,
+                                                        -90.0
+                                                    ],
+                                         "has_float_payload":  true
+                                     }
+                                 ],
+                      "doc":  "CW viewed on YOZ plane with X+ out of screen.",
+                      "helper_commands":  {
+                                              "usb_shell":  [
+                                                                "send ARM_JOINT_JOG 3 -90"
+                                                            ],
+                                              "serial_assistant_hex":  [
+                                                                           "A5 5A 10 2B 00 00 40 40 00 00 B4 C2 00 00 00 00 00 00 00 00 F8 E0 FF"
+                                                                       ],
+                                              "serial_tool_raw":  [
+                                                                      "raw A5 5A 10 2B 00 00 40 40 00 00 B4 C2 00 00 00 00 00 00 00 00 F8 E0 FF"
+                                                                  ],
+                                              "serial_tool_shell":  [
+                                                                        "arm_j3_cw_90deg"
+                                                                    ]
+                                          }
+                  },
+                  {
+                      "index":  3,
+                      "block_id":  "arm_j3_cw_10deg",
+                      "category":  "arm_joint",
+                      "label":  "J3 CW 10 deg",
+                      "record_status":  false,
+                      "wait_kind":  "arm",
+                      "timeout_s":  1.0,
+                      "frames":  [
+                                     {
+                                         "command":  "ARM_JOINT_JOG",
+                                         "cmd":  43,
+                                         "values":  [
+                                                        3.0,
+                                                        -10.0
+                                                    ],
+                                         "has_float_payload":  true
+                                     }
+                                 ],
+                      "doc":  "CW viewed on YOZ plane with X+ out of screen.",
+                      "helper_commands":  {
+                                              "usb_shell":  [
+                                                                "send ARM_JOINT_JOG 3 -10"
+                                                            ],
+                                              "serial_assistant_hex":  [
+                                                                           "A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+                                                                       ],
+                                              "serial_tool_raw":  [
+                                                                      "raw A5 5A 10 2B 00 00 40 40 00 00 20 C1 00 00 00 00 00 00 00 00 A0 B3 FF"
+                                                                  ],
+                                              "serial_tool_shell":  [
+                                                                        "arm_j3_cw_10deg"
+                                                                    ]
+                                          }
+                  },
+                  {
+                      "index":  4,
+                      "block_id":  "climb_all_legs_down_10",
+                      "category":  "climb",
+                      "label":  "Climb all legs down 10",
+                      "record_status":  false,
+                      "wait_kind":  "climb",
+                      "timeout_s":  40.0,
+                      "frames":  [
+                                     {
+                                         "command":  "SYS_SWITCH_SOURCE",
+                                         "cmd":  2,
+                                         "values":  [
+                                                        1.0
+                                                    ],
+                                         "has_float_payload":  true
+                                     },
+                                     {
+                                         "command":  "CLIMB_ENABLE",
+                                         "cmd":  81,
+                                         "values":  [
+
+                                                    ],
+                                         "has_float_payload":  false
+                                     },
+                                     {
+                                         "command":  "CLIMB_TEST_ACTION",
+                                         "cmd":  87,
+                                         "values":  [
+                                                        3.0
+                                                    ],
+                                         "has_float_payload":  true
+                                     }
+                                 ],
+                      "doc":  "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+                      "helper_commands":  {
+                                              "usb_shell":  [
+                                                                "send SYS_SWITCH_SOURCE 1",
+                                                                "send CLIMB_ENABLE",
+                                                                "send CLIMB_TEST_ACTION 3"
+                                                            ],
+                                              "serial_assistant_hex":  [
+                                                                           "A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+                                                                           "A5 5A 00 51 07 C3 FF",
+                                                                           "A5 5A 10 57 00 00 40 40 00 00 00 00 00 00 00 00 00 00 00 00 87 0F FF"
+                                                                       ],
+                                              "serial_tool_raw":  [
+                                                                      "raw A5 5A 10 02 00 00 80 3F 00 00 00 00 00 00 00 00 00 00 00 00 38 4B FF",
+                                                                      "raw A5 5A 00 51 07 C3 FF",
+                                                                      "raw A5 5A 10 57 00 00 40 40 00 00 00 00 00 00 00 00 00 00 00 00 87 0F FF"
+                                                                  ],
+                                              "serial_tool_shell":  [
+                                                                        "climb_all_legs_down_10"
+                                                                    ]
+                                          }
+                  },
+                  {
+                      "index":  5,
+                      "block_id":  "arm_j2_cw_90deg",
+                      "category":  "arm_joint",
+                      "label":  "J2 CW 90 deg",
+                      "record_status":  false,
+                      "wait_kind":  "arm",
+                      "timeout_s":  1.0,
+                      "frames":  [
+                                     {
+                                         "command":  "ARM_JOINT_JOG",
+                                         "cmd":  43,
+                                         "values":  [
+                                                        2.0,
+                                                        -90.0
+                                                    ],
+                                         "has_float_payload":  true
+                                     }
+                                 ],
+                      "doc":  "CW viewed on YOZ plane with X+ out of screen.",
+                      "helper_commands":  {
+                                              "usb_shell":  [
+                                                                "send ARM_JOINT_JOG 2 -90"
+                                                            ],
+                                              "serial_assistant_hex":  [
+                                                                           "A5 5A 10 2B 00 00 00 40 00 00 B4 C2 00 00 00 00 00 00 00 00 78 A1 FF"
+                                                                       ],
+                                              "serial_tool_raw":  [
+                                                                      "raw A5 5A 10 2B 00 00 00 40 00 00 B4 C2 00 00 00 00 00 00 00 00 78 A1 FF"
+                                                                  ],
+                                              "serial_tool_shell":  [
+                                                                        "arm_j2_cw_90deg"
+                                                                    ]
+                                          }
+                  }
+              ],
+    "metadata":  {
+                     "source":  "debug subset copied from s1_down_v2.json",
+                     "debug_until_block_id":  "arm_j2_cw_90deg",
+                     "debug_until_step_index":  5,
+                     "note":  "Runs through arm_j2_cw_90deg and stops before arm_j2_cw_5deg, suction placeholder, arm_j2_ccw_90deg, and climb_auto_resume.",
+                     "after_run":  "Check arm_status. If testing is complete and the climb auto flow is still paused, run climb_auto_resume only when the robot is physically safe."
+                 },
+    "execution_commands":  {
+                               "serial_tool_shell":  {
+                                                         "open":  "python -m serial_tool shell --port COM30 --baud 115200",
+                                                         "commands":  [
+                                                                          "usb",
+                                                                          "block_flow_run s1_down_v2_until_j2_cw_90deg.json 40 2.0",
+                                                                          "arm_status"
+                                                                      ]
+                                                     },
+                               "serial_tool_cli":  {
+                                                       "run":  "python -m serial_tool block-flow-run --port COM30 --baud 115200 s1_down_v2_until_j2_cw_90deg.json --timeout 40 --arm-settle 2.0"
+                                                   }
+                           }
+}

@@ -1,0 +1,168 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="820" viewBox="0 0 1200 820">
+  <defs>
+    <marker id="arrow-black" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#111827"/>
+    </marker>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#059669"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-purple" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L9,3 L0,6 Z" fill="#7c3aed"/>
+    </marker>
+    <style>
+      .bg { fill: #f8fafc; }
+      .panel { fill: #ffffff; stroke: #d1d5db; stroke-width: 1.5; rx: 8; }
+      .grid { stroke: #e5e7eb; stroke-width: 1; }
+      .axis { stroke: #111827; stroke-width: 2.5; marker-end: url(#arrow-black); }
+      .base { stroke: #475569; stroke-width: 6; stroke-linecap: round; }
+      .link { stroke: #f97316; stroke-width: 11; stroke-linecap: round; stroke-linejoin: round; }
+      .link-hi { stroke: #fed7aa; stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+      .offset { stroke: #64748b; stroke-width: 2.2; stroke-dasharray: 8 7; fill: none; }
+      .joint { fill: #111827; stroke: #ffffff; stroke-width: 3; }
+      .fold { fill: #f97316; stroke: #ffffff; stroke-width: 3; }
+      .o4 { fill: #111827; stroke: #fde68a; stroke-width: 5; }
+      .s1 { fill: #2563eb; stroke: #ffffff; stroke-width: 3; }
+      .s2 { fill: #7c3aed; stroke: #ffffff; stroke-width: 3; }
+      .gripper { fill: #dc2626; stroke: #ffffff; stroke-width: 3; }
+      .label { font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #111827; font-size: 18px; }
+      .small { font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #334155; font-size: 15px; }
+      .tiny { font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #475569; font-size: 13px; }
+      .title { font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #0f172a; font-size: 27px; font-weight: 700; }
+      .subtitle { font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #475569; font-size: 16px; }
+      .frame-y { stroke: #059669; stroke-width: 3.2; marker-end: url(#arrow-green); }
+      .frame-z { stroke: #dc2626; stroke-width: 3.2; marker-end: url(#arrow-red); }
+      .frame-x { fill: #ffffff; stroke: #2563eb; stroke-width: 2.5; }
+      .frame-x-dot { fill: #2563eb; }
+      .frame-note { font-family: "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #1e293b; font-size: 14px; font-weight: 600; }
+    </style>
+  </defs>
+
+  <rect class="bg" x="0" y="0" width="1200" height="820"/>
+  <rect class="panel" x="30" y="30" width="1140" height="760"/>
+
+  <text class="title" x="60" y="78">机械臂真实上电姿态与末端工具坐标系</text>
+  <text class="subtitle" x="60" y="106">OYZ 侧视图：+Y0 向右，+Z0 向上，+X0 指向屏幕外；上电为 -Y0 侧凹姿态。</text>
+
+  <!-- Light reference grid -->
+  <line class="grid" x1="120" y1="600" x2="1030" y2="600"/>
+  <line class="grid" x1="120" y1="467.5" x2="1030" y2="467.5"/>
+  <line class="grid" x1="760" y1="160" x2="760" y2="675"/>
+  <text class="tiny" x="128" y="592">Z0=0 / XOY</text>
+  <text class="tiny" x="128" y="459">J2 高度 Z=98.18 mm</text>
+
+  <!-- World axes -->
+  <g transform="translate(900 660)">
+    <line class="axis" x1="0" y1="0" x2="130" y2="0"/>
+    <line class="axis" x1="0" y1="0" x2="0" y2="-120"/>
+    <circle class="frame-x" cx="0" cy="0" r="14"/>
+    <circle class="frame-x-dot" cx="0" cy="0" r="4.2"/>
+    <text class="label" x="138" y="6">+Y0</text>
+    <text class="label" x="-16" y="-132">+Z0</text>
+    <text class="label" x="-32" y="38">+X0 出屏</text>
+  </g>
+
+  <!-- Base and joints: screen mapping x=760+1.35*Y, y=600-1.35*Z -->
+  <!-- O0=(0,0,0), O1=(0,0,98.18), J2=(0,42.64,98.18) -->
+  <line class="base" x1="760" y1="600" x2="760" y2="467.5"/>
+  <line class="base" x1="760" y1="467.5" x2="817.6" y2="467.5"/>
+  <circle class="joint" cx="760" cy="600" r="8"/>
+  <circle class="joint" cx="760" cy="467.5" r="7"/>
+  <circle class="joint" cx="817.6" cy="467.5" r="10"/>
+  <text class="small" x="775" y="605">J1/O0</text>
+  <text class="small" x="775" y="452">O1</text>
+  <text class="label" x="833" y="472">J2</text>
+
+  <!-- Bent link: J2 -> fold -> J3/O4 -->
+  <polyline class="link" points="817.6,467.5 453.7,505.7 300.1,437.3"/>
+  <polyline class="link-hi" points="817.6,467.5 453.7,505.7 300.1,437.3"/>
+  <circle class="fold" cx="453.7" cy="505.7" r="9"/>
+  <circle class="o4" cx="300.1" cy="437.3" r="11"/>
+  <text class="label" x="465" y="530">凹折点</text>
+  <text class="label" x="252" y="414">J3/J4/O4</text>
+  <text class="small" x="615" y="514">长段：朝 -Y0，约 -6deg</text>
+  <text class="small" x="244" y="467">短段</text>
+
+  <!-- Tool offsets from O4 -->
+  <path class="offset" d="M300.1,437.3 L363.3,498.7"/>
+  <path class="offset" d="M300.1,437.3 L175.2,437.3"/>
+  <path class="offset" d="M300.1,437.3 L424.4,451.2"/>
+
+  <!-- Tool points -->
+  <circle class="s1" cx="363.3" cy="498.7" r="10"/>
+  <circle class="s2" cx="175.2" cy="437.3" r="10"/>
+  <circle class="gripper" cx="424.4" cy="451.2" r="10"/>
+  <text class="label" x="374" y="524">S1 吸盘</text>
+  <text class="small" x="374" y="545">x4=0, y4=-46.79, z4=45.5</text>
+  <text class="label" x="92" y="423">S2 吸盘</text>
+  <text class="small" x="70" y="449">x4=0, y4=92.6, z4=0</text>
+  <text class="label" x="438" y="445">夹爪侧投影</text>
+  <text class="small" x="438" y="467">x4=+103 指向出屏</text>
+
+  <!-- O4 frame triad -->
+  <g>
+    <line class="frame-y" x1="300.1" y1="437.3" x2="230.1" y2="437.3"/>
+    <line class="frame-z" x1="300.1" y1="437.3" x2="300.1" y2="507.3"/>
+    <circle class="frame-x" cx="300.1" cy="437.3" r="16"/>
+    <circle class="frame-x-dot" cx="300.1" cy="437.3" r="4.8"/>
+    <text class="frame-note" x="214" y="429">+Y4=-Y0</text>
+    <text class="frame-note" x="308" y="519">+Z4=-Z0</text>
+    <text class="frame-note" x="312" y="431">+X4=+X0</text>
+  </g>
+
+  <!-- Small tool frame triads, same orientation as frame 4 -->
+  <g>
+    <line class="frame-y" x1="363.3" y1="498.7" x2="323.3" y2="498.7"/>
+    <line class="frame-z" x1="363.3" y1="498.7" x2="363.3" y2="538.7"/>
+    <circle class="frame-x" cx="363.3" cy="498.7" r="9"/>
+    <circle class="frame-x-dot" cx="363.3" cy="498.7" r="2.8"/>
+  </g>
+  <g>
+    <line class="frame-y" x1="175.2" y1="437.3" x2="135.2" y2="437.3"/>
+    <line class="frame-z" x1="175.2" y1="437.3" x2="175.2" y2="477.3"/>
+    <circle class="frame-x" cx="175.2" cy="437.3" r="9"/>
+    <circle class="frame-x-dot" cx="175.2" cy="437.3" r="2.8"/>
+  </g>
+  <g>
+    <line class="frame-y" x1="424.4" y1="451.2" x2="384.4" y2="451.2"/>
+    <line class="frame-z" x1="424.4" y1="451.2" x2="424.4" y2="491.2"/>
+    <circle class="frame-x" cx="424.4" cy="451.2" r="9"/>
+    <circle class="frame-x-dot" cx="424.4" cy="451.2" r="2.8"/>
+  </g>
+
+  <!-- Gripper out-of-page cue -->
+  <g>
+    <line x1="424.4" y1="451.2" x2="470" y2="405" stroke="#dc2626" stroke-width="3" stroke-dasharray="7 5" marker-end="url(#arrow-red)"/>
+    <circle class="gripper" cx="470" cy="405" r="8"/>
+    <text class="small" x="482" y="401">夹爪真实点还沿 +X0 出屏 103mm</text>
+  </g>
+
+  <!-- Coordinate summary -->
+  <rect x="640" y="155" width="465" height="195" fill="#f1f5f9" stroke="#cbd5e1" rx="8"/>
+  <text class="label" x="662" y="188">上电时各工具坐标系朝向</text>
+  <text class="small" x="662" y="222">三个工具坐标系只相对 O4 平移，默认不额外旋转：</text>
+  <text class="small" x="682" y="255">+Xt = +X4 = +X0  （出屏）</text>
+  <text class="small" x="682" y="285">+Yt = +Y4 = -Y0  （图中向左）</text>
+  <text class="small" x="682" y="315">+Zt = +Z4 = -Z0  （图中向下）</text>
+
+  <!-- Legend -->
+  <rect x="60" y="665" width="520" height="86" fill="#ffffff" stroke="#d1d5db" rx="8"/>
+  <circle class="s1" cx="88" cy="693" r="8"/>
+  <text class="small" x="105" y="699">S1</text>
+  <circle class="s2" cx="160" cy="693" r="8"/>
+  <text class="small" x="177" y="699">S2</text>
+  <circle class="gripper" cx="232" cy="693" r="8"/>
+  <text class="small" x="249" y="699">夹爪</text>
+  <line class="frame-y" x1="310" y1="693" x2="350" y2="693"/>
+  <text class="small" x="360" y="699">工具 +Y</text>
+  <line class="frame-z" x1="465" y1="676" x2="465" y2="714"/>
+  <text class="small" x="480" y="699">工具 +Z</text>
+  <circle class="frame-x" cx="88" cy="730" r="9"/>
+  <circle class="frame-x-dot" cx="88" cy="730" r="2.8"/>
+  <text class="small" x="105" y="736">圆点表示 +X 指向屏幕外</text>
+</svg>

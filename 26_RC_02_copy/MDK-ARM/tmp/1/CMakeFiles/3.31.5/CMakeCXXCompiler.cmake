@@ -1,4 +1,4 @@
-set(CMAKE_CXX_COMPILER "c:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armclang.exe")
+set(CMAKE_CXX_COMPILER "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armclang.exe")
 set(CMAKE_CXX_COMPILER_ARG1 "")
 set(CMAKE_CXX_COMPILER_ID "ARMClang")
 set(CMAKE_CXX_COMPILER_VERSION "6.24.0")
@@ -24,11 +24,11 @@ set(CMAKE_CXX_SIMULATE_VERSION "")
 
 
 
-set(CMAKE_AR "c:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armar.exe")
+set(CMAKE_AR "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armar.exe")
 set(CMAKE_CXX_COMPILER_AR "")
 set(CMAKE_RANLIB ":")
 set(CMAKE_CXX_COMPILER_RANLIB "")
-set(CMAKE_LINKER "c:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armlink.exe")
+set(CMAKE_LINKER "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin/armlink.exe")
 set(CMAKE_LINKER_LINK "")
 set(CMAKE_LINKER_LLD "")
 set(CMAKE_CXX_COMPILER_LINKER "NOTFOUND")

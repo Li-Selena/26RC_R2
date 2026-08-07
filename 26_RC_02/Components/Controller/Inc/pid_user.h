@@ -20,6 +20,7 @@ void PID_devices_Init(void);
 float PID_velocity_realize_1(float set_speed,int i);
 float PID_position_realize_1(float set_pos,int i);
 float pid_call_1(float position,int i);
+void PID_FDCAN1_Clear(uint8_t motor_id);
 
 float PID_velocity_realize_2(float set_speed,int i);
 float PID_position_realize_2(float set_pos,int i);

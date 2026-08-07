@@ -279,6 +279,9 @@
       <option value="s1_use">吸盘1 使用姿态</option>
       <option value="s2_use">吸盘2 使用姿态</option>
       <option value="g_use">夹爪 使用姿态</option>
+      <option value="g_gz_y_pos">夹爪 GZ+ -> Y0+</option>
+      <option value="g_gz_y_neg">夹爪 GZ+ -> Y0-</option>
+      <option value="g_gz_z_neg">夹爪 GZ+ -> Z0-</option>
     </select>
     <label class="toggle"><input id="showLabels" type="checkbox" checked>标签</label>
     <label class="toggle"><input id="showFrames" type="checkbox" checked>坐标系</label>
@@ -350,6 +353,7 @@
           <li>吸盘1使用：S1 坐标系 <code>+Z</code> 竖直向下。</li>
           <li>吸盘2使用：S2 坐标系 <code>+Y</code> 竖直向下。</li>
           <li>夹爪使用：G 坐标系 <code>-Y</code> 指向底盘前方。</li>
+          <li>夹爪运动：G 坐标系 <code>+Z</code> 与 <code>Y0+</code>、<code>Y0-</code> 或 <code>Z0-</code> 同向，描述基准为 YOZ 平面；切换到 X 工作平面时 Y 方向按当前平面等效。</li>
         </ul>
       </section>
     </aside>
@@ -443,6 +447,24 @@
       },
       g_use: {
         hint: "夹爪使用：G 坐标系 -Y 指向底盘前方 +Y0；此处用 X=+X0, Y=-Y0, Z=-Z0 显示姿态约束。",
+        s1: worldFrame,
+        s2: worldFrame,
+        g: { x: V(1, 0, 0), y: V(0, -1, 0), z: V(0, 0, -1) }
+      },
+      g_gz_y_pos: {
+        hint: "夹爪运动：GZ+ 与 YOZ 平面观测的 Y0+ 同向，夹爪向上；固件在 X 工作平面按平面正方向等效。",
+        s1: worldFrame,
+        s2: worldFrame,
+        g: { x: V(1, 0, 0), y: V(0, 0, -1), z: V(0, 1, 0) }
+      },
+      g_gz_y_neg: {
+        hint: "夹爪运动：GZ+ 与 YOZ 平面观测的 Y0- 同向，夹爪向下；固件在 X 工作平面按平面反方向等效。",
+        s1: worldFrame,
+        s2: worldFrame,
+        g: { x: V(1, 0, 0), y: V(0, 0, 1), z: V(0, -1, 0) }
+      },
+      g_gz_z_neg: {
+        hint: "夹爪运动：GZ+ 竖直向下，夹爪水平向前；与 gripper use 几何姿态一致。",
         s1: worldFrame,
         s2: worldFrame,
         g: { x: V(1, 0, 0), y: V(0, -1, 0), z: V(0, 0, -1) }
@@ -697,7 +719,10 @@
           const activeTool =
             (state.pose === "s1_use" && tool.key === "s1") ||
             (state.pose === "s2_use" && tool.key === "s2") ||
-            (state.pose === "g_use" && tool.key === "g");
+            ((state.pose === "g_use" ||
+              state.pose === "g_gz_y_pos" ||
+              state.pose === "g_gz_y_neg" ||
+              state.pose === "g_gz_z_neg") && tool.key === "g");
           drawToolFrame(tool.origin, axes, activeTool ? 56 : 42, tool.label, activeTool);
         }
       }

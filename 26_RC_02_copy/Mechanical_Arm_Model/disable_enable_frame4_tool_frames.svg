@@ -1,0 +1,174 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="760" viewBox="0 0 1400 760">
+  <defs>
+    <marker id="arrow-blue" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#dc2626"/>
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-gray" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .title { font: 700 24px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .panel-title { font: 700 20px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .label { font: 600 14px "Segoe UI", Arial, sans-serif; fill: #0f172a; }
+      .small { font: 12px "Segoe UI", Arial, sans-serif; fill: #475569; }
+      .tiny { font: 11px "Segoe UI", Arial, sans-serif; fill: #64748b; }
+      .panel { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 12; }
+      .grid { stroke: #e2e8f0; stroke-width: 1; }
+      .base-axis { stroke: #94a3b8; stroke-width: 1.8; marker-end: url(#arrow-gray); }
+      .long-link { stroke: #2563eb; stroke-width: 8; stroke-linecap: round; }
+      .short-link { stroke: #0ea5e9; stroke-width: 8; stroke-linecap: round; }
+      .chord { stroke: #64748b; stroke-width: 2; stroke-dasharray: 8 7; fill: none; }
+      .frame-y { stroke: #2563eb; stroke-width: 4; marker-end: url(#arrow-blue); }
+      .frame-z { stroke: #dc2626; stroke-width: 4; marker-end: url(#arrow-red); }
+      .tool-y { stroke: #60a5fa; stroke-width: 3; marker-end: url(#arrow-blue); }
+      .tool-z { stroke: #f87171; stroke-width: 3; marker-end: url(#arrow-red); }
+      .tool-link { stroke: #16a34a; stroke-width: 4; stroke-linecap: round; }
+      .point { fill: #0f172a; stroke: white; stroke-width: 2; }
+      .o4 { fill: #7c3aed; stroke: white; stroke-width: 2; }
+      .tool-point { fill: #16a34a; stroke: white; stroke-width: 2; }
+      .note-box { fill: white; stroke: #cbd5e1; rx: 8; }
+      .out-circle { fill: white; stroke: #7c3aed; stroke-width: 2.5; }
+      .out-dot { fill: #7c3aed; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="760" fill="#eef4fb"/>
+  <text x="40" y="38" class="title">Frame4 and S1 Tool Frame: Disabled Power-on vs Enabled Ready</text>
+  <text x="40" y="62" class="small">Side view in Y-Z plane. Y+ is right, Z+ is up, X+ is out of page. Tool frame axes are parallel to Frame4 axes.</text>
+
+  <rect x="40" y="86" width="640" height="610" class="panel"/>
+  <rect x="720" y="86" width="640" height="610" class="panel"/>
+
+  <text x="70" y="126" class="panel-title">Disabled / Power-on motor zero</text>
+  <text x="750" y="126" class="panel-title">Enabled / S1 ready hold</text>
+
+  <!-- Left grid, origin at (360, 560), scale 0.72 px/mm -->
+  <g opacity="0.95">
+    <line x1="72" y1="560" x2="632" y2="560" class="grid"/>
+    <line x1="360" y1="660" x2="360" y2="160" class="grid"/>
+    <line x1="216" y1="660" x2="216" y2="160" class="grid"/>
+    <line x1="504" y1="660" x2="504" y2="160" class="grid"/>
+    <line x1="72" y1="416" x2="632" y2="416" class="grid"/>
+    <line x1="72" y1="272" x2="632" y2="272" class="grid"/>
+    <line x1="360" y1="560" x2="620" y2="560" class="base-axis"/>
+    <line x1="360" y1="560" x2="360" y2="180" class="base-axis"/>
+    <text x="624" y="565" class="small">Y0+</text>
+    <text x="346" y="174" class="small">Z0+</text>
+    <text x="350" y="582" class="tiny">O0</text>
+  </g>
+
+  <!-- Right grid, origin at (1000, 560), scale 0.72 px/mm -->
+  <g opacity="0.95">
+    <line x1="752" y1="560" x2="1312" y2="560" class="grid"/>
+    <line x1="1000" y1="660" x2="1000" y2="160" class="grid"/>
+    <line x1="856" y1="660" x2="856" y2="160" class="grid"/>
+    <line x1="1144" y1="660" x2="1144" y2="160" class="grid"/>
+    <line x1="752" y1="416" x2="1312" y2="416" class="grid"/>
+    <line x1="752" y1="272" x2="1312" y2="272" class="grid"/>
+    <line x1="1000" y1="560" x2="1300" y2="560" class="base-axis"/>
+    <line x1="1000" y1="560" x2="1000" y2="180" class="base-axis"/>
+    <text x="1304" y="565" class="small">Y0+</text>
+    <text x="986" y="174" class="small">Z0+</text>
+    <text x="990" y="582" class="tiny">O0</text>
+  </g>
+
+  <!-- Disabled geometry, px = (360 + y*0.72, 560 - z*0.72) -->
+  <g>
+    <!-- J2 (390.70,489.31), elbow (196.65,509.71), O4 (114.74,473.23), tool (148.43,506.00) -->
+    <path d="M390.70 489.31 L196.65 509.71" class="long-link"/>
+    <path d="M196.65 509.71 L114.74 473.23" class="short-link"/>
+    <path d="M390.70 489.31 L114.74 473.23" class="chord"/>
+    <line x1="114.74" y1="473.23" x2="148.43" y2="506.00" class="tool-link"/>
+
+    <circle cx="360" cy="560" r="5" class="point"/>
+    <circle cx="390.70" cy="489.31" r="6" class="point"/>
+    <circle cx="196.65" cy="509.71" r="6" class="point"/>
+    <circle cx="114.74" cy="473.23" r="7" class="o4"/>
+    <circle cx="148.43" cy="506.00" r="7" class="tool-point"/>
+
+    <text x="398" y="484" class="label">J2</text>
+    <text x="122" y="465" class="label">O4</text>
+    <text x="156" y="517" class="label">S1 tool</text>
+
+    <!-- Frame4 axes at O4: Y4+ left, Z4+ down, X4+ out of page -->
+    <line x1="114.74" y1="473.23" x2="74.74" y2="473.23" class="frame-y"/>
+    <line x1="114.74" y1="473.23" x2="114.74" y2="518.23" class="frame-z"/>
+    <circle cx="114.74" cy="473.23" r="13" class="out-circle"/>
+    <circle cx="114.74" cy="473.23" r="4" class="out-dot"/>
+    <text x="61" y="467" class="label" fill="#2563eb">Y4+</text>
+    <text x="121" y="525" class="label" fill="#dc2626">Z4+</text>
+    <text x="84" y="453" class="label" fill="#7c3aed">X4+</text>
+
+    <!-- Tool axes at tool origin, same direction -->
+    <line x1="148.43" y1="506.00" x2="113.43" y2="506.00" class="tool-y"/>
+    <line x1="148.43" y1="506.00" x2="148.43" y2="546.00" class="tool-z"/>
+    <circle cx="148.43" cy="506.00" r="10" fill="white" stroke="#16a34a" stroke-width="2"/>
+    <circle cx="148.43" cy="506.00" r="3.5" fill="#16a34a"/>
+    <text x="88" y="499" class="small" fill="#2563eb">Yt+</text>
+    <text x="155" y="550" class="small" fill="#dc2626">Zt+</text>
+    <text x="154" y="493" class="small" fill="#16a34a">Xt+</text>
+  </g>
+
+  <!-- Enabled geometry, px = (1000 + y*0.72, 560 - z*0.72) -->
+  <g>
+    <!-- J2 (1030.70,489.31), elbow (1097.42,305.95), O4 (1166.13,248.33), tool (1199.82,281.10) -->
+    <path d="M1030.70 489.31 L1097.42 305.95" class="long-link"/>
+    <path d="M1097.42 305.95 L1166.13 248.33" class="short-link"/>
+    <path d="M1030.70 489.31 L1166.13 248.33" class="chord"/>
+    <line x1="1166.13" y1="248.33" x2="1199.82" y2="281.10" class="tool-link"/>
+
+    <circle cx="1000" cy="560" r="5" class="point"/>
+    <circle cx="1030.70" cy="489.31" r="6" class="point"/>
+    <circle cx="1097.42" cy="305.95" r="6" class="point"/>
+    <circle cx="1166.13" cy="248.33" r="7" class="o4"/>
+    <circle cx="1199.82" cy="281.10" r="7" class="tool-point"/>
+
+    <text x="1038" y="484" class="label">J2</text>
+    <text x="1173" y="240" class="label">O4</text>
+    <text x="1208" y="292" class="label">S1 tool</text>
+
+    <!-- Frame4 axes at O4: Y4+ left, Z4+ down, X4+ out of page -->
+    <line x1="1166.13" y1="248.33" x2="1126.13" y2="248.33" class="frame-y"/>
+    <line x1="1166.13" y1="248.33" x2="1166.13" y2="293.33" class="frame-z"/>
+    <circle cx="1166.13" cy="248.33" r="13" class="out-circle"/>
+    <circle cx="1166.13" cy="248.33" r="4" class="out-dot"/>
+    <text x="1111" y="242" class="label" fill="#2563eb">Y4+</text>
+    <text x="1173" y="300" class="label" fill="#dc2626">Z4+</text>
+    <text x="1136" y="228" class="label" fill="#7c3aed">X4+</text>
+
+    <!-- Tool axes at tool origin, same direction -->
+    <line x1="1199.82" y1="281.10" x2="1164.82" y2="281.10" class="tool-y"/>
+    <line x1="1199.82" y1="281.10" x2="1199.82" y2="321.10" class="tool-z"/>
+    <circle cx="1199.82" cy="281.10" r="10" fill="white" stroke="#16a34a" stroke-width="2"/>
+    <circle cx="1199.82" cy="281.10" r="3.5" fill="#16a34a"/>
+    <text x="1139" y="274" class="small" fill="#2563eb">Yt+</text>
+    <text x="1207" y="325" class="small" fill="#dc2626">Zt+</text>
+    <text x="1206" y="268" class="small" fill="#16a34a">Xt+</text>
+  </g>
+
+  <!-- State annotations -->
+  <g>
+    <rect x="70" y="588" width="560" height="82" class="note-box"/>
+    <text x="88" y="614" class="label">Disabled state from code</text>
+    <text x="88" y="637" class="small">Motors: M1=0 deg, M2=0 deg, M3=0 deg. Model: J2=86.665 deg, J3=93.335 deg.</text>
+    <text x="88" y="658" class="small">Frame4: phi=180 deg, O4=(X 0, Y -340.6, Z 120.5) mm. Tool frame is parallel to Frame4.</text>
+
+    <rect x="750" y="588" width="560" height="82" class="note-box"/>
+    <text x="768" y="614" class="label">Enabled ready state from code</text>
+    <text x="768" y="637" class="small">Command target: S1 / S1_PREPARE, alpha=70 deg. Motors: M2=-212.667 deg, M3=-232.000 deg.</text>
+    <text x="768" y="658" class="small">Frame4: phi=180 deg, O4=(X 0, Y 230.7, Z 432.9) mm. Tool frame is parallel to Frame4.</text>
+  </g>
+
+  <g>
+    <rect x="438" y="104" width="216" height="36" fill="#fff7ed" stroke="#fdba74" rx="8"/>
+    <text x="454" y="127" class="small" fill="#9a3412">Z4+ and Zt+ point downward</text>
+    <rect x="1120" y="104" width="216" height="36" fill="#fff7ed" stroke="#fdba74" rx="8"/>
+    <text x="1136" y="127" class="small" fill="#9a3412">Same orientation, new O4 position</text>
+  </g>
+</svg>

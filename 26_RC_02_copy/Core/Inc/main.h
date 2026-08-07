@@ -57,6 +57,8 @@ void Error_Handler(void);
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/
+#define SUCTION_2_Pin GPIO_PIN_13
+#define SUCTION_2_GPIO_Port GPIOE
 
 /* USER CODE BEGIN Private defines */
 

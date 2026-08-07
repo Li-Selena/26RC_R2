@@ -48,4 +48,5 @@
   ..\Components\Device\Inc\robotarm_state.h \
   ..\Components\Device\Inc\dm_motor.h ..\BSP\Inc\bsp_l1_usart.h \
   ..\Components\Controller\Inc\pid.h \
-  ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h
+  ..\Components\Controller\Inc\pid_user.h ..\BSP\Inc\bsp_tick.h \
+  ..\Core\Inc\tim.h

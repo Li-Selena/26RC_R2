@@ -58,7 +58,7 @@ void MX_TIM1_Init(void)
   sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
   if (HAL_TIM_ConfigClockSource(&htim1, &sClockSourceConfig) != HAL_OK)
   {
-    Error_Handler();
+    Error_Handler();  
   }
   if (HAL_TIM_PWM_Init(&htim1) != HAL_OK)
   {

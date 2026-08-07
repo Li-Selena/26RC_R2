@@ -20,7 +20,7 @@ typedef struct
     uint32_t tick_ms;
     uint8_t active_source;
     uint8_t enable_flags;       /* bit0=chassis, bit3=climb, bit4=arm */
-    uint8_t executing_flags;    /* bit0=chassis, bit1=pos, bit4=climb, bit5=yaw_tune, bit6=arm, bit7=any */
+    uint8_t executing_flags;    /* bit0=chassis, bit1=pos, bit2=task_flow, bit4=climb, bit5=yaw_tune, bit6=arm, bit7=any */
     uint8_t error_flags;
     uint8_t online_flags;       /* bit0=USB, bit1=USART, bit2=IMU, bit3=chassis, bit4=arm, bit5=climb, bit6=laser */
     uint8_t timeout_flags;      /* bit0=USB chassis, bit3=USART */
@@ -149,6 +149,8 @@ typedef struct
     float approach_yaw_rad;
     float theta_rad[ROBOTARM_KIN_JOINT_COUNT];
     float tool_world_mm[3];
+    float motor_feedback_rad[ROBOTARM_KIN_JOINT_COUNT];
+    uint8_t motor_feedback_ok_mask;
 } RobotStatusArmView_t;
 
 typedef struct
@@ -181,6 +183,27 @@ typedef struct
 
 typedef struct
 {
+    uint8_t flow_id;
+    uint8_t state;
+    uint8_t error;
+    uint8_t current_op;
+    uint8_t completed_s1_end;
+    uint8_t active;
+    uint8_t flow_arg;
+    uint8_t host_checkpoint_pending;
+    uint8_t host_checkpoint_ack;
+    uint8_t reserved;
+    uint16_t entry_index;
+    uint16_t entry_count;
+    uint16_t repeat_index;
+    uint16_t repeat_count;
+    uint32_t completed_steps;
+    uint32_t step_start_ms;
+    uint32_t last_update_ms;
+} RobotStatusTaskFlowView_t;
+
+typedef struct
+{
     RobotStatusSummaryView_t summary;
     RobotStatusRxView_t rx;
     RobotStatusChassisView_t chassis;
@@ -188,6 +211,7 @@ typedef struct
     RobotStatusClimbView_t climb;
     RobotStatusLaserView_t laser;
     RobotStatusYawTuneView_t yaw_tune;
+    RobotStatusTaskFlowView_t task_flow;
 } RobotStatusView_t;
 
 extern volatile RobotStatusView_t g_robot_status_view;
@@ -200,5 +224,6 @@ void PC_TX_ReqToolStatus(void);
 void PC_TX_ReqRobotStatus(void);
 void PC_TX_ReqClimbStatus(void);
 void PC_TX_ReqYawTuneStatus(void);
+void PC_TX_ReqTaskFlowStatus(void);
 
 #endif

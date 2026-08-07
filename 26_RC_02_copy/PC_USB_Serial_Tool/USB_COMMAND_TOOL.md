@@ -82,8 +82,41 @@ climb_all_legs_220 5
 flow_recover
 ```
 
-等待逻辑会轮询 `CLIMB_GET_STATUS`，看到 `state_done=1`、`IDLE` 或 `DONE` 后继续；如果状态变成 `ERROR` 会直接报错。
-新版 `CLIMB_GET_STATUS` 还会解析 `status_flags`、`leg_reached`、`drive_reached`，自动化脚本可直接判断 `ready_for_next` 或逐个执行机构是否到位。
+等待逻辑会轮询 `CLIMB_GET_STATUS`，新版固件优先看 `summary_state`：`READY/DONE` 继续，`RUNNING` 继续等待，`ERROR` 报错；旧固件则回退到 `state_done=1`、`IDLE` 或 `DONE`。
+新版 `CLIMB_GET_STATUS` 还会解析 `status_flags`、`leg_reached`、`drive_reached`、`summary_state`，自动化脚本可直接判断 `READY/RUNNING/DONE/ERROR/PAUSED` 或逐个执行机构是否到位；`state=29/30` 只表示自动下台阶正在执行内部修补。自动上台阶失败会直接进入 `ERROR`，不再修补或重跑；若 `ERROR` 且 `error_flags.recovery_failed=true`，说明下台阶修补或重跑一次后仍失败，需要上位机接管。
+
+## Mixed arm/base/climb block flow
+
+`blocks` now lists arm, base, tool, and climb block commands in one table.
+Use `block_flow_start` to record a mixed task flow, type block IDs such as
+`arm_down_20mm`, `base_forward_50mm`, and `climb_front_220`, then export or run it:
+
+```text
+blocks
+block_flow_start mixed_task_v1
+arm_down_20mm
+climb_front_220
+base_forward_50mm
+block_flow_export mixed_task_v1.json
+block_flow_run mixed_task_v1.json 40 1.0
+```
+
+The runner is a small state machine: `IDLE -> SEND_STEP -> WAIT_STEP -> DONE`.
+Wait policy is inferred from each block: climb waits for `CLIMB_GET_STATUS`,
+base waits for `CHS_GET_STATUS.pos_state`, and arm waits for a clean
+`ARM_GET_STATUS` plus the configured settle time.
+
+Non-interactive run:
+
+```powershell
+.\.venv\Scripts\python -m serial_tool block-flow-run --port COM26 --baud 115200 mixed_task_v1.json --timeout 40 --arm-settle 1.0
+.\.venv\Scripts\python -m serial_tool send --port COM26 --baud 115200 FLOW_WEAPON_GRAB --wait 0.2
+.\.venv\Scripts\python -m serial_tool send --port COM26 --baud 115200 FLOW_WEAPON_DOCK_TEST --wait 0.2
+.\.venv\Scripts\python -m serial_tool send --port COM26 --baud 115200 FLOW_CHASSIS_MOVE_DONE --wait 0.2
+.\.venv\Scripts\python -m serial_tool send --port COM26 --baud 115200 FLOW_DOCK_DONE --wait 0.2
+.\.venv\Scripts\python -m serial_tool poll --port COM26 --baud 115200 FLOW_GET_STATUS --rate 10
+.\.venv\Scripts\python -m serial_tool block-flow-run --port COM26 --baud 115200 weapon_grab_v1.json --timeout 20 --arm-settle 1.0
+```
 
 ## 3. 底层 USB 命令速查
 
@@ -103,12 +136,40 @@ send CLIMB_UP_STEP          # 上台阶手动推进一步
 send CLIMB_UP_AUTO          # 上台阶自动执行/继续
 send CLIMB_DOWN_STEP        # 下台阶手动推进一步
 send CLIMB_DOWN_AUTO        # 下台阶自动执行/继续
+send ARM_IK_TEST_FLOW       # 启动机械臂逆解测试流程，默认 8000ms/step
+send ARM_IK_TEST_FLOW 1 8000 # 启动测试流程，指定 8000ms/step
+send ARM_IK_TEST_FLOW 0 0   # 停止测试流程
+send ARM_SET_TARGET_XYZ 120 0 450 0 # 发送三维目标；Z 逆解，X/Y 只选运动空间
+send ARM_SET_WORKSPACE 1    # 切换到 X+ 运动空间，0=Y+, 1=X+, 2=X-
+send ARM_HEIGHT_JOG 20      # 当前高度升高 20mm
+send ARM_HEIGHT_JOG -50     # 当前高度下降 50mm
+send ARM_HEIGHT_LIMIT 1     # 当前工具姿态移动到最大 z，0=最小，1=最大
+send ARM_SET_POSTURE 1 2    # 切换工具姿态：tool=S2, state=2
 ```
+
+交互 shell 也提供更顺手的机械臂快捷命令：
+
+```text
+arm_enable / arm_disable
+arm_space Y+|X+|X-
+arm_xyz X_MM Y_MM Z_MM
+arm_up/down 5|10|20|50|100|200|500
+arm_up20 / arm_down50
+arm_zmin / arm_zmax
+arm_posture S1|S2|gripper STATE
+tool_on S2|gripper
+tool_off S2|gripper
+arm_status / tool_status
+```
+
+`arm_xyz` 的 `X/Y` 只决定 `Y+ / X+ / X-` 工作空间；因机械结构无法在平面内到达的坐标，需要底盘命令另行实现。
 
 Auto laser gate:
 
 - `CLIMB_UP_AUTO` starts a forward mecanum search immediately; firmware drives forward until valid X reaches `0 <= x < 35mm` before starting the climb flow. Transient X invalid readings (`-1`) are tolerated, but continuous X invalid for `1000ms` enters `ERROR` with the `timeout` flag.
 - `CLIMB_DOWN_AUTO` starts a forward mecanum search immediately. During `DOWN_LASER_APPROACH_H_GT_65`, valid height `h > 65mm` detects the 50-53mm to 160mm+ drop jump; transient height invalid readings (`-1`) are tolerated, continuous invalid height for `1000ms` enters `ERROR`, and no trigger within `8000ms` also times out. After trigger, the chassis moves forward another `5mm`, then enters `PREPARE_ALL_LEGS_MINUS_30` before the normal downstairs flow.
+- `CLIMB_UP_GATE` and `CLIMB_DOWN_GATE` run only the same auto laser gate stage. The block commands are `climb_up_laser_gate` and `climb_down_laser_gate`.
+- `CLIMB_UP_AUTO_PAUSE` and `CLIMB_DOWN_AUTO_PAUSE` run the real firmware auto flow and pause at the v2 interrupt point. `CLIMB_AUTO_RESUME` continues that paused auto flow to final `DONE`. The block commands are `climb_up_auto_pause`, `climb_down_auto_pause`, and `climb_auto_resume`; the six v2 flows use these commands around their 100 interrupt slots.
 - Old names `CLIMB_AUTO` and `CLIMB_DOWNSTAIRS_AUTO` are still accepted as aliases.
 
 只想生成帧、不发送串口时可以用：
@@ -117,6 +178,11 @@ Auto laser gate:
 .\.venv\Scripts\python usb_cmd_tool.py pack YAW_TUNE_GET_STATUS
 .\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_UP_AUTO
 .\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_DOWN_AUTO
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_UP_GATE
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_DOWN_GATE
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_UP_AUTO_PAUSE
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_DOWN_AUTO_PAUSE
+.\.venv\Scripts\python usb_cmd_tool.py pack CLIMB_AUTO_RESUME
 ```
 
 ## 4. 自动调参指令

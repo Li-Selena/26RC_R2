@@ -13,6 +13,8 @@ float motor_speed_3508_pid_1[8]    = {5, 0.02, 0.1, 0.2};//3508 底盘速度环
 float motor_position_3508_pid_1[8] = {0.2, 0, 1, 0};
 float motor_speed_2006_pid_1[8]    = {9, 0.1, 0, 0.3};//2006
 float motor_position_2006_pid_1[8] = {0.2, 0, 0, 0};
+float motor_speed_2006_climb_drive_pid_1[8]    = {9, 0.1, 0, 0.3};//FDCAN1 M2006 climb drive 5..6
+float motor_position_2006_climb_drive_pid_1[8] = {0.2, 0, 0, 0};
 
 float motor_speed_3508_pid_2[8]    = {5, 0.02, 0.1, 0.2};//3508 抬升
 float motor_position_3508_pid_2[8] = {0.2, 0, 1, 0};
@@ -33,10 +35,12 @@ pid_type_def pid_yaw_rate;  // 机器人/世界坐标系：角速度内环
 const float PID_YAW_ANGLE_PARAM[4] = {2.03f, 0.0f, 0.05f, 0.0f};  // yaw angle loop Kp/Ki/Kd/Kf
 const float PID_YAW_RATE_PARAM[4]  = {0.8f, 0.0f, 0.0f, 0.0f};  // yaw rate loop Kp/Ki/Kd/Kf
 
-#define FDCAN2_CLIMB_LEG_POS_MAX_RPM       2500
+#define FDCAN2_CLIMB_LEG_POS_MAX_RPM       3000
 #define FDCAN2_CLIMB_LEG_POS_MAX_IOUT       300
-#define FDCAN2_CLIMB_DRIVE_POS_MAX_RPM     3500
+#define FDCAN2_CLIMB_DRIVE_POS_MAX_RPM     4200
 #define FDCAN2_CLIMB_DRIVE_POS_MAX_IOUT     300
+#define FDCAN1_CLIMB_DRIVE_POS_MAX_RPM     4200
+#define FDCAN1_CLIMB_DRIVE_POS_MAX_IOUT     300
 
 
 #define LimitMax(input, max)   \
@@ -82,6 +86,13 @@ void PID_devices_Init(void)
 		PID_init(&pid_v_1[i], PID_POSITION, motor_speed_3508_pid_1, 10000, 6000);
 		PID_init(&pid_pos_1[i], PID_POSITION, motor_position_3508_pid_1, 1000, 300);
 
+		if ((i == 4) || (i == 5)) {
+			PID_init(&pid_v_1[i], PID_POSITION, motor_speed_2006_climb_drive_pid_1, 10000, 6000);
+			PID_init(&pid_pos_1[i], PID_POSITION, motor_position_2006_climb_drive_pid_1,
+			         FDCAN1_CLIMB_DRIVE_POS_MAX_RPM,
+			         FDCAN1_CLIMB_DRIVE_POS_MAX_IOUT);
+		}
+
 		/* FDCAN2: motors 5..6 are rear M2006 drive wheels. */
 		if ((i == 4) || (i == 5)) {
 			PID_init(&pid_v_2[i], PID_POSITION, motor_speed_2006_pid_2, 10000, 6000);
@@ -125,6 +136,16 @@ float pid_call_1(float position,int i)
 }
 
 /* ── FDCAN2: 抬升电机 PID ── */
+void PID_FDCAN1_Clear(uint8_t motor_id)
+{
+	if ((motor_id == 0U) || (motor_id > 8U)) {
+		return;
+	}
+
+	PID_clear(&pid_v_1[motor_id - 1U]);
+	PID_clear(&pid_pos_1[motor_id - 1U]);
+}
+
 float PID_velocity_realize_2(float set_speed,int i)
 {
 		PID_calc(&pid_v_2[i-1],motor_fdcan2[i-1].speed_rpm , set_speed);

@@ -4,31 +4,46 @@
 #include <stddef.h>
 
 #define ROBOTARM_KIN_EPS                    1.0e-5f
-#define ROBOTARM_KIN_HEIGHT_TOL             1.0e-4f
-#define ROBOTARM_KIN_SCORE_BAD              1.0e30f
 #define ROBOTARM_KIN_DEFAULT_XY_DEADBAND_MM 1.0f
-#define ROBOTARM_KIN_PATH_FAILED_NONE       0xFFU
+#define ROBOTARM_KIN_S2_PREPARE_TILT_RAD    (ROBOTARM_KIN_PI / 12.0f)
+#define ROBOTARM_KIN_Z_LIMIT_SAMPLE_COUNT   96U
+
+typedef enum
+{
+    ROBOTARM_TOOL_POSTURE_FIXED = 0,
+    ROBOTARM_TOOL_POSTURE_SHORT_PARALLEL = 1
+} RobotArmToolPostureMode_t;
 
 typedef struct
 {
     RobotArmVec3_t offset_mm;
-    float phi_rad;
+    float phi_offset_rad;
+    RobotArmToolPostureMode_t posture_mode;
     uint8_t ik_enabled;
 } RobotArmToolGeometry_t;
 
-static const RobotArmToolGeometry_t s_tool_geometry[ROBOTARM_KIN_TOOL_COUNT][2] =
+static const RobotArmToolGeometry_t s_tool_geometry[ROBOTARM_KIN_TOOL_COUNT][ROBOTARM_KIN_TOOL_STATE_COUNT] =
 {
     {
-        {{0.0f, -46.79f, 45.5f}, 0.0f, 1U},
-        {{0.0f, -46.79f, 45.5f}, ROBOTARM_KIN_PI, 1U}
+        {{0.0f, -46.79f, 45.5f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{0.0f, -46.79f, 45.5f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{0.0f, -46.79f, 45.5f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{0.0f, -46.79f, 45.5f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 0U},
+        {{0.0f, -46.79f, 45.5f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 0U}
     },
     {
-        {{0.0f, 92.6f, 0.0f}, 0.0f, 1U},
-        {{0.0f, 92.6f, 0.0f}, -0.5f * ROBOTARM_KIN_PI, 1U}
+        {{0.0f, 92.6f, 0.0f}, ROBOTARM_KIN_S2_PREPARE_TILT_RAD, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{0.0f, 92.6f, 0.0f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{0.0f, 92.6f, 0.0f}, 0.0f, ROBOTARM_TOOL_POSTURE_SHORT_PARALLEL, 1U},
+        {{0.0f, 92.6f, 0.0f}, 0.5f * ROBOTARM_KIN_PI, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{0.0f, 92.6f, 0.0f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 0U}
     },
     {
-        {{103.0f, -92.0f, 10.3f}, 0.0f, 1U},
-        {{103.0f, -92.0f, 10.3f}, ROBOTARM_KIN_PI, 1U}
+        {{103.0f, -92.0f, 10.3f}, 0.5f * ROBOTARM_KIN_PI, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{103.0f, -92.0f, 10.3f}, -0.5f * ROBOTARM_KIN_PI, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{103.0f, -92.0f, 10.3f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 1U},
+        {{103.0f, -92.0f, 10.3f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 0U},
+        {{103.0f, -92.0f, 10.3f}, 0.0f, ROBOTARM_TOOL_POSTURE_FIXED, 0U}
     }
 };
 
@@ -38,11 +53,31 @@ static uint8_t IsStateIndexValid(RobotArmToolState_t state);
 static uint8_t IsDirectionValid(RobotArmWorkDirection_t direction);
 static uint8_t IsToolStateSupported(RobotArmTool_t tool,
                                     RobotArmToolState_t state);
-static float ClampF(float x, float lo, float hi);
 static float NormalizePi(float x);
 static uint8_t InLimit(float x, float lo, float hi);
 static float AbsF(float x);
 static float LongToChordOffsetRad(void);
+static uint8_t ResolveToolGeometry(const RobotArmIKRequest_t *request,
+                                   RobotArmToolGeometry_t *geometry);
+static float ToolFixedPhiFromOffset(float phi_offset_rad);
+static float ToolPhiFromAlpha(const RobotArmToolGeometry_t *geometry,
+                              float alpha_rad);
+static uint8_t GetAlphaLimitsForDirection(
+    const RobotArmKinematicsConfig_t *config,
+    RobotArmWorkDirection_t direction,
+    float *alpha_min_rad,
+    float *alpha_max_rad);
+static float ToolTargetZFromAlphaGeometry(
+    const RobotArmToolGeometry_t *geometry,
+    float alpha_rad);
+static uint8_t GetToolZLimitForGeometry(
+    const RobotArmToolGeometry_t *geometry,
+    const RobotArmKinematicsConfig_t *config,
+    RobotArmWorkDirection_t direction,
+    RobotArmZLimit_t *limit);
+static void ExpandZLimit(RobotArmZLimit_t *limit,
+                         float z_mm,
+                         uint8_t *has_value);
 static RobotArmWorkDirection_t SelectDirectionWithDeadband(
     const RobotArmVec3_t *target_xyz_mm,
     RobotArmWorkDirection_t current_direction,
@@ -51,10 +86,10 @@ static RobotArmWorkDirection_t DirectionFromLegacyYaw(float yaw_rad);
 static RobotArmVec3_t Vec3(float x, float y, float z);
 static RobotArmVec3_t Add3(RobotArmVec3_t a, RobotArmVec3_t b);
 static RobotArmVec3_t Scale3(RobotArmVec3_t a, float s);
-static void InitResult(const RobotArmIKRequest_t *request,
-                       RobotArmIKResult_t *result);
+static RobotArmVec3_t ModelToRobotXY(RobotArmVec3_t v);
 static void FillForward(RobotArmTool_t tool,
                         RobotArmToolState_t state,
+                        const RobotArmToolGeometry_t *geometry,
                         float target_z_mm,
                         const float theta_rad[ROBOTARM_KIN_JOINT_COUNT],
                         RobotArmIKResult_t *result);
@@ -66,8 +101,8 @@ void RobotArmKinematics_DefaultConfig(RobotArmKinematicsConfig_t *config)
         return;
     }
 
-    config->joint_min_rad[0] = -0.5f * ROBOTARM_KIN_PI;
-    config->joint_max_rad[0] = 0.5f * ROBOTARM_KIN_PI;
+    config->joint_min_rad[0] = ROBOTARM_KIN_J1_MIN_RAD;
+    config->joint_max_rad[0] = ROBOTARM_KIN_J1_MAX_RAD;
     config->joint_min_rad[1] = ROBOTARM_KIN_J2_MIN_RAD;
     config->joint_max_rad[1] = ROBOTARM_KIN_J2_MAX_RAD;
     config->joint_min_rad[2] = ROBOTARM_KIN_J3_MIN_RAD;
@@ -75,13 +110,12 @@ void RobotArmKinematics_DefaultConfig(RobotArmKinematicsConfig_t *config)
     config->preferred_theta2_sign = ROBOTARM_KIN_PREFERRED_THETA2_SIGN;
     config->alpha_min_rad = ROBOTARM_KIN_ALPHA_MIN_RAD;
     config->alpha_max_rad = ROBOTARM_KIN_ALPHA_MAX_RAD;
-    config->yaw_switch_safe_alpha_rad = ROBOTARM_KIN_YAW_SAFE_RAD;
     config->xy_deadband_mm = ROBOTARM_KIN_DEFAULT_XY_DEADBAND_MM;
 }
 
 float RobotArmKinematics_ModelZeroAlpha(void)
 {
-    return (0.5f * ROBOTARM_KIN_PI) - LongToChordOffsetRad();
+    return (0.5f * ROBOTARM_KIN_PI) + LongToChordOffsetRad();
 }
 
 float RobotArmKinematics_DirectionYaw(RobotArmWorkDirection_t direction)
@@ -99,6 +133,340 @@ float RobotArmKinematics_DirectionYaw(RobotArmWorkDirection_t direction)
     }
 }
 
+float RobotArmKinematics_ToolTargetZFromAlpha(RobotArmTool_t tool,
+                                              RobotArmToolState_t state,
+                                              float alpha_rad)
+{
+    RobotArmIKRequest_t request;
+    RobotArmToolGeometry_t tool_geometry;
+
+    if ((!IsToolStateSupported(tool, state)) ||
+        (!IsFiniteFloat(alpha_rad)))
+    {
+        return 0.0f;
+    }
+
+    request.tool = tool;
+    request.state = state;
+    request.target_direction_valid = 0U;
+    request.target_direction = ROBOTARM_WORK_DIR_Y_POS;
+    request.posture_source_valid = 0U;
+    request.posture_source_tool = tool;
+    request.posture_source_state = state;
+
+    if (!ResolveToolGeometry(&request, &tool_geometry))
+    {
+        return 0.0f;
+    }
+
+    return ToolTargetZFromAlphaGeometry(&tool_geometry, alpha_rad);
+}
+
+float RobotArmKinematics_RequestToolTargetZFromAlpha(
+    const RobotArmIKRequest_t *request,
+    float alpha_rad)
+{
+    RobotArmToolGeometry_t tool_geometry;
+
+    if ((request == NULL) || (!IsFiniteFloat(alpha_rad)) ||
+        (!ResolveToolGeometry(request, &tool_geometry)))
+    {
+        return 0.0f;
+    }
+
+    return ToolTargetZFromAlphaGeometry(&tool_geometry, alpha_rad);
+}
+
+uint8_t RobotArmKinematics_GetToolZLimit(
+    RobotArmTool_t tool,
+    RobotArmToolState_t state,
+    const RobotArmKinematicsConfig_t *config,
+    RobotArmZLimit_t *limit)
+{
+    RobotArmKinematicsConfig_t local_config;
+    const RobotArmKinematicsConfig_t *cfg;
+    RobotArmIKRequest_t request;
+    RobotArmToolGeometry_t tool_geometry;
+
+    if (limit == NULL)
+    {
+        return 0U;
+    }
+
+    limit->min_mm = 0.0f;
+    limit->max_mm = 0.0f;
+
+    if (!IsToolStateSupported(tool, state))
+    {
+        return 0U;
+    }
+
+    RobotArmKinematics_DefaultConfig(&local_config);
+    cfg = (config != NULL) ? config : &local_config;
+
+    request.tool = tool;
+    request.state = state;
+    request.target_direction_valid = 0U;
+    request.target_direction = ROBOTARM_WORK_DIR_Y_POS;
+    request.posture_source_valid = 0U;
+    request.posture_source_tool = tool;
+    request.posture_source_state = state;
+    if (!ResolveToolGeometry(&request, &tool_geometry))
+    {
+        return 0U;
+    }
+
+    return GetToolZLimitForGeometry(&tool_geometry,
+                                    cfg,
+                                    ROBOTARM_WORK_DIR_Y_POS,
+                                    limit);
+}
+
+uint8_t RobotArmKinematics_GetRequestToolZLimit(
+    const RobotArmIKRequest_t *request,
+    const RobotArmKinematicsConfig_t *config,
+    RobotArmZLimit_t *limit)
+{
+    RobotArmKinematicsConfig_t local_config;
+    const RobotArmKinematicsConfig_t *cfg;
+    RobotArmToolGeometry_t tool_geometry;
+    RobotArmWorkDirection_t direction;
+
+    if (limit == NULL)
+    {
+        return 0U;
+    }
+
+    limit->min_mm = 0.0f;
+    limit->max_mm = 0.0f;
+
+    if (request == NULL)
+    {
+        return 0U;
+    }
+
+    RobotArmKinematics_DefaultConfig(&local_config);
+    cfg = (config != NULL) ? config : &local_config;
+
+    if (!ResolveToolGeometry(request, &tool_geometry))
+    {
+        return 0U;
+    }
+
+    if (request->target_direction_valid != 0U)
+    {
+        direction = request->target_direction;
+    }
+    else
+    {
+        direction = SelectDirectionWithDeadband(&request->target_xyz_mm,
+                                                request->current_direction,
+                                                cfg->xy_deadband_mm);
+    }
+    if (!IsDirectionValid(direction))
+    {
+        return 0U;
+    }
+
+    return GetToolZLimitForGeometry(&tool_geometry, cfg, direction, limit);
+}
+
+static uint8_t ResolveToolGeometry(const RobotArmIKRequest_t *request,
+                                   RobotArmToolGeometry_t *geometry)
+{
+    const RobotArmToolGeometry_t *base;
+    const RobotArmToolGeometry_t *source;
+
+    if ((request == NULL) || (geometry == NULL) ||
+        (!IsToolStateSupported(request->tool, request->state)))
+    {
+        return 0U;
+    }
+
+    base = &s_tool_geometry[(uint8_t)request->tool][(uint8_t)request->state];
+    *geometry = *base;
+
+    if (request->posture_source_valid == 1U)
+    {
+        if (!IsToolStateSupported(request->posture_source_tool,
+                                  request->posture_source_state))
+        {
+            return 0U;
+        }
+
+        source =
+            &s_tool_geometry[(uint8_t)request->posture_source_tool]
+                            [(uint8_t)request->posture_source_state];
+        geometry->phi_offset_rad = source->phi_offset_rad;
+        geometry->posture_mode = source->posture_mode;
+    }
+
+    return 1U;
+}
+
+static float ToolFixedPhiFromOffset(float phi_offset_rad)
+{
+    return NormalizePi(ROBOTARM_KIN_FRAME4_POWERON_PHI_RAD + phi_offset_rad);
+}
+
+static float ToolPhiFromAlpha(const RobotArmToolGeometry_t *geometry,
+                              float alpha_rad)
+{
+    if (geometry == NULL)
+    {
+        return 0.0f;
+    }
+
+    if (geometry->posture_mode == ROBOTARM_TOOL_POSTURE_SHORT_PARALLEL)
+    {
+        return NormalizePi(alpha_rad - ROBOTARM_KIN_BEND_RAD -
+                           (0.5f * ROBOTARM_KIN_PI));
+    }
+
+    return ToolFixedPhiFromOffset(geometry->phi_offset_rad);
+}
+
+static uint8_t GetAlphaLimitsForDirection(
+    const RobotArmKinematicsConfig_t *config,
+    RobotArmWorkDirection_t direction,
+    float *alpha_min_rad,
+    float *alpha_max_rad)
+{
+    float safe_min;
+    float safe_max;
+    float alpha_min;
+    float alpha_max;
+
+    if ((config == NULL) || (alpha_min_rad == NULL) ||
+        (alpha_max_rad == NULL) || (!IsDirectionValid(direction)))
+    {
+        return 0U;
+    }
+
+    safe_min = (direction == ROBOTARM_WORK_DIR_Y_POS) ?
+        ROBOTARM_KIN_ALPHA_Y_POS_MIN_RAD : ROBOTARM_KIN_ALPHA_X_MIN_RAD;
+    safe_max = ROBOTARM_KIN_ALPHA_MAX_RAD;
+    alpha_min = config->alpha_min_rad;
+    alpha_max = config->alpha_max_rad;
+
+    if ((!IsFiniteFloat(alpha_min)) ||
+        (!IsFiniteFloat(alpha_max)) ||
+        (alpha_min > alpha_max))
+    {
+        return 0U;
+    }
+
+    if (alpha_min < safe_min)
+    {
+        alpha_min = safe_min;
+    }
+    if (alpha_max > safe_max)
+    {
+        alpha_max = safe_max;
+    }
+    if (alpha_min > alpha_max)
+    {
+        return 0U;
+    }
+
+    *alpha_min_rad = alpha_min;
+    *alpha_max_rad = alpha_max;
+    return 1U;
+}
+
+static float ToolTargetZFromAlphaGeometry(
+    const RobotArmToolGeometry_t *geometry,
+    float alpha_rad)
+{
+    float phi_rad;
+    float gamma_rad;
+
+    if ((geometry == NULL) || (!IsFiniteFloat(alpha_rad)))
+    {
+        return 0.0f;
+    }
+
+    phi_rad = ToolPhiFromAlpha(geometry, alpha_rad);
+    gamma_rad = alpha_rad - LongToChordOffsetRad();
+
+    return ROBOTARM_KIN_D1_MM +
+           ROBOTARM_KIN_L23_MM * sinf(gamma_rad) +
+           geometry->offset_mm.y * sinf(phi_rad) +
+           geometry->offset_mm.z * cosf(phi_rad);
+}
+
+static uint8_t GetToolZLimitForGeometry(
+    const RobotArmToolGeometry_t *geometry,
+    const RobotArmKinematicsConfig_t *config,
+    RobotArmWorkDirection_t direction,
+    RobotArmZLimit_t *limit)
+{
+    float alpha_min;
+    float alpha_max;
+    float long_to_chord_rad;
+    float alpha_at_min_z;
+    float alpha_at_max_z;
+    uint8_t has_value = 0U;
+    uint8_t i;
+
+    if ((geometry == NULL) || (config == NULL) || (limit == NULL))
+    {
+        return 0U;
+    }
+
+    limit->min_mm = 0.0f;
+    limit->max_mm = 0.0f;
+
+    if (!GetAlphaLimitsForDirection(config,
+                                    direction,
+                                    &alpha_min,
+                                    &alpha_max))
+    {
+        return 0U;
+    }
+
+    if (geometry->posture_mode == ROBOTARM_TOOL_POSTURE_FIXED)
+    {
+        ExpandZLimit(limit,
+                     ToolTargetZFromAlphaGeometry(geometry, alpha_min),
+                     &has_value);
+        ExpandZLimit(limit,
+                     ToolTargetZFromAlphaGeometry(geometry, alpha_max),
+                     &has_value);
+
+        long_to_chord_rad = LongToChordOffsetRad();
+        alpha_at_min_z = (-0.5f * ROBOTARM_KIN_PI) + long_to_chord_rad;
+        alpha_at_max_z = (0.5f * ROBOTARM_KIN_PI) + long_to_chord_rad;
+
+        if (InLimit(alpha_at_min_z, alpha_min, alpha_max))
+        {
+            ExpandZLimit(limit,
+                         ToolTargetZFromAlphaGeometry(geometry,
+                                                       alpha_at_min_z),
+                         &has_value);
+        }
+        if (InLimit(alpha_at_max_z, alpha_min, alpha_max))
+        {
+            ExpandZLimit(limit,
+                         ToolTargetZFromAlphaGeometry(geometry,
+                                                       alpha_at_max_z),
+                         &has_value);
+        }
+        return has_value;
+    }
+
+    for (i = 0U; i <= ROBOTARM_KIN_Z_LIMIT_SAMPLE_COUNT; i++)
+    {
+        float t = (float)i / (float)ROBOTARM_KIN_Z_LIMIT_SAMPLE_COUNT;
+        float alpha = alpha_min + (alpha_max - alpha_min) * t;
+        ExpandZLimit(limit,
+                     ToolTargetZFromAlphaGeometry(geometry, alpha),
+                     &has_value);
+    }
+
+    return has_value;
+}
+
 RobotArmWorkDirection_t RobotArmKinematics_SelectDirection(
     const RobotArmVec3_t *target_xyz_mm,
     RobotArmWorkDirection_t current_direction)
@@ -108,253 +476,20 @@ RobotArmWorkDirection_t RobotArmKinematics_SelectDirection(
                                        ROBOTARM_KIN_DEFAULT_XY_DEADBAND_MM);
 }
 
-RobotArmIKStatus_t RobotArmKinematics_SolveIK(
-    const RobotArmIKRequest_t *request,
-    const RobotArmKinematicsConfig_t *config,
-    RobotArmIKResult_t *result)
-{
-    RobotArmKinematicsConfig_t local_config;
-    const RobotArmKinematicsConfig_t *cfg;
-    const RobotArmToolGeometry_t *tool_geometry;
-    RobotArmWorkDirection_t target_direction;
-    float phi;
-    float sin_phi;
-    float cos_phi;
-    float required_j4_z_mm;
-    float sin_gamma;
-    float gamma_base;
-    float gamma_candidates[2];
-    float theta_candidate[ROBOTARM_KIN_JOINT_COUNT];
-    float best_theta[ROBOTARM_KIN_JOINT_COUNT] = {0.0f, 0.0f, 0.0f};
-    float best_alpha = 0.0f;
-    float best_score = ROBOTARM_KIN_SCORE_BAD;
-    RobotArmIKStatus_t reject_status = ROBOTARM_IK_ERR_LONG_LINK_LIMIT;
-    RobotArmIKReason_t reject_reason = ROBOTARM_IK_REASON_LONG_LINK_LIMIT;
-    float long_to_chord_rad;
-    uint8_t i;
-
-    if ((request == NULL) || (result == NULL))
-    {
-        return ROBOTARM_IK_ERR_NULL;
-    }
-
-    InitResult(request, result);
-
-    if (!IsToolValid(request->tool))
-    {
-        result->status = ROBOTARM_IK_ERR_BAD_PARAM;
-        result->reason = ROBOTARM_IK_REASON_BAD_TOOL;
-        return result->status;
-    }
-
-    if (!IsStateIndexValid(request->state) ||
-        !IsToolStateSupported(request->tool, request->state))
-    {
-        result->status = ROBOTARM_IK_ERR_UNSUPPORTED_STATE;
-        result->reason = ROBOTARM_IK_REASON_UNSUPPORTED_STATE;
-        return result->status;
-    }
-
-    if (!IsDirectionValid(request->current_direction))
-    {
-        result->status = ROBOTARM_IK_ERR_BAD_DIRECTION;
-        result->reason = ROBOTARM_IK_REASON_BAD_DIRECTION;
-        return result->status;
-    }
-
-    if ((!IsFiniteFloat(request->target_xyz_mm.x)) ||
-        (!IsFiniteFloat(request->target_xyz_mm.y)) ||
-        (!IsFiniteFloat(request->target_xyz_mm.z)) ||
-        (!IsFiniteFloat(request->current_alpha_rad)))
-    {
-        result->status = ROBOTARM_IK_ERR_BAD_PARAM;
-        result->reason = ROBOTARM_IK_REASON_BAD_FLOAT;
-        return result->status;
-    }
-
-    RobotArmKinematics_DefaultConfig(&local_config);
-    cfg = (config != NULL) ? config : &local_config;
-
-    target_direction = SelectDirectionWithDeadband(&request->target_xyz_mm,
-                                                  request->current_direction,
-                                                  cfg->xy_deadband_mm);
-    if (!IsDirectionValid(target_direction))
-    {
-        result->status = ROBOTARM_IK_ERR_BAD_DIRECTION;
-        result->reason = ROBOTARM_IK_REASON_BAD_DIRECTION;
-        return result->status;
-    }
-
-    result->target_direction = target_direction;
-    result->approach_yaw_rad = RobotArmKinematics_DirectionYaw(target_direction);
-    theta_candidate[0] = result->approach_yaw_rad;
-
-    if (!InLimit(theta_candidate[0], cfg->joint_min_rad[0], cfg->joint_max_rad[0]))
-    {
-        result->status = ROBOTARM_IK_ERR_JOINT_LIMIT;
-        result->reason = ROBOTARM_IK_REASON_J1_LIMIT;
-        return result->status;
-    }
-
-    if ((target_direction != request->current_direction) &&
-        (request->current_alpha_rad <= (cfg->yaw_switch_safe_alpha_rad + ROBOTARM_KIN_EPS)))
-    {
-        result->status = ROBOTARM_IK_ERR_YAW_SWITCH_UNSAFE;
-        result->reason = ROBOTARM_IK_REASON_YAW_SWITCH_UNSAFE;
-        return result->status;
-    }
-
-    tool_geometry = &s_tool_geometry[(uint8_t)request->tool][(uint8_t)request->state];
-    phi = tool_geometry->phi_rad;
-    sin_phi = sinf(phi);
-    cos_phi = cosf(phi);
-
-    required_j4_z_mm = request->target_xyz_mm.z -
-                       ROBOTARM_KIN_D1_MM -
-                       tool_geometry->offset_mm.y * sin_phi -
-                       tool_geometry->offset_mm.z * cos_phi;
-    sin_gamma = required_j4_z_mm / ROBOTARM_KIN_L23_MM;
-
-    if ((sin_gamma < (-1.0f - ROBOTARM_KIN_HEIGHT_TOL)) ||
-        (sin_gamma > (1.0f + ROBOTARM_KIN_HEIGHT_TOL)))
-    {
-        result->status = ROBOTARM_IK_ERR_HEIGHT_UNREACHABLE;
-        result->reason = ROBOTARM_IK_REASON_HEIGHT_OUTSIDE_LINK;
-        return result->status;
-    }
-
-    sin_gamma = ClampF(sin_gamma, -1.0f, 1.0f);
-    gamma_base = asinf(sin_gamma);
-    gamma_candidates[0] = gamma_base;
-    gamma_candidates[1] = ROBOTARM_KIN_PI - gamma_base;
-    long_to_chord_rad = LongToChordOffsetRad();
-
-    for (i = 0U; i < 2U; i++)
-    {
-        float gamma = gamma_candidates[i];
-        float alpha = gamma - long_to_chord_rad;
-        float theta2;
-        float theta3;
-        float score;
-        float preferred_penalty = 0.0f;
-
-        theta2 = NormalizePi(gamma - (0.5f * ROBOTARM_KIN_PI));
-        theta3 = NormalizePi(phi - theta2);
-
-        if (!InLimit(alpha, cfg->alpha_min_rad, cfg->alpha_max_rad))
-        {
-            reject_status = ROBOTARM_IK_ERR_LONG_LINK_LIMIT;
-            reject_reason = ROBOTARM_IK_REASON_LONG_LINK_LIMIT;
-            continue;
-        }
-        if (!InLimit(theta2, cfg->joint_min_rad[1], cfg->joint_max_rad[1]))
-        {
-            reject_status = ROBOTARM_IK_ERR_JOINT_LIMIT;
-            reject_reason = ROBOTARM_IK_REASON_J2_LIMIT;
-            continue;
-        }
-        if (!InLimit(theta3, cfg->joint_min_rad[2], cfg->joint_max_rad[2]))
-        {
-            reject_status = ROBOTARM_IK_ERR_JOINT_LIMIT;
-            reject_reason = ROBOTARM_IK_REASON_J3_LIMIT;
-            continue;
-        }
-
-        if ((cfg->preferred_theta2_sign < 0.0f) && (theta2 > ROBOTARM_KIN_EPS))
-        {
-            preferred_penalty = 0.01f;
-        }
-        else if ((cfg->preferred_theta2_sign > 0.0f) && (theta2 < -ROBOTARM_KIN_EPS))
-        {
-            preferred_penalty = 0.01f;
-        }
-
-        score = AbsF(alpha - request->current_alpha_rad) +
-                0.25f * AbsF(theta3) +
-                preferred_penalty;
-
-        if (score < best_score)
-        {
-            best_score = score;
-            best_alpha = alpha;
-            best_theta[0] = theta_candidate[0];
-            best_theta[1] = theta2;
-            best_theta[2] = theta3;
-        }
-    }
-
-    if (best_score >= (ROBOTARM_KIN_SCORE_BAD * 0.5f))
-    {
-        result->status = reject_status;
-        result->reason = reject_reason;
-        return result->status;
-    }
-
-    FillForward(request->tool, request->state, request->target_xyz_mm.z,
-                best_theta, result);
-    result->status = ROBOTARM_IK_OK;
-    result->reason = ROBOTARM_IK_REASON_NONE;
-    result->target_direction = target_direction;
-    result->alpha_rad = best_alpha;
-    result->target_z_mm = request->target_xyz_mm.z;
-    result->approach_yaw_rad = RobotArmKinematics_DirectionYaw(target_direction);
-    return result->status;
-}
-
-RobotArmIKStatus_t RobotArmKinematics_SolveToolHeight(
-    const RobotArmIKRequest_t *request,
-    const RobotArmKinematicsConfig_t *config,
-    RobotArmIKResult_t *result)
-{
-    RobotArmIKRequest_t ik_request;
-    RobotArmWorkDirection_t direction;
-    float yaw;
-
-    if ((request == NULL) || (result == NULL))
-    {
-        return ROBOTARM_IK_ERR_NULL;
-    }
-
-    InitResult(request, result);
-    if ((!IsFiniteFloat(request->target_z_mm)) ||
-        (!IsFiniteFloat(request->approach_yaw_rad)))
-    {
-        result->status = ROBOTARM_IK_ERR_BAD_PARAM;
-        result->reason = ROBOTARM_IK_REASON_BAD_FLOAT;
-        return result->status;
-    }
-
-    direction = DirectionFromLegacyYaw(request->approach_yaw_rad);
-    yaw = RobotArmKinematics_DirectionYaw(direction);
-
-    ik_request = *request;
-    ik_request.current_direction = direction;
-    ik_request.current_alpha_rad = RobotArmKinematics_ModelZeroAlpha();
-    ik_request.current_theta_rad[0] = yaw;
-    ik_request.current_theta_rad[1] = 0.0f;
-    ik_request.current_theta_rad[2] = 0.0f;
-    ik_request.target_xyz_mm.x = 0.0f;
-    ik_request.target_xyz_mm.y = 0.0f;
-    ik_request.target_xyz_mm.z = request->target_z_mm;
-    if (direction == ROBOTARM_WORK_DIR_Y_POS)
-    {
-        ik_request.target_xyz_mm.y = 1.0f;
-    }
-    else if (direction == ROBOTARM_WORK_DIR_X_POS)
-    {
-        ik_request.target_xyz_mm.x = 1.0f;
-    }
-    else
-    {
-        ik_request.target_xyz_mm.x = -1.0f;
-    }
-    ik_request.approach_yaw_rad = yaw;
-
-    return RobotArmKinematics_SolveIK(&ik_request, config, result);
-}
-
 RobotArmIKStatus_t RobotArmKinematics_Forward(
     RobotArmTool_t tool,
+    const float theta_rad[ROBOTARM_KIN_JOINT_COUNT],
+    RobotArmIKResult_t *result)
+{
+    return RobotArmKinematics_ForwardState(tool,
+                                           ROBOTARM_TOOL_STATE_STOW,
+                                           theta_rad,
+                                           result);
+}
+
+RobotArmIKStatus_t RobotArmKinematics_ForwardState(
+    RobotArmTool_t tool,
+    RobotArmToolState_t state,
     const float theta_rad[ROBOTARM_KIN_JOINT_COUNT],
     RobotArmIKResult_t *result)
 {
@@ -370,6 +505,12 @@ RobotArmIKStatus_t RobotArmKinematics_Forward(
         result->reason = ROBOTARM_IK_REASON_BAD_TOOL;
         return result->status;
     }
+    if (!IsToolStateSupported(tool, state))
+    {
+        result->status = ROBOTARM_IK_ERR_UNSUPPORTED_STATE;
+        result->reason = ROBOTARM_IK_REASON_UNSUPPORTED_STATE;
+        return result->status;
+    }
     for (i = 0U; i < ROBOTARM_KIN_JOINT_COUNT; i++)
     {
         if (!IsFiniteFloat(theta_rad[i]))
@@ -380,7 +521,12 @@ RobotArmIKStatus_t RobotArmKinematics_Forward(
         }
     }
 
-    FillForward(tool, ROBOTARM_TOOL_STATE_STOW, 0.0f, theta_rad, result);
+    FillForward(tool,
+                state,
+                &s_tool_geometry[(uint8_t)tool][(uint8_t)state],
+                0.0f,
+                theta_rad,
+                result);
     result->target_z_mm = result->tool_world_mm.z;
     result->status = ROBOTARM_IK_OK;
     result->reason = ROBOTARM_IK_REASON_NONE;
@@ -390,11 +536,20 @@ RobotArmIKStatus_t RobotArmKinematics_Forward(
 float RobotArmKinematics_GetToolPosturePhi(RobotArmTool_t tool,
                                            RobotArmToolState_t state)
 {
+    const RobotArmToolGeometry_t *geometry;
+
     if (!IsToolStateSupported(tool, state))
     {
         return 0.0f;
     }
-    return s_tool_geometry[(uint8_t)tool][(uint8_t)state].phi_rad;
+
+    geometry = &s_tool_geometry[(uint8_t)tool][(uint8_t)state];
+    if (geometry->posture_mode != ROBOTARM_TOOL_POSTURE_FIXED)
+    {
+        return geometry->phi_offset_rad;
+    }
+
+    return ToolPhiFromAlpha(geometry, 0.0f);
 }
 
 const RobotArmVec3_t *RobotArmKinematics_GetToolOffset(RobotArmTool_t tool)
@@ -406,117 +561,20 @@ const RobotArmVec3_t *RobotArmKinematics_GetToolOffset(RobotArmTool_t tool)
     return &s_tool_geometry[(uint8_t)tool][(uint8_t)ROBOTARM_TOOL_STATE_STOW].offset_mm;
 }
 
-RobotArmIKStatus_t RobotArmKinematics_CheckPath(
-    const RobotArmIKRequest_t *points,
-    uint8_t point_count,
-    const RobotArmKinematicsConfig_t *config,
-    RobotArmPathCheckResult_t *path_result)
-{
-    RobotArmIKRequest_t point_request;
-    RobotArmIKResult_t point_result;
-    RobotArmIKStatus_t status;
-    RobotArmWorkDirection_t current_direction;
-    float current_alpha_rad;
-    float current_theta_rad[ROBOTARM_KIN_JOINT_COUNT];
-    uint8_t i;
-    uint8_t j;
-
-    if ((points == NULL) || (path_result == NULL))
-    {
-        return ROBOTARM_IK_ERR_NULL;
-    }
-
-    path_result->status = ROBOTARM_IK_OK;
-    path_result->reason = ROBOTARM_IK_REASON_NONE;
-    path_result->checked_count = 0U;
-    path_result->failed_index = ROBOTARM_KIN_PATH_FAILED_NONE;
-
-    if (point_count == 0U)
-    {
-        path_result->status = ROBOTARM_IK_ERR_BAD_PARAM;
-        path_result->reason = ROBOTARM_IK_REASON_BAD_FLOAT;
-        return path_result->status;
-    }
-
-    current_direction = points[0].current_direction;
-    current_alpha_rad = points[0].current_alpha_rad;
-    for (j = 0U; j < ROBOTARM_KIN_JOINT_COUNT; j++)
-    {
-        current_theta_rad[j] = points[0].current_theta_rad[j];
-    }
-
-    for (i = 0U; i < point_count; i++)
-    {
-        point_request = points[i];
-        point_request.current_direction = current_direction;
-        point_request.current_alpha_rad = current_alpha_rad;
-        for (j = 0U; j < ROBOTARM_KIN_JOINT_COUNT; j++)
-        {
-            point_request.current_theta_rad[j] = current_theta_rad[j];
-        }
-
-        status = RobotArmKinematics_SolveIK(&point_request, config, &point_result);
-        path_result->checked_count = (uint8_t)(i + 1U);
-        path_result->last_result = point_result;
-        if (status != ROBOTARM_IK_OK)
-        {
-            path_result->status = status;
-            path_result->reason = point_result.reason;
-            path_result->failed_index = i;
-            return status;
-        }
-
-        current_direction = point_result.target_direction;
-        current_alpha_rad = point_result.alpha_rad;
-        for (j = 0U; j < ROBOTARM_KIN_JOINT_COUNT; j++)
-        {
-            current_theta_rad[j] = point_result.theta_rad[j];
-        }
-    }
-
-    return ROBOTARM_IK_OK;
-}
-
-static void InitResult(const RobotArmIKRequest_t *request,
-                       RobotArmIKResult_t *result)
-{
-    uint8_t i;
-
-    result->status = ROBOTARM_IK_ERR_BAD_PARAM;
-    result->reason = ROBOTARM_IK_REASON_NONE;
-    result->tool = request->tool;
-    result->state = request->state;
-    result->target_direction = request->current_direction;
-    result->alpha_rad = request->current_alpha_rad;
-    result->target_z_mm = request->target_z_mm;
-    result->approach_yaw_rad = request->approach_yaw_rad;
-    for (i = 0U; i < ROBOTARM_KIN_JOINT_COUNT; i++)
-    {
-        result->theta_rad[i] = request->current_theta_rad[i];
-    }
-    result->j2_world_mm = Vec3(0.0f, 0.0f, 0.0f);
-    result->j3_world_mm = Vec3(0.0f, 0.0f, 0.0f);
-    result->j4_world_mm = Vec3(0.0f, 0.0f, 0.0f);
-    result->tool_world_mm = Vec3(0.0f, 0.0f, 0.0f);
-    result->tool_x_axis = Vec3(1.0f, 0.0f, 0.0f);
-    result->tool_y_axis = Vec3(0.0f, 1.0f, 0.0f);
-    result->tool_z_axis = Vec3(0.0f, 0.0f, 1.0f);
-}
-
 static void FillForward(RobotArmTool_t tool,
                         RobotArmToolState_t state,
+                        const RobotArmToolGeometry_t *geometry,
                         float target_z_mm,
                         const float theta_rad[ROBOTARM_KIN_JOINT_COUNT],
                         RobotArmIKResult_t *result)
 {
-    const RobotArmToolGeometry_t *tool_geometry =
-        &s_tool_geometry[(uint8_t)tool][(uint8_t)state];
+    const RobotArmToolGeometry_t *tool_geometry = geometry;
     float yaw = theta_rad[0];
     float theta2 = theta_rad[1];
     float theta3 = theta_rad[2];
     float phi = theta2 + theta3;
     float gamma = theta2 + (0.5f * ROBOTARM_KIN_PI);
-    float alpha = gamma - LongToChordOffsetRad();
+    float alpha = gamma + LongToChordOffsetRad();
     float radial = ROBOTARM_KIN_L23_MM * cosf(gamma);
     float height = ROBOTARM_KIN_L23_MM * sinf(gamma);
     float cy = cosf(yaw);
@@ -536,9 +594,21 @@ static void FillForward(RobotArmTool_t tool,
                                   Scale3(z_base, height)));
     RobotArmVec3_t tool_pos = j3;
 
+    if (tool_geometry == NULL)
+    {
+        tool_geometry = &s_tool_geometry[(uint8_t)tool][(uint8_t)state];
+    }
+
     tool_pos = Add3(tool_pos, Scale3(x_axis, tool_geometry->offset_mm.x));
     tool_pos = Add3(tool_pos, Scale3(y_axis, tool_geometry->offset_mm.y));
     tool_pos = Add3(tool_pos, Scale3(z_axis, tool_geometry->offset_mm.z));
+
+    j2 = ModelToRobotXY(j2);
+    j3 = ModelToRobotXY(j3);
+    tool_pos = ModelToRobotXY(tool_pos);
+    x_axis = ModelToRobotXY(x_axis);
+    y_axis = ModelToRobotXY(y_axis);
+    z_axis = ModelToRobotXY(z_axis);
 
     result->tool = tool;
     result->state = state;
@@ -570,7 +640,7 @@ static uint8_t IsToolValid(RobotArmTool_t tool)
 
 static uint8_t IsStateIndexValid(RobotArmToolState_t state)
 {
-    return ((uint8_t)state < 2U) ? 1U : 0U;
+    return ((uint8_t)state < ROBOTARM_KIN_TOOL_STATE_COUNT) ? 1U : 0U;
 }
 
 static uint8_t IsDirectionValid(RobotArmWorkDirection_t direction)
@@ -588,13 +658,6 @@ static uint8_t IsToolStateSupported(RobotArmTool_t tool,
         return 0U;
     }
     return s_tool_geometry[(uint8_t)tool][(uint8_t)state].ik_enabled;
-}
-
-static float ClampF(float x, float lo, float hi)
-{
-    if (x < lo) return lo;
-    if (x > hi) return hi;
-    return x;
 }
 
 static float NormalizePi(float x)
@@ -619,6 +682,33 @@ static uint8_t InLimit(float x, float lo, float hi)
 static float AbsF(float x)
 {
     return (x < 0.0f) ? -x : x;
+}
+
+static void ExpandZLimit(RobotArmZLimit_t *limit,
+                         float z_mm,
+                         uint8_t *has_value)
+{
+    if ((limit == NULL) || (has_value == NULL) || (!IsFiniteFloat(z_mm)))
+    {
+        return;
+    }
+
+    if (*has_value == 0U)
+    {
+        limit->min_mm = z_mm;
+        limit->max_mm = z_mm;
+        *has_value = 1U;
+        return;
+    }
+
+    if (z_mm < limit->min_mm)
+    {
+        limit->min_mm = z_mm;
+    }
+    if (z_mm > limit->max_mm)
+    {
+        limit->max_mm = z_mm;
+    }
 }
 
 static float LongToChordOffsetRad(void)
@@ -679,13 +769,15 @@ static RobotArmWorkDirection_t DirectionFromLegacyYaw(float yaw_rad)
 {
     float yaw = NormalizePi(yaw_rad);
 
-    if (yaw < (-0.25f * ROBOTARM_KIN_PI))
-    {
-        return ROBOTARM_WORK_DIR_X_POS;
-    }
-    if (yaw > (0.25f * ROBOTARM_KIN_PI))
+    if ((yaw > (0.25f * ROBOTARM_KIN_PI)) &&
+        (yaw <= (0.75f * ROBOTARM_KIN_PI)))
     {
         return ROBOTARM_WORK_DIR_X_NEG;
+    }
+    if ((yaw < (-0.25f * ROBOTARM_KIN_PI)) &&
+        (yaw >= (-0.75f * ROBOTARM_KIN_PI)))
+    {
+        return ROBOTARM_WORK_DIR_X_POS;
     }
     return ROBOTARM_WORK_DIR_Y_POS;
 }
@@ -707,4 +799,9 @@ static RobotArmVec3_t Add3(RobotArmVec3_t a, RobotArmVec3_t b)
 static RobotArmVec3_t Scale3(RobotArmVec3_t a, float s)
 {
     return Vec3(a.x * s, a.y * s, a.z * s);
+}
+
+static RobotArmVec3_t ModelToRobotXY(RobotArmVec3_t v)
+{
+    return Vec3(-v.x, -v.y, v.z);
 }

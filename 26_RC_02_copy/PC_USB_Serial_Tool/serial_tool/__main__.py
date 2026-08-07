@@ -1,11 +1,23 @@
 from __future__ import annotations
 
 import argparse
+import json
 import sys
+from pathlib import Path
 
+from .block_commands import (
+    block_flow_to_c_source,
+    build_block_command_sequence,
+    clear_all_interrupt_slots,
+    clear_interrupt_slot,
+    fill_interrupt_slot,
+    is_block_command,
+    list_block_commands,
+    list_interrupt_slots,
+)
 from .commands import build_climb_test_shortcut_sequence, build_query_command, build_usb_command, list_commands
 from .protocol import bytes_to_hex, parse_hex
-from .serial_console import SerialShell, list_serial_ports, monitor_serial, poll_serial, send_and_read, send_sequence_and_read
+from .serial_console import SerialShell, list_serial_ports, monitor_serial, poll_serial, run_block_flow_file, send_and_read, send_sequence_and_read
 from .usart_remote import build_remote_frame
 
 
@@ -31,6 +43,92 @@ def cmd_commands(_args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_blocks(_args: argparse.Namespace) -> int:
+    for block in list_block_commands():
+        marker = " record" if block.record_status else ""
+        print(f"{block.block_id:<28} {block.category:<12} {block.label}{marker}")
+    return 0
+
+
+def cmd_block_flow_c(args: argparse.Namespace) -> int:
+    data = json.loads(Path(args.input).read_text(encoding="utf-8"))
+    text = block_flow_to_c_source(data, symbol=args.symbol)
+    Path(args.output).write_text(text, encoding="utf-8")
+    print(f"Block flow C struct exported: {args.output}")
+    return 0
+
+
+def cmd_block_flow_run(args: argparse.Namespace) -> int:
+    run_block_flow_file(
+        args.port,
+        args.baud,
+        Path(args.input),
+        timeout_s=args.timeout,
+        arm_settle_s=args.arm_settle,
+    )
+    return 0
+
+
+def _read_block_flow(path: Path) -> dict:
+    data = json.loads(path.read_text(encoding="utf-8"))
+    if data.get("type") != "r2_block_flow":
+        raise ValueError(f"not an r2_block_flow file: {path}")
+    if not isinstance(data.get("steps"), list):
+        raise ValueError(f"invalid block flow steps in {path}")
+    return data
+
+
+def _write_block_flow(path: Path, data: dict) -> None:
+    steps = data.get("steps")
+    if isinstance(steps, list):
+        for index, step in enumerate(steps, 1):
+            if isinstance(step, dict):
+                step["index"] = index
+        data["step_count"] = len(steps)
+    path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def cmd_block_flow_slots(args: argparse.Namespace) -> int:
+    data = _read_block_flow(Path(args.input))
+    for slot in list_interrupt_slots(data):
+        print(
+            f"slot {int(slot['slot']):03d}\tstep {int(slot['index'])}\t"
+            f"{slot['status']}\t{slot.get('block_id') or ''}\t{slot.get('label') or ''}"
+        )
+    return 0
+
+
+def cmd_block_flow_slot_set(args: argparse.Namespace) -> int:
+    path = Path(args.input)
+    data = _read_block_flow(path)
+    output = Path(args.output) if args.output else path
+    note = " ".join(args.note) if args.note else None
+    step = fill_interrupt_slot(data, args.slot, args.block_id, note=note)
+    _write_block_flow(output, data)
+    print(f"Filled {output} slot {args.slot:03d}: {step['block_id']}")
+    return 0
+
+
+def cmd_block_flow_slot_clear(args: argparse.Namespace) -> int:
+    path = Path(args.input)
+    data = _read_block_flow(path)
+    output = Path(args.output) if args.output else path
+    clear_interrupt_slot(data, args.slot)
+    _write_block_flow(output, data)
+    print(f"Cleared {output} slot {args.slot:03d}.")
+    return 0
+
+
+def cmd_block_flow_slot_clear_all(args: argparse.Namespace) -> int:
+    path = Path(args.input)
+    data = _read_block_flow(path)
+    output = Path(args.output) if args.output else path
+    count = clear_all_interrupt_slots(data)
+    _write_block_flow(output, data)
+    print(f"Cleared {count} interrupt slots in {output}.")
+    return 0
+
+
 def cmd_pack(args: argparse.Namespace) -> int:
     frame = build_usb_command(args.name, args.values)
     print(bytes_to_hex(frame))
@@ -40,6 +138,12 @@ def cmd_pack(args: argparse.Namespace) -> int:
 def cmd_send(args: argparse.Namespace) -> int:
     if args.raw:
         send_and_read(args.port, args.baud, parse_hex(args.raw), wait_s=args.wait, json_lines=args.jsonl)
+        return 0
+
+    if args.name and is_block_command(args.name):
+        if args.values:
+            raise ValueError(f"{args.name} does not accept positional float values")
+        send_sequence_and_read(args.port, args.baud, build_block_command_sequence(args.name), wait_s=args.wait, json_lines=args.jsonl)
         return 0
 
     shortcut_frames = build_climb_test_shortcut_sequence(args.name)
@@ -105,6 +209,45 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("commands", help="List known USB commands.")
     p.set_defaults(func=cmd_commands)
+
+    p = sub.add_parser("blocks", help="List ready-to-use flow block commands.")
+    p.set_defaults(func=cmd_blocks)
+
+    p = sub.add_parser("block-flow-c", help="Convert an exported block flow JSON file to C structs.")
+    p.add_argument("input", help="Input r2_block_flow JSON file.")
+    p.add_argument("output", help="Output .c/.h file.")
+    p.add_argument("--symbol", help="C array symbol name. Defaults to the flow name.")
+    p.set_defaults(func=cmd_block_flow_c)
+
+    p = sub.add_parser("block-flow-run", help="Run an exported arm/base/climb block flow JSON file.")
+    _add_serial_args(p)
+    p.add_argument("input", help="Input r2_block_flow JSON file.")
+    p.add_argument("--timeout", type=float, default=40.0, help="Fallback per-step timeout in seconds.")
+    p.add_argument("--arm-settle", type=float, default=1.0, help="Arm settle time after arm blocks.")
+    p.set_defaults(func=cmd_block_flow_run)
+
+    p = sub.add_parser("block-flow-slots", help="List interrupt slots in a block flow JSON file.")
+    p.add_argument("input", help="Input r2_block_flow JSON file.")
+    p.set_defaults(func=cmd_block_flow_slots)
+
+    p = sub.add_parser("block-flow-slot-set", help="Fill one interrupt slot with an existing block command.")
+    p.add_argument("input", help="Input r2_block_flow JSON file; overwritten unless --output is used.")
+    p.add_argument("slot", type=int, help="Interrupt slot number, for example 1.")
+    p.add_argument("block_id", help="Existing block command id, for example arm_j2_cw_10deg.")
+    p.add_argument("note", nargs="*", help="Optional note saved on the filled slot.")
+    p.add_argument("--output", help="Write to a different file instead of overwriting input.")
+    p.set_defaults(func=cmd_block_flow_slot_set)
+
+    p = sub.add_parser("block-flow-slot-clear", help="Clear one interrupt slot back to an empty placeholder.")
+    p.add_argument("input", help="Input r2_block_flow JSON file; overwritten unless --output is used.")
+    p.add_argument("slot", type=int, help="Interrupt slot number, for example 1.")
+    p.add_argument("--output", help="Write to a different file instead of overwriting input.")
+    p.set_defaults(func=cmd_block_flow_slot_clear)
+
+    p = sub.add_parser("block-flow-slot-clear-all", help="Clear all interrupt slots back to empty placeholders.")
+    p.add_argument("input", help="Input r2_block_flow JSON file; overwritten unless --output is used.")
+    p.add_argument("--output", help="Write to a different file instead of overwriting input.")
+    p.set_defaults(func=cmd_block_flow_slot_clear_all)
 
     p = sub.add_parser("pack", help="Pack a USB frame and print hex.")
     p.add_argument("name", help="Command name or numeric command id.")

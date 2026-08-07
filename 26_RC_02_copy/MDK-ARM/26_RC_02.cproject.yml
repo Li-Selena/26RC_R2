@@ -29,7 +29,6 @@ project:
         - ../Components/Controller/Inc
         - ../Components/Device/Inc
         - ../BSP/Inc
-        - ../Middlewares/ST/ARM/DSP/Inc
       debug: "on"
       define:
         - USE_PWR_LDO_SUPPLY

@@ -5,14 +5,8 @@ include("../roots.cmake")
 
 set(CONTEXT 26_RC_02+26_RC_02)
 set(TARGET ${CONTEXT})
-set(DNAME STM32H723VGTx)
-set(DPACK Keil::STM32H7xx_DFP@4.1.3)
-set(DPACK_DIR "${CMSIS_PACK_ROOT}/Keil/STM32H7xx_DFP/4.1.3")
 set(OUT_DIR "${SOLUTION_ROOT}/out/26_RC_02/26_RC_02")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
-set(CMAKE_COMPILE_COMMANDS ${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json)
-set(COMPILE_COMMANDS ${OUT_DIR}/compile_commands.json)
-set(COMPILE_MACROS ${OUT_DIR}/compile_macros.h)
 set(LD_SCRIPT "${SOLUTION_ROOT}/26_RC_02_26_RC_02.sct")
 set(LD_SCRIPT_PP ${LD_SCRIPT})
 
@@ -23,23 +17,15 @@ set(DSP DSP)
 set(BYTE_ORDER Little-endian)
 
 # Toolchain config map
-set(COMPILER AC6)
 include("toolchain.cmake")
 
 # Setup project
 project(${CONTEXT} LANGUAGES ASM C CXX)
 
-# Enable color diagnostics
-set(CMAKE_COLOR_DIAGNOSTICS ON)
-
 # Compilation database
-add_custom_target(database DEPENDS ${COMPILE_COMMANDS} ${COMPILE_MACROS})
-add_custom_command(OUTPUT ${COMPILE_COMMANDS}
-  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_COMPILE_COMMANDS}" "${COMPILE_COMMANDS}"
-  DEPENDS "${CMAKE_COMPILE_COMMANDS}"
-)
-add_custom_command(OUTPUT ${COMPILE_MACROS}
-  COMMAND ${CPP} ${CPP_DUMP_MACROS}
+add_custom_target(database
+  COMMAND ${CMAKE_COMMAND} -E make_directory "${OUT_DIR}"
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_BINARY_DIR}/compile_commands.json" "${OUT_DIR}"
 )
 set(CMAKE_C_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_C_IMPLICIT_INCLUDE_DIRECTORIES})
 set(CMAKE_CXX_STANDARD_INCLUDE_DIRECTORIES ${CMAKE_CXX_IMPLICIT_INCLUDE_DIRECTORIES})
@@ -73,7 +59,6 @@ target_include_directories(${CONTEXT} PUBLIC
     "${SOLUTION_ROOT}/../Components/Controller/Inc"
     "${SOLUTION_ROOT}/../Components/Device/Inc"
     "${SOLUTION_ROOT}/../BSP/Inc"
-    "${SOLUTION_ROOT}/../Middlewares/ST/ARM/DSP/Inc"
   >
   "${SOLUTION_ROOT}/RTE/_26_RC_02"
   "${CMSIS_PACK_ROOT}/ARM/CMSIS-DSP/1.16.2/Include"
@@ -207,5 +192,4 @@ target_link_options(${CONTEXT} PUBLIC
   "SHELL:--summary_stderr"
   "SHELL:--info summarysizes"
 )
-set(LD_DEPS ${LD_SCRIPT})
-set_target_properties(${CONTEXT} PROPERTIES LINK_DEPENDS "${LD_DEPS}")
+set_target_properties(${CONTEXT} PROPERTIES LINK_DEPENDS ${LD_SCRIPT})

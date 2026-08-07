@@ -1,0 +1,23 @@
+{
+  "type": "r2_climb_debug_flow",
+  "version": 1,
+  "name": "climb_flow_20260713_081117",
+  "created_at": "2026-07-13 08:11:17",
+  "step_count": 1,
+  "steps": [
+    {
+      "command": "CLIMB_TEST_ACTION",
+      "action_id": 1,
+      "action_name": "ALL_LEGS_220",
+      "values": [
+        1.0
+      ],
+      "wait": true,
+      "timeout_s": 40.0,
+      "done_condition": "CLIMB_GET_STATUS.state_done == 1",
+      "index": 1
+    }
+  ],
+  "autosave": true,
+  "autosaved_at": "2026-07-13 08:11:17"
+}

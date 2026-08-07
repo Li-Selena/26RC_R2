@@ -1,0 +1,126 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="650" viewBox="0 0 1200 650">
+  <defs>
+    <marker id="arrow-dark" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#334155" />
+    </marker>
+    <marker id="arrow-red" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#dc2626" />
+    </marker>
+    <marker id="arrow-green" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#16a34a" />
+    </marker>
+    <style>
+      .title { font: 700 24px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 600 17px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #334155; }
+      .label { font: 15px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #334155; }
+      .small { font: 13px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #475569; }
+      .tiny { font: 12px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #64748b; }
+      .panel { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.5; rx: 10; }
+      .base { stroke: #475569; stroke-width: 9; stroke-linecap: round; fill: none; }
+      .long { stroke: #2563eb; stroke-width: 8; stroke-linecap: round; fill: none; }
+      .short { stroke: #f97316; stroke-width: 8; stroke-linecap: round; fill: none; }
+      .tool { stroke: #16a34a; stroke-width: 5; stroke-linecap: round; fill: none; }
+      .dash { stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 7 6; fill: none; }
+      .axis { stroke: #334155; stroke-width: 2.5; marker-end: url(#arrow-dark); }
+      .frame { stroke: #dc2626; stroke-width: 2.5; marker-end: url(#arrow-red); }
+      .joint { fill: #ffffff; stroke: #0f172a; stroke-width: 3; }
+      .bend { fill: #ffffff; stroke: #f97316; stroke-width: 3; }
+      .origin { fill: #16a34a; stroke: #0f172a; stroke-width: 2; }
+    </style>
+  </defs>
+
+  <rect x="0" y="0" width="1200" height="650" fill="#ffffff" />
+  <text x="600" y="38" text-anchor="middle" class="title">机械臂失能/使能实物拓扑图（OYZ侧视，yaw=0 即 Y+ 工作平面）</text>
+  <text x="600" y="64" text-anchor="middle" class="small">蓝色为曲柄长端 270.981 mm，橙色为短端 124.55 mm；短端相对长端固定下折 30°。红色坐标系4在两种状态下保持上电朝向。</text>
+
+  <rect class="panel" x="45" y="90" width="520" height="500" />
+  <rect class="panel" x="635" y="90" width="520" height="500" />
+
+  <text x="305" y="122" text-anchor="middle" class="subtitle">失能 / 上电保持</text>
+  <text x="305" y="148" text-anchor="middle" class="small">output=off，软件目标=上电姿态，alpha=-174°</text>
+  <text x="895" y="122" text-anchor="middle" class="subtitle">使能预备姿态</text>
+  <text x="895" y="148" text-anchor="middle" class="small">output=on，S1/STOW，alpha=70°，S1 z=387.379 mm</text>
+
+  <!-- Left panel coordinate axes -->
+  <line class="axis" x1="85" y1="555" x2="165" y2="555" />
+  <line class="axis" x1="85" y1="555" x2="85" y2="475" />
+  <text x="170" y="560" class="small">Y0+</text>
+  <text x="70" y="470" class="small">Z0+</text>
+  <text x="92" y="576" class="tiny">OYZ侧视</text>
+
+  <!-- Right panel coordinate axes -->
+  <line class="axis" x1="675" y1="555" x2="755" y2="555" />
+  <line class="axis" x1="675" y1="555" x2="675" y2="475" />
+  <text x="760" y="560" class="small">Y0+</text>
+  <text x="660" y="470" class="small">Z0+</text>
+  <text x="682" y="576" class="tiny">OYZ侧视</text>
+
+  <!-- Left disabled topology: origin=(360,540), scale=0.72 px/mm -->
+  <line class="dash" x1="360.00" y1="540.00" x2="360.00" y2="145.00" />
+  <path class="base" d="M360.00 540.00 L390.70 469.31" />
+  <path class="dash" d="M390.70 469.31 L114.74 453.23" />
+  <path class="long" d="M390.70 469.31 L196.66 489.70" />
+  <path class="short" d="M196.66 489.70 L114.74 453.23" />
+  <path class="tool" d="M114.74 453.23 L148.43 485.99" />
+
+  <circle class="joint" cx="360.00" cy="540.00" r="8" />
+  <circle class="joint" cx="390.70" cy="469.31" r="9" />
+  <circle class="bend" cx="196.66" cy="489.70" r="7" />
+  <circle class="joint" cx="114.74" cy="453.23" r="8" />
+  <circle class="origin" cx="148.43" cy="485.99" r="6" />
+
+  <text x="368" y="533" class="label">J1 / 底座</text>
+  <text x="402" y="462" class="label">J2</text>
+  <text x="178" y="514" class="small">固定折弯点</text>
+  <text x="64" y="448" class="label">J3/J4</text>
+  <text x="154" y="505" class="small">S1工具原点</text>
+  <text x="235" y="506" class="small">长端</text>
+  <text x="142" y="472" class="small">短端</text>
+
+  <path class="dash" d="M420 469 A32 32 0 0 0 358 457" />
+  <text x="320" y="438" class="small">alpha=-174°</text>
+
+  <!-- Frame 4 axes in disabled pose: Y4=-Y0, Z4=-Z0, X4 out of page -->
+  <line class="frame" x1="114.74" y1="453.23" x2="72.74" y2="453.23" />
+  <line class="frame" x1="114.74" y1="453.23" x2="114.74" y2="493.23" />
+  <circle cx="114.74" cy="453.23" r="3.5" fill="#dc2626" />
+  <text x="56" y="449" class="small" fill="#dc2626">Y4</text>
+  <text x="122" y="500" class="small" fill="#dc2626">Z4</text>
+  <text x="124" y="436" class="small" fill="#dc2626">X4出屏</text>
+
+  <!-- Right enabled topology: origin=(760,540), scale=0.72 px/mm -->
+  <line class="dash" x1="760.00" y1="540.00" x2="760.00" y2="145.00" />
+  <path class="base" d="M760.00 540.00 L790.70 469.31" />
+  <path class="dash" d="M790.70 469.31 L926.13 228.33" />
+  <path class="long" d="M790.70 469.31 L857.43 286.00" />
+  <path class="short" d="M857.43 286.00 L926.13 228.33" />
+  <path class="tool" d="M926.13 228.33 L959.82 261.12" />
+
+  <circle class="joint" cx="760.00" cy="540.00" r="8" />
+  <circle class="joint" cx="790.70" cy="469.31" r="9" />
+  <circle class="bend" cx="857.43" cy="286.00" r="7" />
+  <circle class="joint" cx="926.13" cy="228.33" r="8" />
+  <circle class="origin" cx="959.82" cy="261.12" r="6" />
+
+  <text x="768" y="533" class="label">J1 / 底座</text>
+  <text x="802" y="462" class="label">J2</text>
+  <text x="864" y="278" class="small">固定折弯点</text>
+  <text x="935" y="222" class="label">J3/J4</text>
+  <text x="965" y="279" class="small">S1工具原点</text>
+  <text x="814" y="360" class="small">长端</text>
+  <text x="898" y="263" class="small">短端</text>
+
+  <path class="dash" d="M820 469 A54 54 0 0 0 808 419" />
+  <text x="825" y="417" class="small">alpha=70°</text>
+
+  <!-- Frame 4 axes in enabled pose: same direction as disabled pose -->
+  <line class="frame" x1="926.13" y1="228.33" x2="884.13" y2="228.33" />
+  <line class="frame" x1="926.13" y1="228.33" x2="926.13" y2="268.33" />
+  <circle cx="926.13" cy="228.33" r="3.5" fill="#dc2626" />
+  <text x="868" y="224" class="small" fill="#dc2626">Y4</text>
+  <text x="934" y="276" class="small" fill="#dc2626">Z4</text>
+  <text x="935" y="211" class="small" fill="#dc2626">X4出屏</text>
+
+  <line x1="114.74" y1="615" x2="926.13" y2="615" stroke="#cbd5e1" stroke-width="1" />
+  <text x="600" y="610" text-anchor="middle" class="small">拓扑关系：J1 yaw 选择工作平面；J2 带动曲柄长端 alpha；J3 角度补偿使 phi=theta2+theta3=pi，从而保持坐标系4上电朝向。</text>
+</svg>

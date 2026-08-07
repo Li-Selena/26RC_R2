@@ -15,7 +15,7 @@
 # Rule for linking CXX executable.
 
 rule CXX_EXECUTABLE_LINKER__26_RC_02.2b26_RC_02_
-  command = C:\Windows\system32\cmd.exe /C "$PRE_LINK && c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armlink.exe $LINK_FLAGS  --via=$RSP_FILE -o $TARGET_FILE  --list=$TARGET_FILE.map && $POST_BUILD"
+  command = C:\Windows\system32\cmd.exe /C "$PRE_LINK && C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armlink.exe $LINK_FLAGS  --via=$RSP_FILE -o $TARGET_FILE  --list=$TARGET_FILE.map && $POST_BUILD"
   description = Linking CXX executable $TARGET_FILE
   rspfile = $RSP_FILE
   rspfile_content = $in $LINK_PATH $LINK_LIBRARIES
@@ -28,7 +28,7 @@ rule CXX_EXECUTABLE_LINKER__26_RC_02.2b26_RC_02_
 rule ASM_COMPILER__Group_Application_MDK-ARM_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -c -o $out $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -c -o $out $in
   description = Building ASM object $out
 
 
@@ -38,7 +38,7 @@ rule ASM_COMPILER__Group_Application_MDK-ARM_unscanned_
 rule C_COMPILER__Group_Application_User_Core_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -48,7 +48,7 @@ rule C_COMPILER__Group_Application_User_Core_unscanned_
 rule C_COMPILER__Group_Applications_Task_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -58,7 +58,7 @@ rule C_COMPILER__Group_Applications_Task_unscanned_
 rule C_COMPILER__Group_Applications_R2_user_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -68,7 +68,7 @@ rule C_COMPILER__Group_Applications_R2_user_unscanned_
 rule C_COMPILER__Group_Components_Algorithm_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -78,7 +78,7 @@ rule C_COMPILER__Group_Components_Algorithm_unscanned_
 rule C_COMPILER__Group_Components_Controller_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -88,7 +88,7 @@ rule C_COMPILER__Group_Components_Controller_unscanned_
 rule C_COMPILER__Group_Components_Device_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -98,7 +98,7 @@ rule C_COMPILER__Group_Components_Device_unscanned_
 rule CXX_COMPILER__Group_Components_Device_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building CXX object $out
 
 
@@ -108,7 +108,7 @@ rule CXX_COMPILER__Group_Components_Device_unscanned_
 rule C_COMPILER__Group_BSP_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -118,7 +118,7 @@ rule C_COMPILER__Group_BSP_unscanned_
 rule C_COMPILER__Group_Application_User_USB_DEVICE_App_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -128,7 +128,7 @@ rule C_COMPILER__Group_Application_User_USB_DEVICE_App_unscanned_
 rule C_COMPILER__Group_Application_User_USB_DEVICE_Target_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -138,7 +138,7 @@ rule C_COMPILER__Group_Application_User_USB_DEVICE_Target_unscanned_
 rule C_COMPILER__Group_Drivers_STM32H7xx_HAL_Driver_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -148,7 +148,7 @@ rule C_COMPILER__Group_Drivers_STM32H7xx_HAL_Driver_unscanned_
 rule C_COMPILER__Group_Drivers_CMSIS_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -158,7 +158,7 @@ rule C_COMPILER__Group_Drivers_CMSIS_unscanned_
 rule C_COMPILER__Group_Middlewares_FreeRTOS_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -168,7 +168,7 @@ rule C_COMPILER__Group_Middlewares_FreeRTOS_unscanned_
 rule C_COMPILER__Group_Middlewares_USB_Device_Library_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 
@@ -178,7 +178,7 @@ rule C_COMPILER__Group_Middlewares_USB_Device_Library_unscanned_
 rule C_COMPILER__ARM_CMSIS_DSP_Source_1_16_2_unscanned_
   depfile = $DEP_FILE
   deps = gcc
-  command = ${LAUNCHER}${CODE_CHECK}c:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
+  command = ${LAUNCHER}${CODE_CHECK}C:\Users\Lenovo\.vcpkg\artifacts\2139c4c6\compilers.arm.armclang\6.24.0\bin\armclang.exe --target=arm-arm-none-eabi $DEFINES $INCLUDES $FLAGS -MD -MT $out -MF $DEP_FILE -o $out -c $in
   description = Building C object $out
 
 

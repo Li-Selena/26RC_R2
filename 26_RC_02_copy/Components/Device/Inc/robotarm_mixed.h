@@ -108,6 +108,7 @@ typedef struct
 typedef struct
 {
     uint32_t tx_cnt;
+    uint32_t enable_cnt;
     RobotArm_MixedCommand_t last_cmd;
     uint16_t dm8006_1_tx_id;
     uint16_t dm8006_2_tx_id;
@@ -115,6 +116,10 @@ typedef struct
     uint8_t dm8006_1_data[8];
     uint8_t dm8006_2_data[8];
     uint8_t el05_data[8];
+    uint8_t dm8006_1_enable_status;
+    uint8_t dm8006_2_enable_status;
+    uint8_t el05_run_status;
+    uint8_t el05_enable_status;
 } RobotArm_FDCAN3TxDebug_t;
 
 void RobotArm_Mixed_Init(void);

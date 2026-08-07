@@ -1,0 +1,178 @@
+{
+  "type": "r2_block_flow",
+  "version": 2,
+  "name": "s1_up_v2",
+  "created_at": "2026-07-10",
+  "step_count": 12,
+  "metadata": {
+    "firmware_flow_command": "FLOW_S1_UP",
+    "firmware_flow_id": 1,
+    "initial_state": "ARM_ENABLE_HOME",
+    "suction_interface": "suction_2_pe13_active_high",
+    "suction_runtime": "enabled",
+    "notes": "Merged replacement flow. Former s1_up_s2_up_v2 was removed."
+  },
+  "steps": [
+    {
+      "index": 1,
+      "block_id": "arm_enable_home",
+      "category": "arm",
+      "label": "Arm enable home",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "ARM_ENABLE",
+          "cmd": 33,
+          "values": [],
+          "has_float_payload": false
+        }
+      ]
+    },
+    {
+      "index": 2,
+      "block_id": "climb_up_auto_pause",
+      "category": "climb",
+      "label": "Climb up auto pause",
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [1.0],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_UP_AUTO_PAUSE",
+          "cmd": 92,
+          "values": [],
+          "has_float_payload": false
+        }
+      ]
+    },
+    {
+      "index": 3,
+      "block_id": "arm_j3_cw_60deg",
+      "category": "arm_joint",
+      "label": "J3 CW 60 deg",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [3.0, -60.0], "has_float_payload": true}]
+    },
+    {
+      "index": 4,
+      "block_id": "arm_j3_cw_10deg",
+      "category": "arm_joint",
+      "label": "J3 CW 10 deg",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [3.0, -10.0], "has_float_payload": true}]
+    },
+    {
+      "index": 5,
+      "block_id": "arm_j3_cw_5deg",
+      "category": "arm_joint",
+      "label": "J3 CW 5 deg",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [3.0, -5.0], "has_float_payload": true}]
+    },
+    {
+      "index": 6,
+      "block_id": "arm_j2_cw_20deg",
+      "category": "arm_joint",
+      "label": "J2 CW 20 deg",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [2.0, -20.0], "has_float_payload": true}]
+    },
+    {
+      "index": 7,
+      "block_id": "arm_j2_cw_1deg",
+      "category": "arm_joint",
+      "label": "J2 CW 1 deg x4",
+      "repeat_count": 4,
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [2.0, -1.0], "has_float_payload": true}]
+    },
+    {
+      "index": 8,
+      "block_id": "arm_j2_cw_60deg",
+      "category": "arm_joint",
+      "label": "J2 CW 60 deg",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [2.0, -60.0], "has_float_payload": true}]
+    },
+    {
+      "index": 9,
+      "block_id": "tool_s2_on",
+      "category": "tool",
+      "label": "Suction 2 on (PE13)",
+      "wait_kind": "settle",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "TOOL_ENABLE",
+          "cmd": 49,
+          "values": [1.0],
+          "has_float_payload": true
+        }
+      ]
+    },
+    {
+      "index": 10,
+      "block_id": "arm_j2_ccw_60deg",
+      "category": "arm_joint",
+      "label": "J2 CCW 60 deg",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [2.0, 60.0], "has_float_payload": true}]
+    },
+    {
+      "index": 11,
+      "block_id": "arm_j3_cw_30deg",
+      "category": "arm_joint",
+      "label": "J3 CW 30 deg",
+      "wait_kind": "arm",
+      "timeout_s": 40.0,
+      "frames": [{"command": "ARM_JOINT_JOG", "cmd": 43, "values": [3.0, -30.0], "has_float_payload": true}]
+    },
+    {
+      "index": 12,
+      "block_id": "climb_auto_resume",
+      "category": "climb",
+      "label": "Climb auto resume",
+      "wait_kind": "climb_final",
+      "timeout_s": 180.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [1.0],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_AUTO_RESUME",
+          "cmd": 94,
+          "values": [],
+          "has_float_payload": false
+        }
+      ]
+    }
+  ]
+}

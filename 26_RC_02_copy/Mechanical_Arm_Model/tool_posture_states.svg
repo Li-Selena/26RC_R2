@@ -1,0 +1,117 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1400" height="900" viewBox="0 0 1400 900">
+  <defs>
+    <marker id="axis-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#475569" />
+    </marker>
+    <marker id="z-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#dc2626" />
+    </marker>
+    <marker id="link-arrow" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto" markerUnits="strokeWidth">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#f97316" />
+    </marker>
+    <style>
+      .title { font: 700 28px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #0f172a; }
+      .subtitle { font: 600 18px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #334155; }
+      .label { font: 15px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #334155; }
+      .small { font: 13px "Microsoft YaHei", "Noto Sans CJK SC", Arial, sans-serif; fill: #64748b; }
+      .panel { fill: #f8fafc; stroke: #cbd5e1; stroke-width: 1.2; rx: 10; }
+      .axis { stroke: #475569; stroke-width: 2.2; marker-end: url(#axis-arrow); }
+      .zdir { stroke: #dc2626; stroke-width: 4; marker-end: url(#z-arrow); stroke-linecap: round; }
+      .plane { stroke: #16a34a; stroke-width: 4; stroke-linecap: round; }
+      .tool { fill: #ffffff; stroke: #0f172a; stroke-width: 2.5; }
+      .link { stroke: #f97316; stroke-width: 5; marker-end: url(#link-arrow); stroke-linecap: round; }
+      .dash { stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 6 5; fill: none; }
+    </style>
+  </defs>
+
+  <rect width="1400" height="900" fill="#ffffff" />
+  <text x="700" y="42" text-anchor="middle" class="title">工具姿态简图（按工具解释 state，OYZ 侧视，yaw=0）</text>
+  <text x="700" y="70" text-anchor="middle" class="small">红色箭头为工具自身 Z+；右为 Y0+，上为 Z0+。S1/S2/夹爪的 state 编号互相独立解释。</text>
+
+  <!-- Reference axes -->
+  <line class="axis" x1="78" y1="835" x2="160" y2="835" />
+  <line class="axis" x1="78" y1="835" x2="78" y2="755" />
+  <text x="166" y="840" class="label">Y0+</text>
+  <text x="60" y="750" class="label">Z0+</text>
+
+  <!-- Row labels -->
+  <text x="55" y="140" class="subtitle">夹爪</text>
+  <text x="55" y="390" class="subtitle">吸盘1</text>
+  <text x="55" y="640" class="subtitle">吸盘2</text>
+
+  <!-- Gripper panels -->
+  <rect class="panel" x="130" y="105" width="360" height="190" />
+  <rect class="panel" x="520" y="105" width="360" height="190" />
+  <rect class="panel" x="910" y="105" width="360" height="190" />
+  <text x="310" y="132" text-anchor="middle" class="subtitle">state 0：夹爪朝上</text>
+  <text x="700" y="132" text-anchor="middle" class="subtitle">state 1：夹爪朝下</text>
+  <text x="1090" y="132" text-anchor="middle" class="subtitle">state 2：夹爪朝前/上电</text>
+  <text x="310" y="154" text-anchor="middle" class="small">GZ+ // Y0+</text>
+  <text x="700" y="154" text-anchor="middle" class="small">GZ+ // Y0-</text>
+  <text x="1090" y="154" text-anchor="middle" class="small">GZ+ // Z0-</text>
+  <circle class="tool" cx="310" cy="220" r="18" />
+  <circle class="tool" cx="700" cy="220" r="18" />
+  <circle class="tool" cx="1090" cy="220" r="18" />
+  <line class="zdir" x1="310" y1="220" x2="400" y2="220" />
+  <line class="zdir" x1="700" y1="220" x2="610" y2="220" />
+  <line class="zdir" x1="1090" y1="220" x2="1090" y2="285" />
+  <line class="plane" x1="280" y1="202" x2="340" y2="238" />
+  <line class="plane" x1="670" y1="238" x2="730" y2="202" />
+  <line class="plane" x1="1060" y1="202" x2="1120" y2="238" />
+
+  <!-- S1 panels -->
+  <rect class="panel" x="130" y="355" width="360" height="190" />
+  <rect class="panel" x="520" y="355" width="360" height="190" />
+  <rect class="panel" x="910" y="355" width="360" height="190" />
+  <text x="310" y="382" text-anchor="middle" class="subtitle">state 0：准备吸取方块</text>
+  <text x="700" y="382" text-anchor="middle" class="subtitle">state 1：已吸取物块</text>
+  <text x="1090" y="382" text-anchor="middle" class="subtitle">state 2：放置方块</text>
+  <text x="310" y="404" text-anchor="middle" class="small">S1Z+ // Z0-</text>
+  <text x="700" y="404" text-anchor="middle" class="small">姿态由最近一次成功 S2 姿态决定</text>
+  <text x="1090" y="404" text-anchor="middle" class="small">S1Z+ // Z0-</text>
+  <circle class="tool" cx="310" cy="470" r="18" />
+  <circle class="tool" cx="700" cy="470" r="18" />
+  <circle class="tool" cx="1090" cy="470" r="18" />
+  <line class="zdir" x1="310" y1="470" x2="310" y2="535" />
+  <line class="zdir" x1="700" y1="470" x2="770" y2="430" />
+  <line class="zdir" x1="1090" y1="470" x2="1090" y2="535" />
+  <line class="plane" x1="250" y1="470" x2="370" y2="470" />
+  <line class="dash" x1="640" y1="520" x2="780" y2="420" />
+  <text x="700" y="528" text-anchor="middle" class="small">follow S2Z</text>
+  <line class="plane" x1="1030" y1="470" x2="1150" y2="470" />
+
+  <!-- S2 panels -->
+  <rect class="panel" x="90" y="605" width="295" height="210" />
+  <rect class="panel" x="405" y="605" width="295" height="210" />
+  <rect class="panel" x="720" y="605" width="295" height="210" />
+  <rect class="panel" x="1035" y="605" width="295" height="210" />
+  <text x="237" y="632" text-anchor="middle" class="subtitle">state 0：准备吸取</text>
+  <text x="552" y="632" text-anchor="middle" class="subtitle">state 1：吸取中</text>
+  <text x="867" y="632" text-anchor="middle" class="subtitle">state 2：短端平行</text>
+  <text x="1182" y="632" text-anchor="middle" class="subtitle">state 3：放置方块</text>
+  <text x="237" y="654" text-anchor="middle" class="small">吸盘平面与方块平面夹角 15°，向 Y0+</text>
+  <text x="552" y="654" text-anchor="middle" class="small">S2Z+ // Z0-</text>
+  <text x="867" y="654" text-anchor="middle" class="small">S2Z+ 与折弯点→J4 同向平行</text>
+  <text x="1182" y="654" text-anchor="middle" class="small">S2Z+ // Y0+</text>
+
+  <circle class="tool" cx="237" cy="730" r="18" />
+  <circle class="tool" cx="552" cy="730" r="18" />
+  <circle class="tool" cx="867" cy="730" r="18" />
+  <circle class="tool" cx="1182" cy="730" r="18" />
+
+  <line class="dash" x1="160" y1="760" x2="320" y2="760" />
+  <line class="plane" x1="170" y1="740" x2="315" y2="700" />
+  <path class="dash" d="M320 760 A60 60 0 0 0 306 719" />
+  <text x="318" y="735" class="small">15°</text>
+  <line class="zdir" x1="237" y1="730" x2="260" y2="792" />
+
+  <line class="plane" x1="482" y1="730" x2="622" y2="730" />
+  <line class="zdir" x1="552" y1="730" x2="552" y2="795" />
+
+  <line class="link" x1="795" y1="775" x2="930" y2="690" />
+  <line class="zdir" x1="867" y1="730" x2="930" y2="690" />
+  <text x="800" y="795" class="small">短端方向</text>
+
+  <line class="plane" x1="1152" y1="700" x2="1212" y2="760" />
+  <line class="zdir" x1="1182" y1="730" x2="1272" y2="730" />
+</svg>

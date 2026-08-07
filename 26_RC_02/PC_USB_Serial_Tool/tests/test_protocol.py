@@ -1,7 +1,7 @@
 import struct
 import unittest
 
-from serial_tool.commands import build_usb_command
+from serial_tool.commands import build_climb_test_shortcut_sequence, build_usb_command
 from serial_tool.protocol import UsbStreamParser, bytes_to_hex, crc16_modbus, pack_usb_frame
 from serial_tool.status import CLIMB_TEST_ACTIONS, decode_usb_frame
 from serial_tool.usart_remote import build_remote_frame
@@ -84,7 +84,7 @@ class ProtocolTests(unittest.TestCase):
         self.assertTrue(decoded["executing_flags"]["climb_motor_active"])
         self.assertTrue(decoded["executing_flags"]["yaw_tune_running"])
         self.assertTrue(decoded["executing_flags"]["any"])
-        self.assertEqual(decoded["climb"]["state_name"], "STEP_05_FRONT_ZERO")
+        self.assertEqual(decoded["climb"]["state_name"], "STEP_05_FRONT_MINUS_30")
         self.assertEqual(decoded["climb"]["test_action_name"], "CHASSIS_FORWARD_100")
         self.assertTrue(decoded["climb"]["test_chassis_active"])
         self.assertEqual(decoded["laser"]["distance_mm"]["y_pos"], -1)
@@ -103,7 +103,7 @@ class ProtocolTests(unittest.TestCase):
         parsed = UsbStreamParser().feed(frame)[0]
         decoded = decode_usb_frame(parsed)["payload"]
         self.assertEqual(decoded["climb"]["flow_name"], "DOWNSTAIRS")
-        self.assertEqual(decoded["climb"]["state_name"], "DOWN_04_ALL_LEGS_UP_20")
+        self.assertEqual(decoded["climb"]["state_name"], "DOWN_04_ALL_LEGS_UP_10")
 
     def test_decode_yaw_tune_status_payload(self):
         payload = bytearray(64)
@@ -235,7 +235,7 @@ class ProtocolTests(unittest.TestCase):
         parsed = UsbStreamParser().feed(frame)[0]
         decoded = decode_usb_frame(parsed)
         self.assertEqual(decoded["cmd_name"], "CLIMB_GET_STATUS")
-        self.assertEqual(decoded["payload"]["state_name"], "STEP_05_FRONT_ZERO")
+        self.assertEqual(decoded["payload"]["state_name"], "STEP_05_FRONT_MINUS_30")
         self.assertTrue(decoded["payload"]["state_done"])
         self.assertTrue(decoded["payload"]["error_flags"]["test_action"])
         self.assertEqual(decoded["payload"]["active_source_name"], "USB")
@@ -251,7 +251,7 @@ class ProtocolTests(unittest.TestCase):
         frame = pack_usb_frame(0x56, bytes(payload))
         parsed = UsbStreamParser().feed(frame)[0]
         decoded = decode_usb_frame(parsed)
-        self.assertEqual(decoded["payload"]["state_name"], "PREPARE_ALL_LEGS_MINUS_10")
+        self.assertEqual(decoded["payload"]["state_name"], "PREPARE_ALL_LEGS_MINUS_30")
 
         payload[0] = 25
         frame = pack_usb_frame(0x56, bytes(payload))
@@ -275,7 +275,7 @@ class ProtocolTests(unittest.TestCase):
         frame = pack_usb_frame(0x56, bytes(payload))
         parsed = UsbStreamParser().feed(frame)[0]
         decoded = decode_usb_frame(parsed)
-        self.assertEqual(decoded["payload"]["state_name"], "DOWN_PREPARE_CHASSIS_BACKWARD_5")
+        self.assertEqual(decoded["payload"]["state_name"], "DOWN_PREPARE_CHASSIS_FORWARD_5")
 
     def test_climb_test_action_frame(self):
         frame = build_usb_command("CLIMB_TEST_ACTION", [16.0])
@@ -287,6 +287,21 @@ class ProtocolTests(unittest.TestCase):
         parsed = UsbStreamParser().feed(frame)[0]
         self.assertEqual(CLIMB_TEST_ACTIONS[23], "FRONT_220")
         self.assertAlmostEqual(struct.unpack_from("<f", parsed.payload, 0)[0], 23.0)
+
+        self.assertEqual(CLIMB_TEST_ACTIONS[4], "REAR_DRIVE_FORWARD_30")
+        self.assertEqual(CLIMB_TEST_ACTIONS[27], "FRONT_DRIVE_FORWARD_30")
+        self.assertEqual(CLIMB_TEST_ACTIONS[33], "ALL_DRIVE_FORWARD_30")
+
+        frame = build_usb_command("climb_all_drive_forward_30")
+        parsed = UsbStreamParser().feed(frame)[0]
+        self.assertEqual(parsed.cmd, 0x57)
+        self.assertAlmostEqual(struct.unpack_from("<f", parsed.payload, 0)[0], 33.0)
+
+        frames = build_climb_test_shortcut_sequence("climb_front_drive_forward_30")
+        self.assertIsNotNone(frames)
+        parsed = [UsbStreamParser().feed(frame)[0] for frame in frames]
+        self.assertEqual([frame.cmd for frame in parsed], [0x02, 0x51, 0x57])
+        self.assertAlmostEqual(struct.unpack_from("<f", parsed[2].payload, 0)[0], 27.0)
 
     def test_climb_downstairs_command_frames(self):
         parsed = UsbStreamParser().feed(build_usb_command("CLIMB_UP_STEP"))[0]
@@ -307,6 +322,26 @@ class ProtocolTests(unittest.TestCase):
         self.assertEqual(parsed.cmd, 0x59)
         parsed = UsbStreamParser().feed(build_usb_command("CLIMB_DOWNSTAIRS_RUN"))[0]
         self.assertEqual(parsed.cmd, 0x59)
+        parsed = UsbStreamParser().feed(build_usb_command("CLIMB_UP_GATE"))[0]
+        self.assertEqual(parsed.cmd, 0x5A)
+        parsed = UsbStreamParser().feed(build_usb_command("UP_LASER_GATE"))[0]
+        self.assertEqual(parsed.cmd, 0x5A)
+        parsed = UsbStreamParser().feed(build_usb_command("CLIMB_DOWN_GATE"))[0]
+        self.assertEqual(parsed.cmd, 0x5B)
+        parsed = UsbStreamParser().feed(build_usb_command("DOWN_LASER_GATE"))[0]
+        self.assertEqual(parsed.cmd, 0x5B)
+        parsed = UsbStreamParser().feed(build_usb_command("CLIMB_UP_AUTO_PAUSE"))[0]
+        self.assertEqual(parsed.cmd, 0x5C)
+        parsed = UsbStreamParser().feed(build_usb_command("UP_AUTO_PAUSE"))[0]
+        self.assertEqual(parsed.cmd, 0x5C)
+        parsed = UsbStreamParser().feed(build_usb_command("CLIMB_DOWN_AUTO_PAUSE"))[0]
+        self.assertEqual(parsed.cmd, 0x5D)
+        parsed = UsbStreamParser().feed(build_usb_command("DOWN_AUTO_PAUSE"))[0]
+        self.assertEqual(parsed.cmd, 0x5D)
+        parsed = UsbStreamParser().feed(build_usb_command("CLIMB_AUTO_RESUME"))[0]
+        self.assertEqual(parsed.cmd, 0x5E)
+        parsed = UsbStreamParser().feed(build_usb_command("AUTO_RESUME"))[0]
+        self.assertEqual(parsed.cmd, 0x5E)
 
     def test_tool_set_state_frames(self):
         self.assertEqual(
@@ -342,7 +377,7 @@ class ProtocolTests(unittest.TestCase):
         parsed = UsbStreamParser().feed(frame)[0]
         decoded = decode_usb_frame(parsed)["payload"]
         self.assertEqual(decoded["flow_name"], "DOWNSTAIRS")
-        self.assertEqual(decoded["state_name"], "DOWN_04_ALL_LEGS_UP_20")
+        self.assertEqual(decoded["state_name"], "DOWN_04_ALL_LEGS_UP_10")
         self.assertTrue(decoded["status_flags"]["motor_output_active"])
         self.assertTrue(decoded["status_flags"]["ready_for_next"])
         self.assertEqual(decoded["leg_reached"], [True, True, True, True])

@@ -1,0 +1,4437 @@
+{
+  "type": "r2_block_flow",
+  "version": 1,
+  "name": "s1_up_s2_up_v1",
+  "created_at": "2026-07-08 02:57:01",
+  "step_count": 45,
+  "steps": [
+    {
+      "index": 1,
+      "block_id": "arm_s1_up_v1_end_from_enable",
+      "category": "arm_joint_target",
+      "label": "S1 up v1 arm end from enable",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 3.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            5.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -185.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Move from the S1 enable-end pose to the recorded s1_up_v1 arm end pose.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 107621,
+        "last_update_ms": 140161,
+        "output_apply_count": 71025,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": 345.4023742675781,
+        "approach_yaw_rad": -0.00019073486328125,
+        "theta_rad": [
+          -0.00019073486328125,
+          -1.0285553932189941,
+          0.9485710859298706
+        ],
+        "theta_deg": [
+          -0.010928302672020402,
+          -58.931883026867176,
+          54.34911979192293
+        ],
+        "tool_world_mm": [
+          0.0626547634601593,
+          328.49139404296875,
+          345.4023742675781
+        ],
+        "j4_z_mm": 296.30938720703125,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00019073486328125,
+          -4.659151554107666,
+          -3.058344841003418
+        ],
+        "motor_feedback_deg": [
+          -0.010928302672020402,
+          -266.9497201621877,
+          -175.23025168510466
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 2,
+      "block_id": "climb_all_legs_220",
+      "category": "climb",
+      "label": "Climb all legs 220",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 1,
+        "test_action_name": "ALL_LEGS_220",
+        "elapsed_ms": 145,
+        "last_update_ms": 224952,
+        "leg_pos_mm": [
+          -17.155651092529297,
+          -17.716135025024414,
+          -17.620744705200195,
+          -17.368526458740234
+        ],
+        "leg_target_mm": [
+          220.0,
+          220.0,
+          220.0,
+          220.0
+        ],
+        "drive_pos_mm": [
+          -0.10022007673978806,
+          4.788405895233154
+        ],
+        "drive_target_mm": [
+          0.0,
+          0.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": true,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 0,
+        "drive_reached_mask": 1,
+        "leg_reached": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "drive_reached": [
+          true,
+          false
+        ]
+      }
+    },
+    {
+      "index": 3,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 149,
+        "last_update_ms": 282556,
+        "leg_pos_mm": [
+          219.99847412109375,
+          219.99362182617188,
+          219.8723602294922,
+          220.19032287597656
+        ],
+        "leg_target_mm": [
+          220.0,
+          220.0,
+          220.0,
+          220.0
+        ],
+        "drive_pos_mm": [
+          23.841812133789062,
+          24.045318603515625
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 4,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 138,
+        "last_update_ms": 289925,
+        "leg_pos_mm": [
+          220.47434997558594,
+          219.9947052001953,
+          219.9181671142578,
+          219.98446655273438
+        ],
+        "leg_target_mm": [
+          220.0,
+          220.0,
+          220.0,
+          220.0
+        ],
+        "drive_pos_mm": [
+          23.448089599609375,
+          23.42218017578125
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 5,
+      "block_id": "climb_all_drive_forward_10",
+      "category": "climb",
+      "label": "Climb all drive forward 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            34.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 34,
+        "test_action_name": "ALL_DRIVE_FORWARD_10",
+        "elapsed_ms": 148,
+        "last_update_ms": 308012,
+        "leg_pos_mm": [
+          220.00009155273438,
+          219.99794006347656,
+          220.00439453125,
+          220.00115966796875
+        ],
+        "leg_target_mm": [
+          220.0,
+          220.0,
+          220.0,
+          220.0
+        ],
+        "drive_pos_mm": [
+          8.73141860961914,
+          8.470982551574707
+        ],
+        "drive_target_mm": [
+          10.0,
+          10.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 6,
+      "block_id": "climb_all_legs_down_10",
+      "category": "climb",
+      "label": "Climb all legs down 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            3.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 3,
+        "test_action_name": "ALL_LEGS_DOWN_10",
+        "elapsed_ms": 141,
+        "last_update_ms": 342720,
+        "leg_pos_mm": [
+          210.9369659423828,
+          211.47857666015625,
+          211.28941345214844,
+          211.095947265625
+        ],
+        "leg_target_mm": [
+          209.99900817871094,
+          210.00009155273438,
+          210.00277709960938,
+          210.00009155273438
+        ],
+        "drive_pos_mm": [
+          10.073140144348145,
+          10.13995361328125
+        ],
+        "drive_target_mm": [
+          10.0,
+          10.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 7,
+      "block_id": "climb_all_legs_down_10",
+      "category": "climb",
+      "label": "Climb all legs down 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            3.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 3,
+        "test_action_name": "ALL_LEGS_DOWN_10",
+        "elapsed_ms": 151,
+        "last_update_ms": 349614,
+        "leg_pos_mm": [
+          200.53890991210938,
+          200.90538024902344,
+          200.88705444335938,
+          200.8795166015625
+        ],
+        "leg_target_mm": [
+          200.0741424560547,
+          199.8224639892578,
+          199.98736572265625,
+          200.1625213623047
+        ],
+        "drive_pos_mm": [
+          10.129045486450195,
+          10.321985244750977
+        ],
+        "drive_target_mm": [
+          10.0,
+          10.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 8,
+      "block_id": "climb_all_legs_down_10",
+      "category": "climb",
+      "label": "Climb all legs down 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            3.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 3,
+        "test_action_name": "ALL_LEGS_DOWN_10",
+        "elapsed_ms": 149,
+        "last_update_ms": 353130,
+        "leg_pos_mm": [
+          190.53427124023438,
+          190.87649536132812,
+          190.82421875,
+          191.02847290039062
+        ],
+        "leg_target_mm": [
+          189.95094299316406,
+          189.77687072753906,
+          189.9019012451172,
+          190.14334106445312
+        ],
+        "drive_pos_mm": [
+          9.934059143066406,
+          10.546287536621094
+        ],
+        "drive_target_mm": [
+          10.0,
+          10.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 9,
+      "block_id": "climb_all_legs_down_10",
+      "category": "climb",
+      "label": "Climb all legs down 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            3.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 3,
+        "test_action_name": "ALL_LEGS_DOWN_10",
+        "elapsed_ms": 141,
+        "last_update_ms": 357388,
+        "leg_pos_mm": [
+          180.8632354736328,
+          181.36874389648438,
+          181.42910766601562,
+          181.26473999023438
+        ],
+        "leg_target_mm": [
+          179.85630798339844,
+          179.95115661621094,
+          180.0713348388672,
+          180.05462646484375
+        ],
+        "drive_pos_mm": [
+          9.930309295654297,
+          10.577990531921387
+        ],
+        "drive_target_mm": [
+          10.0,
+          10.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 10,
+      "block_id": "climb_front_minus_30",
+      "category": "climb",
+      "label": "Climb front minus 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            24.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 24,
+        "test_action_name": "FRONT_MINUS_30",
+        "elapsed_ms": 139,
+        "last_update_ms": 385617,
+        "leg_pos_mm": [
+          167.82229614257812,
+          179.9141845703125,
+          180.06130981445312,
+          168.0605010986328
+        ],
+        "leg_target_mm": [
+          -30.0,
+          179.95115661621094,
+          180.0713348388672,
+          -30.0
+        ],
+        "drive_pos_mm": [
+          9.938831329345703,
+          10.981939315795898
+        ],
+        "drive_target_mm": [
+          10.0,
+          10.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": true,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 6,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          false,
+          true,
+          true,
+          false
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 11,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 142,
+        "last_update_ms": 431521,
+        "leg_pos_mm": [
+          -29.999351501464844,
+          179.91041564941406,
+          180.0666961669922,
+          -30.047853469848633
+        ],
+        "leg_target_mm": [
+          -30.0,
+          179.95115661621094,
+          180.0713348388672,
+          -30.0
+        ],
+        "drive_pos_mm": [
+          23.71977424621582,
+          23.972028732299805
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 12,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 145,
+        "last_update_ms": 436327,
+        "leg_pos_mm": [
+          -29.998271942138672,
+          179.88938903808594,
+          180.0683135986328,
+          -30.0672550201416
+        ],
+        "leg_target_mm": [
+          -30.0,
+          179.95115661621094,
+          180.0713348388672,
+          -30.0
+        ],
+        "drive_pos_mm": [
+          23.902828216552734,
+          24.18951416015625
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 13,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 151,
+        "last_update_ms": 439010,
+        "leg_pos_mm": [
+          -29.998271942138672,
+          179.89964294433594,
+          180.06239318847656,
+          -30.051626205444336
+        ],
+        "leg_target_mm": [
+          -30.0,
+          179.95115661621094,
+          180.0713348388672,
+          -30.0
+        ],
+        "drive_pos_mm": [
+          24.036113739013672,
+          24.297914505004883
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 14,
+      "block_id": "climb_front_up_10",
+      "category": "climb",
+      "label": "Climb front up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            8.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 8,
+        "test_action_name": "FRONT_UP_10",
+        "elapsed_ms": 147,
+        "last_update_ms": 542518,
+        "leg_pos_mm": [
+          -21.025144577026367,
+          180.08502197265625,
+          180.06239318847656,
+          -21.165266036987305
+        ],
+        "leg_target_mm": [
+          -19.999889373779297,
+          179.94091796875,
+          180.0772705078125,
+          -19.98426055908203
+        ],
+        "drive_pos_mm": [
+          30.055797576904297,
+          30.66257095336914
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 15,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 2,
+        "test_action_name": "ALL_LEGS_UP_10",
+        "elapsed_ms": 146,
+        "last_update_ms": 563033,
+        "leg_pos_mm": [
+          -12.274592399597168,
+          188.43731689453125,
+          187.70059204101562,
+          -11.94261360168457
+        ],
+        "leg_target_mm": [
+          -9.871841430664062,
+          190.21275329589844,
+          190.0731658935547,
+          -9.981782913208008
+        ],
+        "drive_pos_mm": [
+          29.580944061279297,
+          31.229122161865234
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 16,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 2,
+        "test_action_name": "ALL_LEGS_UP_10",
+        "elapsed_ms": 141,
+        "last_update_ms": 571453,
+        "leg_pos_mm": [
+          -2.8913414478302,
+          198.21505737304688,
+          197.26170349121094,
+          -2.5378055572509766
+        ],
+        "leg_target_mm": [
+          0.23249340057373047,
+          200.20606994628906,
+          200.10690307617188,
+          0.053030967712402344
+        ],
+        "drive_pos_mm": [
+          29.611623764038086,
+          31.24173355102539
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": true,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 14,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          false,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 17,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 2,
+        "test_action_name": "ALL_LEGS_UP_10",
+        "elapsed_ms": 143,
+        "last_update_ms": 584396,
+        "leg_pos_mm": [
+          7.285210132598877,
+          208.40347290039062,
+          207.53524780273438,
+          7.504014492034912
+        ],
+        "leg_target_mm": [
+          10.264613151550293,
+          210.15573120117188,
+          210.13525390625,
+          9.991915702819824
+        ],
+        "drive_pos_mm": [
+          29.578899383544922,
+          31.300708770751953
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 18,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 2,
+        "test_action_name": "ALL_LEGS_UP_10",
+        "elapsed_ms": 143,
+        "last_update_ms": 587292,
+        "leg_pos_mm": [
+          17.2736759185791,
+          218.36228942871094,
+          217.55767822265625,
+          17.46230125427246
+        ],
+        "leg_target_mm": [
+          20.332839965820312,
+          220.16683959960938,
+          220.2482147216797,
+          19.99762725830078
+        ],
+        "drive_pos_mm": [
+          29.581283569335938,
+          31.37911033630371
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": true,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 14,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          false,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 19,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 146,
+        "last_update_ms": 631505,
+        "leg_pos_mm": [
+          20.336397171020508,
+          220.16822814941406,
+          220.16015625,
+          19.921422958374023
+        ],
+        "leg_target_mm": [
+          20.332839965820312,
+          220.16683959960938,
+          220.2482147216797,
+          19.99762725830078
+        ],
+        "drive_pos_mm": [
+          23.901805877685547,
+          23.473995208740234
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 20,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 143,
+        "last_update_ms": 637123,
+        "leg_pos_mm": [
+          20.716339111328125,
+          220.1973419189453,
+          220.235595703125,
+          20.082561492919922
+        ],
+        "leg_target_mm": [
+          20.332839965820312,
+          220.16683959960938,
+          220.2482147216797,
+          19.99762725830078
+        ],
+        "drive_pos_mm": [
+          23.495813369750977,
+          22.527700424194336
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 21,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 147,
+        "last_update_ms": 641025,
+        "leg_pos_mm": [
+          20.16986846923828,
+          220.00656127929688,
+          219.9866180419922,
+          20.0248966217041
+        ],
+        "leg_target_mm": [
+          20.332839965820312,
+          220.16683959960938,
+          220.2482147216797,
+          19.99762725830078
+        ],
+        "drive_pos_mm": [
+          23.715682983398438,
+          23.451839447021484
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 22,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": true,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 2,
+        "test_action_name": "ALL_LEGS_UP_10",
+        "elapsed_ms": 143,
+        "last_update_ms": 662100,
+        "leg_pos_mm": [
+          27.41573715209961,
+          228.26560974121094,
+          227.58763122558594,
+          27.62645721435547
+        ],
+        "leg_target_mm": [
+          30.320228576660156,
+          230.20811462402344,
+          230.2140350341797,
+          30.01088523864746
+        ],
+        "drive_pos_mm": [
+          29.99716567993164,
+          29.897624969482422
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": true
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 23,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 2,
+        "test_action_name": "ALL_LEGS_UP_10",
+        "elapsed_ms": 141,
+        "last_update_ms": 670221,
+        "leg_pos_mm": [
+          37.07060623168945,
+          238.17861938476562,
+          237.496337890625,
+          37.239830017089844
+        ],
+        "leg_target_mm": [
+          40.28767395019531,
+          240.21490478515625,
+          240.3485565185547,
+          39.951927185058594
+        ],
+        "drive_pos_mm": [
+          29.952850341796875,
+          29.900352478027344
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": true,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 14,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          false,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 24,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 140,
+        "last_update_ms": 685767,
+        "leg_pos_mm": [
+          40.32572555541992,
+          240.2313995361328,
+          240.18504333496094,
+          40.46261215209961
+        ],
+        "leg_target_mm": [
+          40.28767395019531,
+          240.21490478515625,
+          240.3485565185547,
+          39.951927185058594
+        ],
+        "drive_pos_mm": [
+          23.28412437438965,
+          23.183902740478516
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 25,
+      "block_id": "climb_all_legs_up_10",
+      "category": "climb",
+      "label": "Climb all legs up 10",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            2.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 2,
+        "test_action_name": "ALL_LEGS_UP_10",
+        "elapsed_ms": 145,
+        "last_update_ms": 700577,
+        "leg_pos_mm": [
+          47.27302551269531,
+          248.3648681640625,
+          247.60606384277344,
+          47.397518157958984
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          30.03875160217285,
+          30.005687713623047
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": true,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 14,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          false,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    },
+    {
+      "index": 26,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 143,
+        "last_update_ms": 708887,
+        "leg_pos_mm": [
+          50.39502716064453,
+          250.17459106445312,
+          250.34274291992188,
+          49.97682189941406
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          23.26026153564453,
+          23.096637725830078
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 27,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 145,
+        "last_update_ms": 724191,
+        "leg_pos_mm": [
+          50.520599365234375,
+          250.2257843017578,
+          250.26405334472656,
+          50.14011764526367
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          23.348209381103516,
+          23.27526092529297
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 28,
+      "block_id": "arm_j3_cw_30deg",
+      "category": "arm_joint",
+      "label": "J3 CW 30 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -30.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 440753,
+        "last_update_ms": 802540,
+        "output_apply_count": 71026,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": 360.25946044921875,
+        "approach_yaw_rad": -0.00057220458984375,
+        "theta_rad": [
+          -0.00057220458984375,
+          -1.0287635326385498,
+          0.4251624643802643
+        ],
+        "theta_deg": [
+          -0.0327849080160612,
+          -58.94380853715802,
+          24.360014816370338
+        ],
+        "tool_world_mm": [
+          0.2053309679031372,
+          358.8418273925781,
+          360.25946044921875
+        ],
+        "j4_z_mm": 296.2409362792969,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00057220458984375,
+          -4.659151554107666,
+          2.4073562622070312
+        ],
+        "motor_feedback_deg": [
+          -0.0327849080160612,
+          -266.9497201621877,
+          137.93135360885205
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 29,
+      "block_id": "arm_j2_cw_30deg",
+      "category": "arm_joint",
+      "label": "J2 CW 30 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            -30.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 458545,
+        "last_update_ms": 837919,
+        "output_apply_count": 71027,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": 166.96563720703125,
+        "approach_yaw_rad": -0.00057220458984375,
+        "theta_rad": [
+          -0.00057220458984375,
+          -1.5525704622268677,
+          0.4253227710723877
+        ],
+        "theta_deg": [
+          -0.0327849080160612,
+          -88.95573488227491,
+          24.369199713256712
+        ],
+        "tool_world_mm": [
+          0.2560747265815735,
+          447.5229797363281,
+          166.96563720703125
+        ],
+        "j4_z_mm": 105.17707824707031,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00095367431640625,
+          -5.61589241027832,
+          2.406972885131836
+        ],
+        "motor_feedback_deg": [
+          -0.054641513360102006,
+          -321.7669333084991,
+          137.9093877204813
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 30,
+      "block_id": "arm_j3_cw_30deg",
+      "category": "arm_joint",
+      "label": "J3 CW 30 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -30.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 465853,
+        "last_update_ms": 852445,
+        "output_apply_count": 71028,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": 148.13092041015625,
+        "approach_yaw_rad": -0.00095367431640625,
+        "theta_rad": [
+          -0.00095367431640625,
+          -1.5527029037475586,
+          -0.09808431565761566
+        ],
+        "theta_deg": [
+          -0.054641513360102006,
+          -88.9633232224428,
+          -5.619817323610315
+        ],
+        "tool_world_mm": [
+          0.45356735587120056,
+          475.59967041015625,
+          148.13092041015625
+        ],
+        "j4_z_mm": 105.12623596191406,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00095367431640625,
+          -5.619707107543945,
+          3.453847885131836
+        ],
+        "motor_feedback_deg": [
+          -0.054641513360102006,
+          -321.9854993619395,
+          197.89090689823936
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 31,
+      "block_id": "arm_j2_cw_30deg",
+      "category": "arm_joint",
+      "label": "J2 CW 30 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            -30.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 472613,
+        "last_update_ms": 865862,
+        "output_apply_count": 71029,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": -75.11405944824219,
+        "approach_yaw_rad": -0.00095367431640625,
+        "theta_rad": [
+          -0.00095367431640625,
+          -2.076509714126587,
+          -0.09792304039001465
+        ],
+        "theta_deg": [
+          -0.054641513360102006,
+          -118.97524273737054,
+          -5.610576931436934
+        ],
+        "tool_world_mm": [
+          0.4220309853553772,
+          442.53143310546875,
+          -75.11405944824219
+        ],
+        "j4_z_mm": -87.80756378173828,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00057220458984375,
+          -6.577973365783691,
+          3.453847885131836
+        ],
+        "motor_feedback_deg": [
+          -0.0327849080160612,
+          -376.8901116088704,
+          197.89090689823936
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 32,
+      "block_id": "arm_j3_ccw_10deg",
+      "category": "arm_joint",
+      "label": "J3 CCW 10 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            10.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CCW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 490240,
+        "last_update_ms": 900922,
+        "output_apply_count": 71030,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": -64.24271392822266,
+        "approach_yaw_rad": -0.00095367431640625,
+        "theta_rad": [
+          -0.00095367431640625,
+          -2.0766422748565674,
+          0.07660987973213196
+        ],
+        "theta_deg": [
+          -0.054641513360102006,
+          -118.98283790772759,
+          4.389422777655987
+        ],
+        "tool_world_mm": [
+          0.41898080706596375,
+          439.3330993652344,
+          -64.24271392822266
+        ],
+        "j4_z_mm": -87.85208892822266,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00133514404296875,
+          -6.580262660980225,
+          3.1043787002563477
+        ],
+        "motor_feedback_deg": [
+          -0.07649811870414282,
+          -377.0212785616913,
+          177.86779753499678
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 33,
+      "block_id": "arm_j3_ccw_10deg",
+      "category": "arm_joint",
+      "label": "J3 CCW 10 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            10.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CCW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 496185,
+        "last_update_ms": 912780,
+        "output_apply_count": 71031,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": -54.035160064697266,
+        "approach_yaw_rad": -0.00095367431640625,
+        "theta_rad": [
+          -0.00095367431640625,
+          -2.0766422748565674,
+          0.25115278363227844
+        ],
+        "theta_deg": [
+          -0.054641513360102006,
+          -118.98283790772759,
+          14.389994515091896
+        ],
+        "tool_world_mm": [
+          0.4141891300678253,
+          434.30865478515625,
+          -54.035160064697266
+        ],
+        "j4_z_mm": -87.85208892822266,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00095367431640625,
+          -6.580644130706787,
+          2.7552919387817383
+        ],
+        "motor_feedback_deg": [
+          -0.054641513360102006,
+          -377.04313516703536,
+          157.8665994186116
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 34,
+      "block_id": "arm_j3_ccw_5deg",
+      "category": "arm_joint",
+      "label": "J3 CCW 5 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            5.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CCW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 513929,
+        "last_update_ms": 948053,
+        "output_apply_count": 71032,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": -49.288089752197266,
+        "approach_yaw_rad": -0.00095367431640625,
+        "theta_rad": [
+          -0.00095367431640625,
+          -2.0766422748565674,
+          0.3386214077472687
+        ],
+        "theta_deg": [
+          -0.054641513360102006,
+          -118.98283790772759,
+          19.401577516697053
+        ],
+        "tool_world_mm": [
+          0.41116833686828613,
+          431.14111328125,
+          -49.288089752197266
+        ],
+        "j4_z_mm": -87.85208892822266,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00095367431640625,
+          -6.580262660980225,
+          2.580747604370117
+        ],
+        "motor_feedback_deg": [
+          -0.054641513360102006,
+          -377.0212785616913,
+          147.86594571890564
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 35,
+      "block_id": "arm_j2_cw_10deg",
+      "category": "arm_joint",
+      "label": "J2 CW 10 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            -10.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 597877,
+        "last_update_ms": 1114964,
+        "output_apply_count": 71035,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": -114.6471939086914,
+        "approach_yaw_rad": -0.00133514404296875,
+        "theta_rad": [
+          -0.00133514404296875,
+          -2.251591205596924,
+          0.3388187885284424
+        ],
+        "theta_deg": [
+          -0.07649811870414282,
+          -129.00667326947655,
+          19.412886602415302
+        ],
+        "tool_world_mm": [
+          0.5334398150444031,
+          399.5369873046875,
+          -114.6471939086914
+        ],
+        "j4_z_mm": -143.4693603515625,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00171661376953125,
+          -6.900701999664307,
+          2.5799808502197266
+        ],
+        "motor_feedback_deg": [
+          -0.09835472404818361,
+          -395.3811002582524,
+          147.82201394216412
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 36,
+      "block_id": "arm_j2_ccw_30deg",
+      "category": "arm_joint",
+      "label": "J2 CCW 30 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            30.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CCW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 609677,
+        "last_update_ms": 1138422,
+        "output_apply_count": 71036,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": 92.21012115478516,
+        "approach_yaw_rad": -0.00171661376953125,
+        "theta_rad": [
+          -0.00171661376953125,
+          -1.728244662284851,
+          0.3388187885284424
+        ],
+        "theta_deg": [
+          -0.09835472404818361,
+          -99.02112511493425,
+          19.412886602415302
+        ],
+        "tool_world_mm": [
+          0.7864392995834351,
+          458.13360595703125,
+          92.21012115478516
+        ],
+        "j4_z_mm": 37.980411529541016,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00209808349609375,
+          -5.94663143157959,
+          2.5792131423950195
+        ],
+        "motor_feedback_deg": [
+          -0.12021132939222441,
+          -340.71688334934925,
+          147.77802752390923
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 37,
+      "block_id": "arm_j2_ccw_60deg",
+      "category": "arm_joint",
+      "label": "J2 CCW 60 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            2.0,
+            60.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CCW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 621569,
+        "last_update_ms": 1162104,
+        "output_apply_count": 71037,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": 455.0075378417969,
+        "approach_yaw_rad": -0.00171661376953125,
+        "theta_rad": [
+          -0.00171661376953125,
+          -0.6811228394508362,
+          0.3388187885284424
+        ],
+        "theta_deg": [
+          -0.09835472404818361,
+          -39.02546403049968,
+          19.412886602415302
+        ],
+        "tool_world_mm": [
+          0.43873921036720276,
+          255.58383178710938,
+          455.0075378417969
+        ],
+        "j4_z_mm": 396.44183349609375,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00782012939453125,
+          -4.425688743591309,
+          2.5795974731445312
+        ],
+        "motor_feedback_deg": [
+          -0.44806040955283644,
+          -253.57328644633793,
+          147.80004805379335
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 38,
+      "block_id": "arm_j3_cw_30deg",
+      "category": "arm_joint",
+      "label": "J3 CW 30 deg",
+      "record_status": false,
+      "wait_kind": "arm",
+      "timeout_s": 1.0,
+      "frames": [
+        {
+          "command": "ARM_JOINT_JOG",
+          "cmd": 43,
+          "values": [
+            3.0,
+            -30.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "CW viewed on YOZ plane with X+ out of screen.",
+      "snapshot": {
+        "enabled": true,
+        "has_target": true,
+        "output_enabled": true,
+        "state": 2,
+        "state_name": "TARGET_VALID",
+        "status_flags": {
+          "enabled": true,
+          "has_target": true,
+          "output_enabled": true,
+          "ik_ok": true,
+          "active": true
+        },
+        "error_flags": {
+          "ik": false,
+          "joint_limit": false,
+          "height_unreachable": false,
+          "bad_param": false,
+          "unsafe": false,
+          "unsupported": false
+        },
+        "ik_status": 0,
+        "ik_status_name": "OK",
+        "ik_reason": 0,
+        "ik_reason_name": "NONE",
+        "last_command_ms": 649514,
+        "last_update_ms": 1217676,
+        "output_apply_count": 71038,
+        "tool": 0,
+        "tool_name": "S1",
+        "tool_state": 0,
+        "tool_state_name": "S1_PREPARE",
+        "target_direction": 0,
+        "target_direction_name": "Y+",
+        "ik_test": {
+          "step": 0,
+          "error": false,
+          "done": false,
+          "active": false
+        },
+        "target_z_mm": 461.52557373046875,
+        "approach_yaw_rad": -0.00324249267578125,
+        "theta_rad": [
+          -0.00324249267578125,
+          -0.6812736988067627,
+          -0.18477998673915863
+        ],
+        "theta_deg": [
+          -0.18578114542434682,
+          -39.03410763489433,
+          -10.587113378637108
+        ],
+        "tool_world_mm": [
+          0.936367928981781,
+          288.7792663574219,
+          461.52557373046875
+        ],
+        "j4_z_mm": 396.40533447265625,
+        "height_error_mm": 0.0,
+        "motor_feedback_rad": [
+          -0.00324249267578125,
+          -4.023612976074219,
+          3.626474380493164
+        ],
+        "motor_feedback_deg": [
+          -0.18578114542434682,
+          -230.53604192312542,
+          207.78167651457815
+        ],
+        "motor_feedback_ok": {
+          "j1": true,
+          "j2": true,
+          "j3": true
+        }
+      }
+    },
+    {
+      "index": 39,
+      "block_id": "climb_all_drive_forward_500",
+      "category": "climb",
+      "label": "Climb all drive forward 500",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            37.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 37,
+        "test_action_name": "ALL_DRIVE_FORWARD_500",
+        "elapsed_ms": 148,
+        "last_update_ms": 1366884,
+        "leg_pos_mm": [
+          50.54107666015625,
+          250.2257843017578,
+          250.3292694091797,
+          50.016700744628906
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          26.63092803955078,
+          26.012563705444336
+        ],
+        "drive_target_mm": [
+          500.0,
+          500.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 40,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 145,
+        "last_update_ms": 1386810,
+        "leg_pos_mm": [
+          50.343292236328125,
+          250.22201538085938,
+          250.26943969726562,
+          49.91484451293945
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          23.19992446899414,
+          23.294010162353516
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 41,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 145,
+        "last_update_ms": 1393121,
+        "leg_pos_mm": [
+          50.663414001464844,
+          250.18267822265625,
+          250.26458740234375,
+          50.04688262939453
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          23.508426666259766,
+          23.273897171020508
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 42,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 143,
+        "last_update_ms": 1396052,
+        "leg_pos_mm": [
+          50.38964080810547,
+          250.17567443847656,
+          250.25973510742188,
+          50.02478790283203
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          23.016529083251953,
+          22.565879821777344
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 43,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 140,
+        "last_update_ms": 1398184,
+        "leg_pos_mm": [
+          50.306644439697266,
+          250.1670379638672,
+          250.2613525390625,
+          49.91915512084961
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          22.69098472595215,
+          22.356918334960938
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 44,
+      "block_id": "climb_all_drive_forward_30",
+      "category": "climb",
+      "label": "Climb all drive forward 30",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            33.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 33,
+        "test_action_name": "ALL_DRIVE_FORWARD_30",
+        "elapsed_ms": 147,
+        "last_update_ms": 1408081,
+        "leg_pos_mm": [
+          50.255985260009766,
+          250.22039794921875,
+          250.33518981933594,
+          50.042030334472656
+        ],
+        "leg_target_mm": [
+          50.31278991699219,
+          250.2276153564453,
+          250.33595275878906,
+          49.9484748840332
+        ],
+        "drive_pos_mm": [
+          23.500585556030273,
+          23.080615997314453
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": false,
+          "drive_busy": true,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 15,
+        "drive_reached_mask": 0,
+        "leg_reached": [
+          true,
+          true,
+          true,
+          true
+        ],
+        "drive_reached": [
+          false,
+          false
+        ]
+      }
+    },
+    {
+      "index": 45,
+      "block_id": "climb_all_legs_zero",
+      "category": "climb",
+      "label": "Climb all legs zero",
+      "record_status": false,
+      "wait_kind": "climb",
+      "timeout_s": 40.0,
+      "frames": [
+        {
+          "command": "SYS_SWITCH_SOURCE",
+          "cmd": 2,
+          "values": [
+            1.0
+          ],
+          "has_float_payload": true
+        },
+        {
+          "command": "CLIMB_ENABLE",
+          "cmd": 81,
+          "values": [],
+          "has_float_payload": false
+        },
+        {
+          "command": "CLIMB_TEST_ACTION",
+          "cmd": 87,
+          "values": [
+            16.0
+          ],
+          "has_float_payload": true
+        }
+      ],
+      "doc": "Run one climb test action and wait for CLIMB_GET_STATUS.ready/state_done.",
+      "snapshot": {
+        "state": 0,
+        "state_name": "IDLE",
+        "flow": 0,
+        "flow_name": "UPSTAIRS",
+        "enabled": true,
+        "auto_run": false,
+        "state_done": false,
+        "error_flags": {
+          "timeout": false,
+          "param_not_configured": false,
+          "test_action": false,
+          "flow_switch": false
+        },
+        "active_source": 1,
+        "active_source_name": "USB",
+        "climb_motor_online_count": 8,
+        "fdcan2_motor_online_count": 8,
+        "test_action": 16,
+        "test_action_name": "ALL_LEGS_ZERO",
+        "elapsed_ms": 151,
+        "last_update_ms": 1432389,
+        "leg_pos_mm": [
+          35.96095657348633,
+          237.16867065429688,
+          237.17784118652344,
+          36.29994201660156
+        ],
+        "leg_target_mm": [
+          0.0,
+          0.0,
+          0.0,
+          0.0
+        ],
+        "drive_pos_mm": [
+          29.85126495361328,
+          29.971256256103516
+        ],
+        "drive_target_mm": [
+          30.0,
+          30.0
+        ],
+        "status_flags": {
+          "motor_output_active": true,
+          "leg_busy": true,
+          "drive_busy": false,
+          "test_chassis_active": false,
+          "pending_step": false,
+          "pending_auto": false,
+          "pending_test_action": false,
+          "ready_for_next": false
+        },
+        "leg_reached_mask": 0,
+        "drive_reached_mask": 3,
+        "leg_reached": [
+          false,
+          false,
+          false,
+          false
+        ],
+        "drive_reached": [
+          true,
+          true
+        ]
+      }
+    }
+  ]
+}

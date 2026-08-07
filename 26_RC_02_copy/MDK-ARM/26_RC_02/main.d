@@ -82,4 +82,6 @@
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_core.h \
   ..\Middlewares\ST\STM32_USB_Device_Library\Core\Inc\usbd_ctlreq.h \
   ..\Applications\Task\Inc\INS_Task.h ..\Components\Device\Inc\imu.h \
-  ..\Components\Device\Inc\wit_c_sdk.h ..\Components\Device\Inc\REG.h
+  ..\Components\Device\Inc\wit_c_sdk.h ..\Components\Device\Inc\REG.h \
+  ..\Applications\R2_user\Inc\R2_arm.h \
+  ..\Components\Algorithm\Inc\robotarm_kinematics.h

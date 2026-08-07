@@ -32,6 +32,7 @@
 #include "bsp_tick.h"
 #include "bsp_mcu.h"
 #include "Control_Task.h"
+#include "R2_arm.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -73,7 +74,7 @@ void MX_FREERTOS_Init(void);
   * @retval int
   */
 int main(void)
-{
+    {
 
   /* USER CODE BEGIN 1 */
 
@@ -114,6 +115,7 @@ int main(void)
   MX_TIM5_Init();
   /* USER CODE BEGIN 2 */
   H7_power();
+  R2_Arm_SetToolActuator(ROBOTARM_TOOL_GRIPPER, 1U);
   /* USER CODE END 2 */
 
   /* Call init function for freertos objects (in cmsis_os2.c) */

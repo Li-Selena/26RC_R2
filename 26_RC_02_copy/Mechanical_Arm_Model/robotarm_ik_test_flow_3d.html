@@ -1,0 +1,1293 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Robot Arm IK Test Flow 3D</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #0f172a;
+      --muted: #64748b;
+      --line: #d8e0ed;
+      --panel: #ffffff;
+      --bg: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, Helvetica, sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      display: grid;
+      grid-template-columns: 560px 1fr;
+    }
+    aside {
+      border-right: 1px solid var(--line);
+      background: var(--panel);
+      padding: 22px;
+      overflow: auto;
+    }
+    main { min-width: 0; display: grid; grid-template-rows: auto 1fr; }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.82);
+    }
+    h1 { margin: 0 0 6px; font-size: 22px; letter-spacing: 0; }
+    p { margin: 0; color: var(--muted); line-height: 1.45; }
+    canvas {
+      width: 100%;
+      height: 100%;
+      min-height: 640px;
+      display: block;
+      cursor: grab;
+    }
+    canvas:active { cursor: grabbing; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 13px; }
+    th, td { border-bottom: 1px solid var(--line); padding: 7px 4px; text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    .dot { display: inline-block; width: 12px; height: 12px; border-radius: 999px; margin-right: 6px; vertical-align: -1px; }
+    .meta { margin-top: 18px; display: grid; gap: 7px; font-size: 13px; color: var(--muted); }
+    @media (max-width: 900px) {
+      body { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      canvas { min-height: 520px; }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>IK Test Flow</h1>
+    <p>Drag the canvas to rotate. P0 is actual motor zero, S0 is the J2-only startup move, and numbered points are the requested IK test poses.</p>
+    <div class="meta">
+      <div>J1: Y+=0 deg, X+=-90 deg, X-=+90 deg</div>
+      <div>S0 flips from concave Y- to convex Y+; after that all poses stay convex</div>
+      <div>Numbered commands use S2/STOW; yaw switches happen only at alpha=80 deg</div>
+      <div>Solid long/short segments: physical crank structure; dashed segment: IK L23 chord</div>
+    </div>
+    <table>
+      <thead>
+        <tr><th>Step</th><th>Plane</th><th>Fold</th><th>X</th><th>Y</th><th>Z</th><th>J1</th><th>alpha</th><th>M2</th><th>M3</th></tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+  </aside>
+  <main>
+    <header>
+      <h1>Robot Arm Physical Structure and S2 Trajectory</h1>
+      <p>Starts from the actual concave Y- power-on pose, uses J2 to flip into the convex Y+ 45deg side, then runs the IK test with safe alpha=80deg waypoints before each yaw switch.</p>
+    </header>
+    <canvas id="view"></canvas>
+  </main>
+  <script>
+    const DATA = {
+      "poses": [
+            {
+                  "index": "P0",
+                  "label": "P0 actual power-on",
+                  "direction": "Y+",
+                  "planeLabel": "-YOZ",
+                  "fold": "concave",
+                  "color": "#64748b",
+                  "alphaDeg": -174.0,
+                  "yawDeg": 0.0,
+                  "theta2Deg": 86.665,
+                  "theta3Deg": 93.335,
+                  "phiDeg": 180.0,
+                  "motor1Deg": 0.0,
+                  "motor2Deg": 0.0,
+                  "motor3Deg": 0.0,
+                  "command": false,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              0.0,
+                              42.64,
+                              98.18
+                        ],
+                        "Elbow": [
+                              0.0,
+                              -226.856,
+                              69.855
+                        ],
+                        "J4": [
+                              0.0,
+                              -340.638,
+                              120.514
+                        ],
+                        "S2": [
+                              0.0,
+                              -433.238,
+                              120.514
+                        ],
+                        "J4Chord": [
+                              0.0,
+                              -340.639,
+                              120.514
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": "S0",
+                  "label": "S0 J2-only to convex Y+ +45deg",
+                  "direction": "Y+",
+                  "planeLabel": "Y+",
+                  "fold": "convex",
+                  "color": "#0f766e",
+                  "alphaDeg": 45.0,
+                  "yawDeg": 0.0,
+                  "theta2Deg": -54.335,
+                  "theta3Deg": 93.335,
+                  "phiDeg": 39.0,
+                  "motor1Deg": 0.0,
+                  "motor2Deg": -258.5,
+                  "motor3Deg": -0.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              0.0,
+                              42.64,
+                              98.18
+                        ],
+                        "Elbow": [
+                              0.0,
+                              234.252,
+                              289.792
+                        ],
+                        "J4": [
+                              0.0,
+                              354.558,
+                              322.028
+                        ],
+                        "S2": [
+                              0.0,
+                              426.522,
+                              380.303
+                        ],
+                        "J4Chord": [
+                              0.0,
+                              354.559,
+                              322.029
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": 1,
+                  "label": "1 Y+ long +45deg IK",
+                  "direction": "Y+",
+                  "planeLabel": "Y+",
+                  "fold": "convex",
+                  "color": "#16a34a",
+                  "alphaDeg": 45.0,
+                  "yawDeg": 0.0,
+                  "theta2Deg": -54.335,
+                  "theta3Deg": 54.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": 0.0,
+                  "motor2Deg": -258.5,
+                  "motor3Deg": 78.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              0.0,
+                              42.64,
+                              98.18
+                        ],
+                        "Elbow": [
+                              0.0,
+                              234.252,
+                              289.792
+                        ],
+                        "J4": [
+                              0.0,
+                              354.558,
+                              322.028
+                        ],
+                        "S2": [
+                              0.0,
+                              447.158,
+                              322.028
+                        ],
+                        "J4Chord": [
+                              0.0,
+                              354.559,
+                              322.029
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": "S1",
+                  "label": "safe lift Y+ +80deg",
+                  "direction": "Y+",
+                  "planeLabel": "Y+",
+                  "fold": "convex",
+                  "color": "#22c55e",
+                  "alphaDeg": 80.0,
+                  "yawDeg": 0.0,
+                  "theta2Deg": -19.335,
+                  "theta3Deg": 19.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": 0.0,
+                  "motor2Deg": -194.333,
+                  "motor3Deg": 148.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              0.0,
+                              42.64,
+                              98.18
+                        ],
+                        "Elbow": [
+                              0.0,
+                              89.695,
+                              365.044
+                        ],
+                        "J4": [
+                              0.0,
+                              169.755,
+                              460.455
+                        ],
+                        "S2": [
+                              0.0,
+                              262.355,
+                              460.455
+                        ],
+                        "J4Chord": [
+                              0.0,
+                              169.755,
+                              460.456
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": "S2",
+                  "label": "safe switch X+ +80deg",
+                  "direction": "X+",
+                  "planeLabel": "X+",
+                  "fold": "convex",
+                  "color": "#f59e0b",
+                  "alphaDeg": 80.0,
+                  "yawDeg": -90.0,
+                  "theta2Deg": -19.335,
+                  "theta3Deg": 19.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": -90.0,
+                  "motor2Deg": -194.333,
+                  "motor3Deg": 148.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              42.64,
+                              0.0,
+                              98.18
+                        ],
+                        "Elbow": [
+                              89.695,
+                              0.0,
+                              365.044
+                        ],
+                        "J4": [
+                              169.755,
+                              0.0,
+                              460.455
+                        ],
+                        "S2": [
+                              262.355,
+                              0.0,
+                              460.455
+                        ],
+                        "J4Chord": [
+                              169.755,
+                              0.0,
+                              460.456
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": 2,
+                  "label": "2 X+ long 0deg IK",
+                  "direction": "X+",
+                  "planeLabel": "X+",
+                  "fold": "convex",
+                  "color": "#ea580c",
+                  "alphaDeg": 0.0,
+                  "yawDeg": -90.0,
+                  "theta2Deg": -99.335,
+                  "theta3Deg": 99.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": -90.0,
+                  "motor2Deg": -341.0,
+                  "motor3Deg": -12.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              42.64,
+                              0.0,
+                              98.18
+                        ],
+                        "Elbow": [
+                              313.621,
+                              0.0,
+                              98.18
+                        ],
+                        "J4": [
+                              421.484,
+                              0.0,
+                              35.905
+                        ],
+                        "S2": [
+                              514.084,
+                              0.0,
+                              35.905
+                        ],
+                        "J4Chord": [
+                              421.485,
+                              0.0,
+                              35.905
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": "S3",
+                  "label": "safe lift X+ +80deg",
+                  "direction": "X+",
+                  "planeLabel": "X+",
+                  "fold": "convex",
+                  "color": "#f59e0b",
+                  "alphaDeg": 80.0,
+                  "yawDeg": -90.0,
+                  "theta2Deg": -19.335,
+                  "theta3Deg": 19.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": -90.0,
+                  "motor2Deg": -194.333,
+                  "motor3Deg": 148.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              42.64,
+                              0.0,
+                              98.18
+                        ],
+                        "Elbow": [
+                              89.695,
+                              0.0,
+                              365.044
+                        ],
+                        "J4": [
+                              169.755,
+                              0.0,
+                              460.455
+                        ],
+                        "S2": [
+                              262.355,
+                              0.0,
+                              460.455
+                        ],
+                        "J4Chord": [
+                              169.755,
+                              0.0,
+                              460.456
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": "S4",
+                  "label": "safe switch X- +80deg",
+                  "direction": "X-",
+                  "planeLabel": "X-",
+                  "fold": "convex",
+                  "color": "#a855f7",
+                  "alphaDeg": 80.0,
+                  "yawDeg": 90.0,
+                  "theta2Deg": -19.335,
+                  "theta3Deg": 19.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": 90.0,
+                  "motor2Deg": -194.333,
+                  "motor3Deg": 148.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              -42.64,
+                              0.0,
+                              98.18
+                        ],
+                        "Elbow": [
+                              -89.695,
+                              0.0,
+                              365.044
+                        ],
+                        "J4": [
+                              -169.755,
+                              0.0,
+                              460.455
+                        ],
+                        "S2": [
+                              -262.355,
+                              0.0,
+                              460.455
+                        ],
+                        "J4Chord": [
+                              -169.755,
+                              0.0,
+                              460.456
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": 3,
+                  "label": "3 X- long -30deg IK",
+                  "direction": "X-",
+                  "planeLabel": "X-",
+                  "fold": "convex",
+                  "color": "#9333ea",
+                  "alphaDeg": -30.0,
+                  "yawDeg": 90.0,
+                  "theta2Deg": -129.335,
+                  "theta3Deg": 129.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": 90.0,
+                  "motor2Deg": -396.0,
+                  "motor3Deg": -72.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              -42.64,
+                              0.0,
+                              98.18
+                        ],
+                        "Elbow": [
+                              -277.316,
+                              0.0,
+                              -37.31
+                        ],
+                        "J4": [
+                              -339.591,
+                              0.0,
+                              -145.174
+                        ],
+                        "S2": [
+                              -432.191,
+                              0.0,
+                              -145.174
+                        ],
+                        "J4Chord": [
+                              -339.592,
+                              0.0,
+                              -145.174
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": "S5",
+                  "label": "safe lift X- +80deg",
+                  "direction": "X-",
+                  "planeLabel": "X-",
+                  "fold": "convex",
+                  "color": "#a855f7",
+                  "alphaDeg": 80.0,
+                  "yawDeg": 90.0,
+                  "theta2Deg": -19.335,
+                  "theta3Deg": 19.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": 90.0,
+                  "motor2Deg": -194.333,
+                  "motor3Deg": 148.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              -42.64,
+                              0.0,
+                              98.18
+                        ],
+                        "Elbow": [
+                              -89.695,
+                              0.0,
+                              365.044
+                        ],
+                        "J4": [
+                              -169.755,
+                              0.0,
+                              460.455
+                        ],
+                        "S2": [
+                              -262.355,
+                              0.0,
+                              460.455
+                        ],
+                        "J4Chord": [
+                              -169.755,
+                              0.0,
+                              460.456
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": "S6",
+                  "label": "safe switch Y+ +80deg",
+                  "direction": "Y+",
+                  "planeLabel": "Y+",
+                  "fold": "convex",
+                  "color": "#22c55e",
+                  "alphaDeg": 80.0,
+                  "yawDeg": 0.0,
+                  "theta2Deg": -19.335,
+                  "theta3Deg": 19.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": 0.0,
+                  "motor2Deg": -194.333,
+                  "motor3Deg": 148.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              0.0,
+                              42.64,
+                              98.18
+                        ],
+                        "Elbow": [
+                              0.0,
+                              89.695,
+                              365.044
+                        ],
+                        "J4": [
+                              0.0,
+                              169.755,
+                              460.455
+                        ],
+                        "S2": [
+                              0.0,
+                              262.355,
+                              460.455
+                        ],
+                        "J4Chord": [
+                              0.0,
+                              169.755,
+                              460.456
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            },
+            {
+                  "index": 4,
+                  "label": "4 return Y+ long +45deg IK",
+                  "direction": "Y+",
+                  "planeLabel": "Y+",
+                  "fold": "convex",
+                  "color": "#059669",
+                  "alphaDeg": 45.0,
+                  "yawDeg": 0.0,
+                  "theta2Deg": -54.335,
+                  "theta3Deg": 54.335,
+                  "phiDeg": 0.0,
+                  "motor1Deg": 0.0,
+                  "motor2Deg": -258.5,
+                  "motor3Deg": 78.0,
+                  "command": true,
+                  "points": {
+                        "O0": [
+                              0.0,
+                              0.0,
+                              0.0
+                        ],
+                        "O1": [
+                              0.0,
+                              0.0,
+                              98.18
+                        ],
+                        "J2": [
+                              0.0,
+                              42.64,
+                              98.18
+                        ],
+                        "Elbow": [
+                              0.0,
+                              234.252,
+                              289.792
+                        ],
+                        "J4": [
+                              0.0,
+                              354.558,
+                              322.028
+                        ],
+                        "S2": [
+                              0.0,
+                              447.158,
+                              322.028
+                        ],
+                        "J4Chord": [
+                              0.0,
+                              354.559,
+                              322.029
+                        ]
+                  },
+                  "segments": [
+                        [
+                              "O0",
+                              "O1",
+                              "base"
+                        ],
+                        [
+                              "O1",
+                              "J2",
+                              "j2_offset"
+                        ],
+                        [
+                              "J2",
+                              "Elbow",
+                              "long_link"
+                        ],
+                        [
+                              "Elbow",
+                              "J4",
+                              "short_link"
+                        ],
+                        [
+                              "J4",
+                              "S2",
+                              "tool_offset"
+                        ],
+                        [
+                              "J2",
+                              "J4Chord",
+                              "equivalent_chord"
+                        ]
+                  ]
+            }
+      ],
+      "constants": {
+            "D1_MM": 98.18,
+            "J2_Y_MM": 42.64,
+            "LONG_LINK_MM": 270.98076211,
+            "SHORT_LINK_MM": 124.55,
+            "S2_STOW_OFFSET_Y_MM": 92.6,
+            "longToChordOffsetDeg": 9.334886074497428
+      }
+};
+    const canvas = document.getElementById('view');
+    const ctx = canvas.getContext('2d');
+    let az = -0.72;
+    let el = 0.46;
+    let dragging = false;
+    let lastX = 0;
+    let lastY = 0;
+
+    function rotate(p) {
+      const [x, y, z] = p;
+      const caz = Math.cos(az), saz = Math.sin(az);
+      const x1 = x * caz - y * saz;
+      const y1 = x * saz + y * caz;
+      const cel = Math.cos(el), sel = Math.sin(el);
+      const y2 = y1 * cel - z * sel;
+      const z2 = y1 * sel + z * cel;
+      return [x1, -y2, z2];
+    }
+
+    function fit(points) {
+      const pr = points.map(rotate);
+      const xs = pr.map(p => p[0]);
+      const ys = pr.map(p => p[1]);
+      const pad = 74;
+      const scale = Math.min((canvas.width - pad * 2) / (Math.max(...xs) - Math.min(...xs)),
+                             (canvas.height - pad * 2) / (Math.max(...ys) - Math.min(...ys)));
+      const ox = canvas.width / 2 - (Math.max(...xs) + Math.min(...xs)) * 0.5 * scale;
+      const oy = canvas.height / 2 - (Math.max(...ys) + Math.min(...ys)) * 0.5 * scale;
+      return {scale, ox, oy};
+    }
+
+    function worldToScreen(p, view) {
+      const q = rotate(p);
+      return [q[0] * view.scale + view.ox, q[1] * view.scale + view.oy, q[2]];
+    }
+
+    function line(a, b, view, color, width, dash=false) {
+      const pa = worldToScreen(a, view);
+      const pb = worldToScreen(b, view);
+      ctx.save();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = width;
+      ctx.lineCap = 'round';
+      if (dash) ctx.setLineDash([9, 9]);
+      ctx.beginPath();
+      ctx.moveTo(pa[0], pa[1]);
+      ctx.lineTo(pb[0], pb[1]);
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    function marker(p, view, color, r=6) {
+      const q = worldToScreen(p, view);
+      ctx.beginPath();
+      ctx.arc(q[0], q[1], r, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.fill();
+      ctx.lineWidth = 2;
+      ctx.strokeStyle = '#ffffff';
+      ctx.stroke();
+    }
+
+    function label(text, p, view, color='#0f172a') {
+      const q = worldToScreen(p, view);
+      ctx.font = '600 14px Arial';
+      ctx.fillStyle = color;
+      ctx.fillText(text, q[0] + 10, q[1] - 10);
+    }
+
+    function render() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * dpr);
+      canvas.height = Math.floor(rect.height * dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      const w = rect.width;
+      const h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const allPoints = [];
+      DATA.poses.forEach(pose => Object.values(pose.points).forEach(p => allPoints.push(p)));
+      const limit = 620;
+      allPoints.push([-limit, 0, 0], [limit, 0, 0], [0, -limit, 0], [0, limit, 0], [0, 0, -80], [0, 0, 560]);
+      const view = fit(allPoints);
+      view.scale /= dpr;
+      view.ox /= dpr;
+      view.oy /= dpr;
+
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, 0, w, h);
+      for (let v = -600; v <= 600; v += 100) {
+        line([-600, v, 0], [600, v, 0], view, 'rgba(148,163,184,.35)', 1);
+        line([v, -600, 0], [v, 600, 0], view, 'rgba(148,163,184,.35)', 1);
+      }
+      line([-620, 0, 0], [620, 0, 0], view, '#dc2626', 2.5);
+      line([0, -620, 0], [0, 620, 0], view, '#15803d', 2.5);
+      line([0, 0, -80], [0, 0, 560], view, '#2563eb', 2.5);
+      label('X+', [620, 0, 0], view, '#dc2626');
+      label('Y+', [0, 620, 0], view, '#15803d');
+      label('Z+', [0, 0, 560], view, '#2563eb');
+
+      for (let i = 0; i < DATA.poses.length - 1; i++) {
+        line(DATA.poses[i].points.S2, DATA.poses[i + 1].points.S2, view, 'rgba(15,23,42,.72)', 3);
+      }
+
+      DATA.poses.forEach(pose => {
+        const p = pose.points;
+        line(p.O0, p.O1, view, 'rgba(71,85,105,.65)', 6);
+        line(p.O1, p.J2, view, pose.color + 'aa', 5);
+        line(p.J2, p.Elbow, view, pose.color, 8);
+        line(p.Elbow, p.J4, view, pose.color, 6);
+        line(p.J4, p.S2, view, 'rgba(15,23,42,.9)', 4);
+        line(p.J2, p.J4Chord, view, 'rgba(71,85,105,.5)', 2, true);
+        marker(p.J2, view, pose.color, 4);
+        marker(p.Elbow, view, pose.color, 4);
+        marker(p.J4, view, pose.color, 5);
+        marker(p.S2, view, pose.color, 8);
+        label(String(pose.index), p.S2, view);
+      });
+    }
+
+    function fillRows() {
+      const body = document.getElementById('rows');
+      body.innerHTML = DATA.poses.map(pose => {
+        const s2 = pose.points.S2;
+        return `<tr>
+          <td><span class="dot" style="background:${pose.color}"></span>${pose.index}</td>
+          <td>${pose.planeLabel}</td>
+          <td>${pose.fold}</td>
+          <td>${s2[0].toFixed(1)}</td>
+          <td>${s2[1].toFixed(1)}</td>
+          <td>${s2[2].toFixed(1)}</td>
+          <td>${pose.yawDeg.toFixed(1)}</td>
+          <td>${pose.alphaDeg.toFixed(1)}</td>
+          <td>${pose.motor2Deg.toFixed(1)}</td>
+          <td>${pose.motor3Deg.toFixed(1)}</td>
+        </tr>`;
+      }).join('');
+    }
+
+    canvas.addEventListener('pointerdown', ev => {
+      dragging = true;
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+      canvas.setPointerCapture(ev.pointerId);
+    });
+    canvas.addEventListener('pointermove', ev => {
+      if (!dragging) return;
+      az += (ev.clientX - lastX) * 0.008;
+      el += (ev.clientY - lastY) * 0.008;
+      el = Math.max(-1.2, Math.min(1.2, el));
+      lastX = ev.clientX;
+      lastY = ev.clientY;
+      render();
+    });
+    canvas.addEventListener('pointerup', ev => {
+      dragging = false;
+      canvas.releasePointerCapture(ev.pointerId);
+    });
+    window.addEventListener('resize', render);
+    fillRows();
+    render();
+  </script>
+</body>
+</html>

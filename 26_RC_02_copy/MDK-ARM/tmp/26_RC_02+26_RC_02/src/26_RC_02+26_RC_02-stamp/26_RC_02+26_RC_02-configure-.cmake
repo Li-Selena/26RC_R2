@@ -1,7 +1,7 @@
 
 cmake_minimum_required(VERSION ${CMAKE_VERSION}) # this file comes with cmake
 
-set(command "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/bin/cmake.exe;-G;Ninja;-S;F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02;-B;F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1;-DSOLUTION_ROOT=F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM;-DCMSIS_PACK_ROOT=C:/Users/Lenovo/AppData/Local/arm/packs;-DCMSIS_COMPILER_ROOT=C:/Users/Lenovo/.vscode/extensions/arm.cmsis-csolution-1.68.0-win32-x64/tools/cmsis-toolbox/etc")
+set(command "C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.kitware.cmake/3.31.5/bin/cmake.exe;-G;Ninja;-S;F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02;-B;F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/1;-DSOLUTION_ROOT=F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM;-DCMSIS_PACK_ROOT=C:/Users/Lenovo/AppData/Local/arm/packs;-DCMSIS_COMPILER_ROOT=C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/tools.open.cmsis.pack.cmsis.toolbox/2.12.0/etc")
 set(log_merged "")
 set(log_output_on_failure "ON")
 set(stdout_log "F:/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/MDK-ARM/tmp/26_RC_02+26_RC_02/src/26_RC_02+26_RC_02-stamp/26_RC_02+26_RC_02-configure-out.log")

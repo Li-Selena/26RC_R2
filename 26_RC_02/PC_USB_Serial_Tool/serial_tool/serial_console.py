@@ -351,6 +351,51 @@ class SerialShell:
                 )
                 time.sleep(CLIMB_COMMAND_SETTLE_S)
                 self._wait_for_climb(timeout_s, final_state=True)
+            elif op in {"climb_up_laser_gate", "climb_up_gate"}:
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_UP_GATE"),
+                        build_usb_command("CLIMB_GET_STATUS"),
+                    ]
+                )
+            elif op in {"climb_down_laser_gate", "climb_down_gate"}:
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_DOWN_GATE"),
+                        build_usb_command("CLIMB_GET_STATUS"),
+                    ]
+                )
+            elif op in {"climb_up_auto_pause", "climb_up_pause", "climb_upstairs_auto_pause"}:
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_UP_AUTO_PAUSE"),
+                        build_usb_command("CLIMB_GET_STATUS"),
+                    ]
+                )
+            elif op in {"climb_down_auto_pause", "climb_down_pause", "climb_downstairs_auto_pause"}:
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_DOWN_AUTO_PAUSE"),
+                        build_usb_command("CLIMB_GET_STATUS"),
+                    ]
+                )
+            elif op in {"climb_auto_resume", "climb_resume"}:
+                self._write_sequence(
+                    [
+                        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+                        build_usb_command("CLIMB_ENABLE"),
+                        build_usb_command("CLIMB_AUTO_RESUME"),
+                        build_usb_command("CLIMB_GET_STATUS"),
+                    ]
+                )
             elif op in {"climb_step", "climb_upstairs_step"}:
                 self._write_sequence(
                     [
@@ -842,8 +887,9 @@ class SerialShell:
                     "climb_enable | climb_step | climb_up_auto/climb_auto | climb_ctrl ENABLE STEP AUTO | climb_stop | climb_status",
                     "climb_wait [timeout_s] | climb_step_wait [timeout_s] | climb_up_auto_wait/climb_auto_wait [timeout_s] | climb_wait_then NAME [float...]",
                     "climb_down_step/climb_downstairs_step | climb_down_step_wait [timeout_s] | climb_down_auto/climb_downstairs_auto | climb_down_auto_wait [timeout_s]",
+                    "climb_up_laser_gate | climb_down_laser_gate | climb_up_auto_pause | climb_down_auto_pause | climb_auto_resume",
                     "climb_tests | climb_test ACTION | climb_test_wait ACTION [timeout_s]",
-                    "climb_<action_name_lower> [timeout_s], for example climb_all_legs_220 or climb_all_legs_zero 10",
+                    "climb_<action_name_lower> [timeout_s], for example climb_all_drive_forward_30 or climb_front_drive_forward_30 10",
                     "tune_start [pass_count] | tune_status | tune_stop",
                     "exit",
                 ]

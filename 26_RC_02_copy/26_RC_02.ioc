@@ -245,6 +245,7 @@ PE1.Locked=true
 PE1.Mode=Asynchronous
 PE1.Signal=UART8_TX
 PE13.Locked=true
+PE13.GPIO_Label=SUCTION_2
 PE13.Signal=GPIO_Output
 PE2.Locked=true
 PE2.Mode=Asynchronous

@@ -68,46 +68,67 @@ pos DX DY YAW_DATA          # ROBOT_NO_YAW: robot yaw deg；WORLD_NO_YAW: world 
 
 ```text
 arm_enable          # 机械臂使能
-arm_target 200 0 180  # 设置机械臂目标点 x=200, y=0, z=180
+arm_disable         # 机械臂失能
+arm_space Y+        # 切到 Y+ 工作空间，保持当前工具/姿态/高度
+arm_space X+        # 切到 X+ 工作空间
+arm_space X-        # 切到 X- 工作空间
+arm_xyz 200 0 180   # 发送三维目标；Z 逆解，X/Y 只选择工作空间
+arm_up 20           # 当前高度升高 20mm，步长支持 5/10/20/50/100/200/500
+arm_down 50         # 当前高度下降 50mm
+arm_up20            # 等价 arm_up 20
+arm_down50          # 等价 arm_down 50
+arm_zmin            # 移动到当前工具姿态最小高度
+arm_zmax            # 移动到当前工具姿态最大高度
+arm_posture S2 1    # 切换工具姿态，保持当前 x/y/z
+send ARM_IK_TEST_FLOW # 启动机械臂逆解测试流程，默认 8000ms/step
+send ARM_IK_TEST_FLOW 1 8000 # 启动测试流程，指定 8000ms/step
+send ARM_IK_TEST_FLOW 0 0 # 停止测试流程
 arm_status          # 查询机械臂状态
 arm_stop            # 机械臂停止并保持
-arm_disable         # 机械臂失能
 ```
 
 机械臂目标点单位是 mm：
 
 ```text
-arm_target X Y Z    # X/Y/Z 单位 mm
+arm_xyz X Y Z       # X/Y/Z 单位 mm；X/Y 只选 Y+/X+/X-，平面距离由底盘实现
 ```
 
-当前固件限制：
+工具姿态 state 按工具分别解释：
 
 ```text
 TOOL: 0=S1, 1=S2, 2=gripper
-STATE: 0=stow, 1=use
-Z_MM: 工具目标高度，单位 mm
-YAW_RAD: 底盘应用给出的接近 yaw，单位 rad
+S1: 0=准备吸取, 1=已吸取且姿态跟随最近 S2, 2=放置
+S2: 0=准备吸取15deg, 1=竖直向下吸取, 2=短端同向平行, 3=Y+模板等效放置
+gripper: 0=朝上, 1=朝下, 2=朝前/上电姿态
 ```
 
 ## 工具机构
 
 ```text
-tool_enable         # 工具机构使能
-tool_target 0 1 450 0    # S1 use, target_z=450mm, yaw=0
-tool_target 1 1 450 0    # S2 use, target_z=450mm, yaw=0
-tool_target 2 1 450 0    # gripper use, target_z=450mm, yaw=0
-tool_stow 0 450 0        # S1 stow, target_z=450mm, yaw=0
-tool_status         # 查询工具机构状态
-tool_stop           # 工具机构停止
-tool_disable        # 工具机构失能
+tool_on S2          # PE13 高电平，打开 S2 吸盘
+tool_off S2         # PE13 低电平，关闭 S2 吸盘
+tool_on gripper     # 夹爪舵机开
+tool_off gripper    # 夹爪舵机关
+arm_posture S1 0    # S1 准备吸取姿态
+arm_posture S1 1    # S1 已吸取物块姿态，跟随最近 S2
+arm_posture S1 2    # S1 放置姿态
+arm_posture S2 0    # S2 准备吸取 15deg
+arm_posture S2 1    # S2 竖直向下吸取
+arm_posture S2 2    # S2 与曲柄短端同向平行
+arm_posture S2 3    # S2 放置，S2Z+ // 当前工作空间等效 Y+
+arm_posture gripper 0 # 夹爪朝上
+arm_posture gripper 1 # 夹爪朝下
+arm_posture gripper 2 # 夹爪朝前/上电状态
+tool_status         # 查询工具姿态/机械臂状态
+tool_stop           # 工具/机械臂停止并保持
 ```
 
-也可以用组合快捷命令：
+兼容旧高度+yaw 目标仍可使用：
 
 ```text
-tool_s1 450 0       # S1 use
-tool_s2 450 0       # S2 use
-tool_gripper 450 0  # gripper use
+tool_target TOOL STATE Z_MM YAW_RAD
+send ARM_SET_TARGET 0 0 450 0  # S1 state0, target_z=450mm, yaw=0
+send TOOL_SET_MODE 2 1 450 0   # gripper state1, target_z=450mm, yaw=0
 ```
 
 ## 上/下台阶机构
@@ -152,6 +173,7 @@ climb_test_wait ACTION [timeout_s]  # 发送指定测试动作并等待完成
 
 # 立杆：四根
 climb_all_legs_220 [timeout_s]       # 四根立杆目标到 220mm；带超时时间则等待完成
+climb_all_legs_300 [timeout_s]       # 四根立杆目标到 300mm；带超时时间则等待完成
 climb_all_legs_zero [timeout_s]      # 四根立杆统一回到 0mm；带超时时间则等待完成
 climb_all_legs_up_10 [timeout_s]     # 四根立杆当前位置上升 10mm；带超时时间则等待完成
 climb_all_legs_down_10 [timeout_s]   # 四根立杆当前位置下降 10mm；带超时时间则等待完成
@@ -217,6 +239,22 @@ climb_ctrl 1 1 0                # 使能 climb，并触发一次 step
 climb_ctrl 1 0 1                # 使能 climb，并触发/继续 auto
 ```
 
+## 任务流程 / 武器夹取对接
+
+```text
+send FLOW_WEAPON_GRAB       # 执行完整 weapon_grab_v1：含 J2 ccw5、J3 ccw1、J3 ccw1 优化尾段
+weapon_dock_test            # 启动 WEAPON_DOCK_TEST_V1
+weapon_dock_status          # 查询 FLOW_GET_STATUS
+weapon_chassis_done         # 底盘移动完成，确认 checkpoint 1
+weapon_dock_done            # 对接完成，确认 checkpoint 2
+
+send FLOW_WEAPON_DOCK_TEST
+send FLOW_CHASSIS_MOVE_DONE
+send FLOW_DOCK_DONE
+```
+
+`FLOW_WEAPON_DOCK_TEST` 到达底盘移动检查点和对接完成检查点时会保持 `WAIT/HOST_CHECKPOINT_WAIT`，上位机发送对应确认命令后继续；底盘 `CHS_SET_POS/VEL` 命令不会重置该任务流。
+
 ## 自动调参
 
 ```text
@@ -241,13 +279,17 @@ send YAW_TUNE_STOP      # 原生命令：停止 yaw 自动调参
 send SYS_ENABLE             # 系统使能
 send CHS_SET_MODE 3         # 设置底盘模式为 WORLD_VEL
 send CHS_SET_VEL 0.2 0 0 0  # 发送底盘速度指令
-send ARM_SET_TARGET 0 1 450 0  # S1 use, target_z=450mm, yaw=0
-send TOOL_SET_MODE 2 1 450 0   # gripper use, target_z=450mm, yaw=0
+send ARM_SET_TARGET_XYZ 120 0 450 0 # 三维目标；Z 逆解，X/Y 只选空间
+send ARM_SET_POSTURE 2 1    # gripper state1，夹爪朝下
 send CLIMB_UP_STEP          # 上台阶手动推进一步
 send CLIMB_UP_AUTO          # 上台阶自动执行/继续
 send CLIMB_DOWN_STEP        # 下台阶手动推进一步
 send CLIMB_DOWN_AUTO        # 下台阶自动执行/继续
 send CLIMB_TEST_ACTION 10   # 执行 climb 测试动作 10：底盘前进 100mm
+send FLOW_WEAPON_GRAB       # 执行完整武器夹取轨迹
+send FLOW_WEAPON_DOCK_TEST  # 启动武器夹取+对接状态机
+send FLOW_CHASSIS_MOVE_DONE # 确认底盘移动完成，继续 dock 流程
+send FLOW_DOCK_DONE         # 确认对接完成，继续 dock 流程
 send YAW_TUNE_START 1       # 启动 yaw 自动调参
 send YAW_TUNE_GET_STATUS    # 查询 yaw 自动调参状态
 send YAW_TUNE_STOP          # 停止 yaw 自动调参

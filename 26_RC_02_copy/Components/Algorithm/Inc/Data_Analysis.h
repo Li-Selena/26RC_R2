@@ -28,9 +28,16 @@
 
 #define USB_CMD_ARM_DISABLE         0x20U
 #define USB_CMD_ARM_ENABLE          0x21U
+#define USB_CMD_ARM_SET_WORKSPACE   0x22U  /* f0=direction 0=Y+ 1=X+ 2=X- */
 #define USB_CMD_ARM_SET_TARGET      0x23U
+#define USB_CMD_ARM_SET_TARGET_XYZ  0x24U  /* f0=x_mm f1=y_mm f2=z_mm */
 #define USB_CMD_ARM_STOP            0x25U
 #define USB_CMD_ARM_GET_STATUS      0x26U
+#define USB_CMD_ARM_IK_TEST_FLOW    0x27U  /* empty=start, f0=1 start/f0=0 stop, f1=step_ms */
+#define USB_CMD_ARM_HEIGHT_JOG      0x28U  /* f0=delta_z_mm */
+#define USB_CMD_ARM_HEIGHT_LIMIT    0x29U  /* f0=0 min, f0=1 max */
+#define USB_CMD_ARM_SET_POSTURE     0x2AU  /* f0=tool, f1=state, keep xyz */
+#define USB_CMD_ARM_JOINT_JOG       0x2BU  /* f0=joint 2/3, f1=signed delta_deg */
 
 #define USB_CMD_TOOL_DISABLE        0x30U
 #define USB_CMD_TOOL_ENABLE         0x31U
@@ -58,6 +65,23 @@
 #define USB_CMD_CLIMB_DOWN_STEP     0x58U
 #define USB_CMD_CLIMB_DOWN_AUTO     0x59U
 #define USB_CMD_CLIMB_DOWN_RUN      USB_CMD_CLIMB_DOWN_AUTO
+#define USB_CMD_CLIMB_UP_GATE       0x5AU
+#define USB_CMD_CLIMB_DOWN_GATE     0x5BU
+#define USB_CMD_CLIMB_UP_AUTO_PAUSE 0x5CU
+#define USB_CMD_CLIMB_DOWN_AUTO_PAUSE 0x5DU
+#define USB_CMD_CLIMB_AUTO_RESUME   0x5EU
+
+#define USB_CMD_FLOW_S1_UP          0x60U
+#define USB_CMD_FLOW_S1_DOWN        0x61U
+#define USB_CMD_FLOW_S1_UP_S2_DOWN  0x63U
+#define USB_CMD_FLOW_S1_DOWN_S2_UP  0x64U
+#define USB_CMD_FLOW_S1_DOWN_S2_DOWN 0x65U
+#define USB_CMD_FLOW_GET_STATUS     0x66U
+#define USB_CMD_FLOW_WEAPON_GRAB    0x67U
+#define USB_CMD_FLOW_THROW_BLOCK    0x68U  /* f0=1 X+, f0=2 X- */
+#define USB_CMD_FLOW_WEAPON_DOCK_TEST 0x69U /* lower-computer arm/gripper test flow */
+#define USB_CMD_FLOW_CHASSIS_MOVE_DONE 0x6AU /* host confirms checkpoint 1 */
+#define USB_CMD_FLOW_DOCK_DONE      0x6BU /* host confirms checkpoint 2 */
 
 #define USB_CHASSIS_TIMEOUT_MS      100U
 

@@ -1,0 +1,10 @@
++------------------------------------------
+(1/1) Building context: "26_RC_02+26_RC_02"
+Using AC6 V6.24.0 compiler, from: 'C:/Users/Lenovo/.vcpkg/artifacts/2139c4c6/compilers.arm.armclang/6.24.0/bin'
+Building CMake target '26_RC_02+26_RC_02'
+[1/2] Building C object CMakeFiles/Group_Applications_R2_user.dir/F_/spareE/Vinci_Robocon_2026/26_RC_Projects/26_RC_02_copy/Applications/R2_user/Src/R2_arm.o
+[2/2] Linking CXX executable F:\spareE\Vinci_Robocon_2026\26_RC_Projects\26_RC_02_copy\MDK-ARM\out\26_RC_02\26_RC_02\26_RC_02.axf
+Program Size: Code=112012 RO-data=5596 RW-data=1020 ZI-data=85292  
++------------------------------------------------------------
+Build summary: 1 succeeded, 0 failed - Time Elapsed: 00:00:04
++============================================================

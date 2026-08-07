@@ -29,12 +29,13 @@ volatile uint8_t el05_tx_status = 0U;
  * 只有 RobotArm_Mixed_Enable() 执行后，TIM5 调用的 Transmit1ms 才会发控制帧。
  */
 static uint8_t robotarm_mixed_enabled = 0U;
+static uint8_t robotarm_poweron_zero_written = 0U;
 static volatile uint8_t robotarm_control_cmd_valid = 0U;
 static RobotArm_MixedCommand_t robotarm_control_cmd;
 static uint32_t robotarm_dm8006_1_rx_cnt = 0U;
 static uint32_t robotarm_dm8006_2_rx_cnt = 0U;
 
-#define ROBOTARM_FDCAN3_TEST_SPEED_RAD_S     0.0f
+#define ROBOTARM_FDCAN3_TEST_SPEED_RAD_S     0.5f
 #define ROBOTARM_FDCAN3_TEST_KP              0.0f
 
 static const RobotArm_MixedConfig_t robotarm_default_config = {
@@ -556,11 +557,14 @@ void RobotArm_Mixed_InitWithConfig(const RobotArm_MixedConfig_t *config)
     }
     robotarm_feedback_reset();
     robotarm_apply_modes_from_config();
+//    RobotArm_Mixed_SetZero();
 
 }
 
 void RobotArm_Mixed_Enable(void)
 {
+    g_robotarm_fdcan3_tx_debug.enable_cnt++;
+
     if ((robotarm_config.el05_set_mit_protocol_once != 0U) &&
         (robotarm_config.el05_mode == ROBOTARM_COMM_MIT))
     {
@@ -573,27 +577,33 @@ void RobotArm_Mixed_Enable(void)
     {
         if (robotarm_config.dm8006_1_mode == ROBOTARM_COMM_MIT)
         {
-            (void)dm8006_enter_motor_mode(&hfdcan3, ROBOTARM_DM8006_1_ID);
+            g_robotarm_fdcan3_tx_debug.dm8006_1_enable_status =
+                dm8006_enter_motor_mode(&hfdcan3, ROBOTARM_DM8006_1_ID);
         }
         else
         {
-            (void)dm8006_enter_pos_speed_mode(&hfdcan3, ROBOTARM_DM8006_1_ID);
+            g_robotarm_fdcan3_tx_debug.dm8006_1_enable_status =
+                dm8006_enter_pos_speed_mode(&hfdcan3, ROBOTARM_DM8006_1_ID);
         }
         HAL_Delay(2);
 
         if (robotarm_config.dm8006_2_mode == ROBOTARM_COMM_MIT)
         {
-            (void)dm8006_enter_motor_mode(&hfdcan3, ROBOTARM_DM8006_2_ID);
+            g_robotarm_fdcan3_tx_debug.dm8006_2_enable_status =
+                dm8006_enter_motor_mode(&hfdcan3, ROBOTARM_DM8006_2_ID);
         }
         else
         {
-            (void)dm8006_enter_pos_speed_mode(&hfdcan3, ROBOTARM_DM8006_2_ID);
+            g_robotarm_fdcan3_tx_debug.dm8006_2_enable_status =
+                dm8006_enter_pos_speed_mode(&hfdcan3, ROBOTARM_DM8006_2_ID);
         }
         HAL_Delay(2);
 
-        (void)robotarm_el05_send_run_mode(robotarm_config.el05_mode);
+        g_robotarm_fdcan3_tx_debug.el05_run_status =
+            robotarm_el05_send_run_mode(robotarm_config.el05_mode);
         HAL_Delay(2);
-        (void)robotarm_el05_send_enable(robotarm_config.el05_mode);
+        g_robotarm_fdcan3_tx_debug.el05_enable_status =
+            robotarm_el05_send_enable(robotarm_config.el05_mode);
         el05_enable_sent = 1U;
         HAL_Delay(5);
     }
@@ -635,6 +645,14 @@ void RobotArm_Mixed_Disable(void)
 
 void RobotArm_Mixed_SetZero(void)
 {
+    if (robotarm_poweron_zero_written != 0U)
+    {
+        return;
+    }
+
+    robotarm_poweron_zero_written = 1U;
+
+    /* J1 zero write disabled.
     if (robotarm_config.dm8006_1_mode == ROBOTARM_COMM_MIT)
     {
         (void)dm8006_set_zero_position(&hfdcan3, ROBOTARM_DM8006_1_ID);
@@ -644,6 +662,7 @@ void RobotArm_Mixed_SetZero(void)
         (void)dm8006_set_zero_position_pos_speed(&hfdcan3, ROBOTARM_DM8006_1_ID);
     }
     HAL_Delay(20);
+    */
 
     if (robotarm_config.dm8006_2_mode == ROBOTARM_COMM_MIT)
     {
@@ -938,22 +957,22 @@ void RobotArm_FDCAN3_TestMITKpZeroStart(float dm8006_1_rad,
 
     RobotArm_Mixed_SetMotorParam(ROBOTARM_MOTOR_DM8006_1,
                                  ROBOTARM_COMM_POS_SPEED,
-                                 0.0f,
-                                 0.5f,
+                                 dm8006_1_rad,
+                                 ROBOTARM_FDCAN3_TEST_SPEED_RAD_S,
                                  0.0f,
                                  0.0f,
                                  0.0f);
     RobotArm_Mixed_SetMotorParam(ROBOTARM_MOTOR_DM8006_2,
                                  ROBOTARM_COMM_POS_SPEED,
-                                 2.0f,
-                                 2.0f,
+                                 dm8006_2_rad,
+                                 ROBOTARM_FDCAN3_TEST_SPEED_RAD_S,
                                  0.0f,
                                  0.0f,
                                  0.0f);
     RobotArm_Mixed_SetMotorParam(ROBOTARM_MOTOR_EL05,
                                  ROBOTARM_COMM_POS_SPEED,
                                  el05_rad,
-                                 0.0f,
+                                 ROBOTARM_FDCAN3_TEST_SPEED_RAD_S,
                                  0.0f,
                                  0.0f,
                                  0.0f);

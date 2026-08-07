@@ -55,6 +55,11 @@ COMMANDS: Tuple[UsbCommand, ...] = (
     UsbCommand("CLIMB_TEST_ACTION", 0x57, True, "f0=action id.", aliases=("CLIMB_ACTION", "CLIMB_TEST")),
     UsbCommand("CLIMB_DOWN_STEP", 0x58, aliases=("CLIMB_DOWNSTAIRS_STEP", "DOWNSTAIRS_STEP")),
     UsbCommand("CLIMB_DOWN_AUTO", 0x59, aliases=("CLIMB_DOWNSTAIRS_AUTO", "CLIMB_DOWNSTAIRS_RUN", "CLIMB_DOWN_RUN", "DOWNSTAIRS_AUTO", "DOWNSTAIRS_RUN")),
+    UsbCommand("CLIMB_UP_GATE", 0x5A, doc="Run only the upstairs auto laser gate: UP_LASER_APPROACH_X_LT_35.", aliases=("CLIMB_UP_LASER_GATE", "UPSTAIRS_GATE", "UP_LASER_GATE")),
+    UsbCommand("CLIMB_DOWN_GATE", 0x5B, doc="Run only the downstairs auto laser gate: DOWN_LASER_APPROACH_H_GT_65 plus 5mm approach.", aliases=("CLIMB_DOWN_LASER_GATE", "DOWNSTAIRS_GATE", "DOWN_LASER_GATE")),
+    UsbCommand("CLIMB_UP_AUTO_PAUSE", 0x5C, doc="Run upstairs auto and pause at the v2 interrupt point.", aliases=("CLIMB_UP_PAUSE", "UPSTAIRS_AUTO_PAUSE", "UP_AUTO_PAUSE")),
+    UsbCommand("CLIMB_DOWN_AUTO_PAUSE", 0x5D, doc="Run downstairs auto and pause at the v2 interrupt point.", aliases=("CLIMB_DOWN_PAUSE", "DOWNSTAIRS_AUTO_PAUSE", "DOWN_AUTO_PAUSE")),
+    UsbCommand("CLIMB_AUTO_RESUME", 0x5E, doc="Resume a climb auto flow paused at the v2 interrupt point.", aliases=("CLIMB_RESUME", "AUTO_RESUME")),
     UsbCommand("ARM_IK_RESULT", 0x90, doc="Async arm IK result from firmware."),
 )
 
@@ -81,6 +86,34 @@ STATUS_ALIASES = {
     "TUNE": "YAW_TUNE_GET_STATUS",
     "CLIMB": "CLIMB_GET_STATUS",
 }
+
+
+def climb_test_shortcut_action(token: str) -> Optional[int]:
+    key = token.strip().lower()
+    if not key.startswith("climb_"):
+        return None
+
+    # Import lazily to keep command lookup independent from status decoding.
+    from .status import CLIMB_TEST_ACTIONS
+
+    action_by_shortcut = {
+        f"climb_{name.lower()}": action
+        for action, name in CLIMB_TEST_ACTIONS.items()
+        if action != 0
+    }
+    return action_by_shortcut.get(key)
+
+
+def build_climb_test_shortcut_sequence(token: str) -> Optional[Tuple[bytes, bytes, bytes]]:
+    action = climb_test_shortcut_action(token)
+    if action is None:
+        return None
+
+    return (
+        build_usb_command("SYS_SWITCH_SOURCE", [1.0]),
+        build_usb_command("CLIMB_ENABLE"),
+        build_usb_command("CLIMB_TEST_ACTION", [float(action)]),
+    )
 
 
 def command_name(cmd: int) -> str:
@@ -112,6 +145,13 @@ def resolve_command(token: str) -> UsbCommand:
 
 
 def build_usb_command(token: str, values: Optional[Iterable[float]] = None) -> bytes:
+    shortcut_action = climb_test_shortcut_action(token)
+    if shortcut_action is not None:
+        vals = list(values or [])
+        if vals:
+            raise ValueError(f"{token} does not accept float payload values; use CLIMB_TEST_ACTION {shortcut_action}")
+        return pack_4float_frame(resolve_command("CLIMB_TEST_ACTION").cmd, [float(shortcut_action)])
+
     command = resolve_command(token)
     vals = list(values or [])
 

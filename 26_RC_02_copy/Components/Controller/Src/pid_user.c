@@ -28,11 +28,11 @@ pid_type_def pid_yaw_rate;  // 机器人/世界坐标系：角速度内环
 const float PID_YAW_ANGLE_PARAM[4] = {2.03f, 0.0f, 0.05f, 0.0f};  // yaw angle loop Kp/Ki/Kd/Kf
 const float PID_YAW_RATE_PARAM[4]  = {0.8f, 0.0f, 0.0f, 0.0f};  // yaw rate loop Kp/Ki/Kd/Kf
 
-#define FDCAN2_CLIMB_LEG_POS_MAX_RPM       2500
+#define FDCAN2_CLIMB_LEG_POS_MAX_RPM       2100
 #define FDCAN2_CLIMB_LEG_POS_MAX_IOUT       300
-#define FDCAN2_CLIMB_DRIVE_POS_MAX_RPM     3500
+#define FDCAN2_CLIMB_DRIVE_POS_MAX_RPM     4200
 #define FDCAN2_CLIMB_DRIVE_POS_MAX_IOUT     300
-#define FDCAN1_CLIMB_DRIVE_POS_MAX_RPM     3500
+#define FDCAN1_CLIMB_DRIVE_POS_MAX_RPM     4200
 #define FDCAN1_CLIMB_DRIVE_POS_MAX_IOUT     300
 
 

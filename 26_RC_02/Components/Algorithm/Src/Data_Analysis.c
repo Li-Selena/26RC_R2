@@ -493,6 +493,60 @@ void Data_Analysis(uint8_t cmd, const uint8_t* d, uint8_t len)
         }
         break;
 
+    case USB_CMD_CLIMB_UP_GATE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            USB_ChassisWatchdog_Disarm();
+            R2_Climb_RequestFlowGate(&g_r2_climb_usb,
+                                     R2_CLIMB_FLOW_UPSTAIRS);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
+    case USB_CMD_CLIMB_DOWN_GATE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            USB_ChassisWatchdog_Disarm();
+            R2_Climb_RequestFlowGate(&g_r2_climb_usb,
+                                     R2_CLIMB_FLOW_DOWNSTAIRS);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
+    case USB_CMD_CLIMB_UP_AUTO_PAUSE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            USB_ChassisWatchdog_Disarm();
+            R2_Climb_RequestFlowAutoPause(&g_r2_climb_usb,
+                                          R2_CLIMB_FLOW_UPSTAIRS);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
+    case USB_CMD_CLIMB_DOWN_AUTO_PAUSE:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            USB_ChassisWatchdog_Disarm();
+            R2_Climb_RequestFlowAutoPause(&g_r2_climb_usb,
+                                          R2_CLIMB_FLOW_DOWNSTAIRS);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
+    case USB_CMD_CLIMB_AUTO_RESUME:
+        if (!USB_AllowEmptyOrFloatPayload(len)) break;
+        if (USB_Task_flag) {
+            taskENTER_CRITICAL();
+            USB_ChassisWatchdog_Disarm();
+            R2_Climb_RequestAutoResume(&g_r2_climb_usb);
+            taskEXIT_CRITICAL();
+        }
+        break;
+
     case USB_CMD_CLIMB_STOP:
         if (!USB_AllowEmptyOrFloatPayload(len)) break;
         taskENTER_CRITICAL();

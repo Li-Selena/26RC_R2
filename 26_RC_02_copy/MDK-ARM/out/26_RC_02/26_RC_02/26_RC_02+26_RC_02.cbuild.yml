@@ -1,5 +1,5 @@
 build:
-  generated-by: csolution version 2.14.1+p9-g859cb6c9
+  generated-by: csolution version 2.12.0
   solution: ../../../26_RC_02.csolution.yml
   project: ../../../26_RC_02.cproject.yml
   context: 26_RC_02+26_RC_02
@@ -116,7 +116,6 @@ build:
     - ../../../../Components/Controller/Inc
     - ../../../../Components/Device/Inc
     - ../../../../BSP/Inc
-    - ../../../../Middlewares/ST/ARM/DSP/Inc
     - ../../../RTE/_26_RC_02
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-DSP/1.16.2/Include
     - ${CMSIS_PACK_ROOT}/ARM/CMSIS-DSP/1.16.2/PrivateInclude
@@ -133,10 +132,6 @@ build:
   output:
     - type: elf
       file: 26_RC_02.axf
-    - type: comp-db
-      file: compile_commands.json
-    - type: comp-db
-      file: compile_macros.h
   components:
     - component: ARM::CMSIS:CORE@5.6.0
       condition: ARMv6_7_8-M Device

@@ -35,8 +35,10 @@ static volatile uint32_t s_status_q_drop_count = 0U;
 static void PC_TX_EnqueueStatus(uint8_t cmd);
 static uint8_t PC_TX_DequeueStatus(uint8_t *cmd);
 static void PackFloatLE(float v, uint8_t *buf, uint16_t offset);
+static void PackU16LE(uint16_t v, uint8_t *buf, uint16_t offset);
 static void PackU32LE(uint32_t v, uint8_t *buf, uint16_t offset);
 static void PackI32LE(int32_t v, uint8_t *buf, uint16_t offset);
+static uint8_t PackArmIKTestFlags(const R2_ArmStatus_t *arm);
 static float AbsF(float x);
 static uint8_t MotorOnline(const motor_measure_t *m, uint8_t n);
 static uint8_t ClimbMotorOnline(void);
@@ -46,6 +48,7 @@ static void SendArmStatus(uint8_t reply_cmd);
 static void SendClimbStatus(void);
 static void SendYawTuneStatus(void);
 static void SendRobotStatus(void);
+static void SendTaskFlowStatus(void);
 
 void PC_TX_ReqSysStatus(void) { PC_TX_EnqueueStatus(USB_CMD_SYS_GET_STATUS); }
 void PC_TX_ReqChsStatus(void) { PC_TX_EnqueueStatus(USB_CMD_CHS_GET_STATUS); }
@@ -54,6 +57,7 @@ void PC_TX_ReqToolStatus(void) { PC_TX_EnqueueStatus(USB_CMD_TOOL_GET_STATUS); }
 void PC_TX_ReqRobotStatus(void) { PC_TX_EnqueueStatus(USB_CMD_ROBOT_GET_STATUS); }
 void PC_TX_ReqClimbStatus(void) { PC_TX_EnqueueStatus(USB_CMD_CLIMB_GET_STATUS); }
 void PC_TX_ReqYawTuneStatus(void) { PC_TX_EnqueueStatus(USB_CMD_YAW_TUNE_GET_STATUS); }
+void PC_TX_ReqTaskFlowStatus(void) { PC_TX_EnqueueStatus(USB_CMD_FLOW_GET_STATUS); }
 
 static void PC_TX_EnqueueStatus(uint8_t cmd)
 {
@@ -106,6 +110,12 @@ static void PackFloatLE(float v, uint8_t *buf, uint16_t offset)
     buf[offset + 3U] = u.b[3];
 }
 
+static void PackU16LE(uint16_t v, uint8_t *buf, uint16_t offset)
+{
+    buf[offset] = (uint8_t)(v & 0xFFU);
+    buf[offset + 1U] = (uint8_t)((v >> 8) & 0xFFU);
+}
+
 static void PackU32LE(uint32_t v, uint8_t *buf, uint16_t offset)
 {
     buf[offset] = (uint8_t)(v & 0xFFU);
@@ -117,6 +127,22 @@ static void PackU32LE(uint32_t v, uint8_t *buf, uint16_t offset)
 static void PackI32LE(int32_t v, uint8_t *buf, uint16_t offset)
 {
     PackU32LE((uint32_t)v, buf, offset);
+}
+
+static uint8_t PackArmIKTestFlags(const R2_ArmStatus_t *arm)
+{
+    uint8_t flags;
+
+    if (arm == NULL)
+    {
+        return 0U;
+    }
+
+    flags = arm->ik_test_step & 0x0FU;
+    if (arm->ik_test_active != 0U) flags |= 0x80U;
+    if (arm->ik_test_done != 0U) flags |= 0x40U;
+    if (arm->ik_test_error != 0U) flags |= 0x20U;
+    return flags;
 }
 
 static float AbsF(float x)
@@ -258,7 +284,7 @@ static void SendChsStatus(void)
     Send_Cmd_Data(USB_CMD_CHS_GET_STATUS, buf, CHS_STATUS_LEN);
 }
 
-#define ARM_STATUS_LEN  64U
+#define ARM_STATUS_LEN  80U
 
 static void SendArmStatus(uint8_t reply_cmd)
 {
@@ -288,6 +314,8 @@ static void SendArmStatus(uint8_t reply_cmd)
     PackU32LE(arm.output_apply_count, buf, 16);
     buf[20] = (uint8_t)arm.request.tool;
     buf[21] = (uint8_t)arm.request.state;
+    buf[22] = (uint8_t)arm.result.target_direction;
+    buf[23] = PackArmIKTestFlags(&arm);
     PackFloatLE(arm.request.target_z_mm, buf, 24);
     PackFloatLE(arm.request.approach_yaw_rad, buf, 28);
     PackFloatLE(arm.result.theta_rad[0], buf, 32);
@@ -298,11 +326,15 @@ static void SendArmStatus(uint8_t reply_cmd)
     PackFloatLE(arm.result.tool_world_mm.z, buf, 52);
     PackFloatLE(arm.result.j4_world_mm.z, buf, 56);
     PackFloatLE(arm.request.target_z_mm - arm.result.tool_world_mm.z, buf, 60);
+    PackFloatLE(arm.motor_feedback_rad[0], buf, 64);
+    PackFloatLE(arm.motor_feedback_rad[1], buf, 68);
+    PackFloatLE(arm.motor_feedback_rad[2], buf, 72);
+    buf[76] = arm.motor_feedback_ok_mask;
 
     Send_Cmd_Data(reply_cmd, buf, ARM_STATUS_LEN);
 }
 
-#define CLIMB_STATUS_LEN  68U
+#define CLIMB_STATUS_LEN  69U
 
 static uint8_t ClimbValueReached(float pos, float target, float tol)
 {
@@ -387,6 +419,53 @@ static uint8_t ClimbDriveReachedMask(const R2_Climb_Ctrl_t *climb)
     return mask;
 }
 
+static uint8_t ClimbSummaryState(const R2_Climb_Ctrl_t *climb,
+                                 uint8_t ready_for_next)
+{
+    if (climb == NULL)
+    {
+        return (uint8_t)R2_CLIMB_SUMMARY_NOT_READY;
+    }
+
+    if ((climb->error_flags != 0U) ||
+        (climb->state == R2_CLIMB_STATE_ERROR))
+    {
+        return (uint8_t)R2_CLIMB_SUMMARY_ERROR;
+    }
+
+    if (climb->state == R2_CLIMB_STATE_DONE)
+    {
+        return (uint8_t)R2_CLIMB_SUMMARY_DONE;
+    }
+
+    if (climb->auto_pause_active != 0U)
+    {
+        return (uint8_t)R2_CLIMB_SUMMARY_PAUSED;
+    }
+
+    if ((climb->auto_run != 0U) ||
+        (climb->test_active != 0U) ||
+        (climb->test_chassis_active != 0U) ||
+        (climb->pending_step != 0U) ||
+        (climb->pending_auto != 0U) ||
+        (climb->pending_gate != 0U) ||
+        (climb->pending_resume != 0U) ||
+        (climb->pending_test_action != 0U) ||
+        (climb->gate_active != 0U) ||
+        ((climb->state != R2_CLIMB_STATE_IDLE) &&
+         (climb->state_done == 0U)))
+    {
+        return (uint8_t)R2_CLIMB_SUMMARY_RUNNING;
+    }
+
+    if (ready_for_next != 0U)
+    {
+        return (uint8_t)R2_CLIMB_SUMMARY_READY;
+    }
+
+    return (uint8_t)R2_CLIMB_SUMMARY_NOT_READY;
+}
+
 static void SendClimbStatus(void)
 {
     uint8_t buf[CLIMB_STATUS_LEN];
@@ -428,6 +507,7 @@ static void SendClimbStatus(void)
            (climb.state == R2_CLIMB_STATE_DONE)) &&
           (climb.pending_step == 0U) &&
           (climb.pending_auto == 0U) &&
+          (climb.pending_resume == 0U) &&
           (climb.pending_test_action == 0U) &&
           (climb.test_chassis_active == 0U) &&
           (leg_busy == 0U) &&
@@ -439,7 +519,9 @@ static void SendClimbStatus(void)
         ((climb.test_chassis_active != 0U) ? 0x08U : 0U) |
         ((climb.pending_step != 0U) ? 0x10U : 0U) |
         ((climb.pending_auto != 0U) ? 0x20U : 0U) |
-        ((climb.pending_test_action != 0U) ? 0x40U : 0U) |
+        (((climb.pending_test_action != 0U) ||
+          (climb.pending_resume != 0U) ||
+          (climb.auto_pause_active != 0U)) ? 0x40U : 0U) |
         ((ready_for_next != 0U) ? 0x80U : 0U);
 
     buf[0] = (uint8_t)climb.state;
@@ -468,6 +550,7 @@ static void SendClimbStatus(void)
     buf[65] = status_flags;
     buf[66] = leg_reached_mask;
     buf[67] = drive_reached_mask;
+    buf[68] = ClimbSummaryState(&climb, ready_for_next);
 
     Send_Cmd_Data(USB_CMD_CLIMB_GET_STATUS, buf, CLIMB_STATUS_LEN);
 }
@@ -513,8 +596,10 @@ static void SendYawTuneStatus(void)
     Send_Cmd_Data(USB_CMD_YAW_TUNE_GET_STATUS, buf, YAW_TUNE_STATUS_LEN);
 }
 
-#define ROBOT_STATUS_PROTOCOL_VERSION 4U
-#define ROBOT_STATUS_LEN        240U
+#define ROBOT_STATUS_PROTOCOL_VERSION 5U
+#define ROBOT_STATUS_LEN        253U
+#define TASK_FLOW_STATUS_PROTOCOL_VERSION 1U
+#define TASK_FLOW_STATUS_LEN    32U
 #define ROBOT_CMD_RECENT_MS     500U
 #define ROBOT_VEL_MOVE_TOL      0.01f
 #define ROBOT_WZ_MOVE_TOL       0.01f
@@ -545,6 +630,7 @@ void RobotStatusView_Update(void)
     R2_Move_Ctrl_t chs;
     R2_Climb_Ctrl_t climb;
     R2_ArmStatus_t arm;
+    R2_TaskFlow_Ctrl_t task_flow;
     R2_LaserMeasure_t laser;
     R2_YawAutoTuneStatus_t yaw_tune;
     INS_NavState_t nav;
@@ -562,6 +648,7 @@ void RobotStatusView_Update(void)
     chs = (active_source == CONTROL_SOURCE_USB) ? g_r2_ctrl_usb : g_r2_ctrl_usart;
     climb = (active_source == CONTROL_SOURCE_USB) ? g_r2_climb_usb : g_r2_climb_usart;
     R2_Arm_GetStatus(&g_r2_arm_usb, &arm);
+    task_flow = g_r2_task_flow_usb;
     usart_rx = crc_dbg;
     taskEXIT_CRITICAL();
 
@@ -608,6 +695,7 @@ void RobotStatusView_Update(void)
 
     if (chassis_moving != 0U) executing_flags |= 0x01U;
     if (chassis_pos_running != 0U) executing_flags |= 0x02U;
+    if (R2_TaskFlow_IsActive(&task_flow) != 0U) executing_flags |= 0x04U;
     if (climb_motor_active != 0U) executing_flags |= 0x10U;
     if (yaw_tune_running != 0U) executing_flags |= 0x20U;
     if (arm_motor_active != 0U) executing_flags |= 0x40U;
@@ -714,17 +802,19 @@ void RobotStatusView_Update(void)
     view->arm.output_apply_count = arm.output_apply_count;
     view->arm.tool = (uint8_t)arm.request.tool;
     view->arm.tool_state = (uint8_t)arm.request.state;
-    view->arm.reserved[0] = 0U;
-    view->arm.reserved[1] = 0U;
+    view->arm.reserved[0] = (uint8_t)arm.result.target_direction;
+    view->arm.reserved[1] = PackArmIKTestFlags(&arm);
     view->arm.target_z_mm = arm.request.target_z_mm;
     view->arm.approach_yaw_rad = arm.request.approach_yaw_rad;
     for (i = 0U; i < ROBOTARM_KIN_JOINT_COUNT; i++)
     {
         view->arm.theta_rad[i] = arm.result.theta_rad[i];
+        view->arm.motor_feedback_rad[i] = arm.motor_feedback_rad[i];
     }
     view->arm.tool_world_mm[0] = arm.result.tool_world_mm.x;
     view->arm.tool_world_mm[1] = arm.result.tool_world_mm.y;
     view->arm.tool_world_mm[2] = arm.result.tool_world_mm.z;
+    view->arm.motor_feedback_ok_mask = arm.motor_feedback_ok_mask;
 
     view->climb.source = active_source;
     view->climb.enabled = climb.enabled;
@@ -812,6 +902,24 @@ void RobotStatusView_Update(void)
     view->yaw_tune.rate_ki = yaw_tune.rate_ki;
     view->yaw_tune.rate_kd = yaw_tune.rate_kd;
     view->yaw_tune.pos_kp_yaw = yaw_tune.pos_kp_yaw;
+
+    view->task_flow.flow_id = task_flow.flow_id;
+    view->task_flow.state = task_flow.state;
+    view->task_flow.error = task_flow.error;
+    view->task_flow.current_op = task_flow.current_op;
+    view->task_flow.completed_s1_end = task_flow.completed_s1_end;
+    view->task_flow.active = R2_TaskFlow_IsActive(&task_flow);
+    view->task_flow.flow_arg = task_flow.flow_arg;
+    view->task_flow.host_checkpoint_pending =
+        task_flow.host_checkpoint_pending;
+    view->task_flow.host_checkpoint_ack = task_flow.host_checkpoint_ack;
+    view->task_flow.entry_index = task_flow.entry_index;
+    view->task_flow.entry_count = task_flow.entry_count;
+    view->task_flow.repeat_index = task_flow.repeat_index;
+    view->task_flow.repeat_count = task_flow.repeat_count;
+    view->task_flow.completed_steps = task_flow.completed_steps;
+    view->task_flow.step_start_ms = task_flow.step_start_ms;
+    view->task_flow.last_update_ms = task_flow.last_update_ms;
 }
 
 static void SendRobotStatus(void)
@@ -922,11 +1030,53 @@ static void SendRobotStatus(void)
     PackU32LE(view->arm.output_apply_count, buf, 228);
     buf[232] = view->arm.tool;
     buf[233] = view->arm.tool_state;
+    buf[234] = view->arm.reserved[0];
+    buf[235] = view->arm.reserved[1];
 
     buf[238] = view->climb.error_flags;
     buf[239] = view->summary.active_source_stale;
+    PackFloatLE(view->arm.motor_feedback_rad[0], buf, 240);
+    PackFloatLE(view->arm.motor_feedback_rad[1], buf, 244);
+    PackFloatLE(view->arm.motor_feedback_rad[2], buf, 248);
+    buf[252] = view->arm.motor_feedback_ok_mask;
 
     Send_Cmd_Data(USB_CMD_ROBOT_GET_STATUS, buf, ROBOT_STATUS_LEN);
+}
+
+static void SendTaskFlowStatus(void)
+{
+    uint8_t buf[TASK_FLOW_STATUS_LEN];
+    uint8_t i;
+    R2_TaskFlow_Ctrl_t task_flow;
+
+    for (i = 0U; i < TASK_FLOW_STATUS_LEN; i++)
+    {
+        buf[i] = 0U;
+    }
+
+    taskENTER_CRITICAL();
+    task_flow = g_r2_task_flow_usb;
+    taskEXIT_CRITICAL();
+
+    buf[0] = TASK_FLOW_STATUS_PROTOCOL_VERSION;
+    buf[1] = task_flow.flow_id;
+    buf[2] = task_flow.state;
+    buf[3] = task_flow.error;
+    buf[4] = task_flow.current_op;
+    buf[5] = task_flow.completed_s1_end;
+    buf[6] = R2_TaskFlow_IsActive(&task_flow);
+    buf[7] = task_flow.flow_arg;
+    PackU16LE(task_flow.entry_index, buf, 8);
+    PackU16LE(task_flow.entry_count, buf, 10);
+    PackU16LE(task_flow.repeat_index, buf, 12);
+    PackU16LE(task_flow.repeat_count, buf, 14);
+    PackU32LE(task_flow.completed_steps, buf, 16);
+    PackU32LE(task_flow.step_start_ms, buf, 20);
+    PackU32LE(task_flow.last_update_ms, buf, 24);
+    buf[28] = task_flow.host_checkpoint_pending;
+    buf[29] = task_flow.host_checkpoint_ack;
+
+    Send_Cmd_Data(USB_CMD_FLOW_GET_STATUS, buf, TASK_FLOW_STATUS_LEN);
 }
 
 void PC_TX_Task(void const *argument)
@@ -969,6 +1119,9 @@ void PC_TX_Task(void const *argument)
                 break;
             case USB_CMD_ROBOT_GET_STATUS:
                 SendRobotStatus();
+                break;
+            case USB_CMD_FLOW_GET_STATUS:
+                SendTaskFlowStatus();
                 break;
             case USB_CMD_CLIMB_GET_STATUS:
                 SendClimbStatus();

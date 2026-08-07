@@ -65,11 +65,12 @@ static const R2_ClimbMainStep_t s_main_steps[R2_CLIMB_MAIN_STEP_COUNT] = {
     {"STEP_06_REAR_DRIVE_FORWARD_30_X4", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_REAR, {-30.0f, 170.0f, 170.0f, -30.0f}, 120.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(120.0f)},
     {"STEP_07_FRONT_UP_10_X2", R2_CLIMB_MAIN_STEP_LEG_TARGET, R2_CLIMB_FRONT_LEG_MASK, R2_CLIMB_DRIVE_GROUP_REAR, {-10.0f, 170.0f, 170.0f, -10.0f}, 0.0f, R2_CLIMB_STEP_LEG_20_TIMEOUT_MS},
     {"STEP_08_ALL_LEGS_UP_10_X6", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, R2_CLIMB_DRIVE_GROUP_REAR, {50.0f, 230.0f, 230.0f, 50.0f}, 0.0f, R2_CLIMB_LEG_TIMEOUT_MS(60.0f)},
-    {"STEP_09_ALL_DRIVE_FORWARD_500", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_ALL, {50.0f, 230.0f, 230.0f, 50.0f}, 500.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(500.0f)},
-    {"STEP_10_ALL_DRIVE_FORWARD_30_X9", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_ALL, {50.0f, 230.0f, 230.0f, 50.0f}, 270.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(270.0f)},
-    {"STEP_11_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, R2_CLIMB_DRIVE_GROUP_ALL, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
-    {"STEP_12_ALL_LEGS_DOWN_10_X2", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, R2_CLIMB_DRIVE_GROUP_ALL, {-20.0f, -20.0f, -20.0f, -20.0f}, 0.0f, R2_CLIMB_STEP_LEG_20_TIMEOUT_MS},
-    {"STEP_13_CHASSIS_FORWARD_100_X2", R2_CLIMB_MAIN_STEP_CHASSIS_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_ALL, {-20.0f, -20.0f, -20.0f, -20.0f}, 0.20f, R2_CLIMB_STEP_CHASSIS_200_TIMEOUT_MS},
+    {"STEP_09_ALL_DRIVE_FORWARD_200_PAUSE", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_ALL, {50.0f, 230.0f, 230.0f, 50.0f}, 200.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(200.0f)},
+    {"STEP_10_ALL_DRIVE_FORWARD_300_RESUME", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_ALL, {50.0f, 230.0f, 230.0f, 50.0f}, 300.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(300.0f)},
+    {"STEP_11_ALL_DRIVE_FORWARD_30_X9", R2_CLIMB_MAIN_STEP_DRIVE_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_ALL, {50.0f, 230.0f, 230.0f, 50.0f}, 270.0f, R2_CLIMB_DRIVE_TIMEOUT_MS(270.0f)},
+    {"STEP_12_ALL_LEGS_ZERO", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, R2_CLIMB_DRIVE_GROUP_ALL, {0.0f, 0.0f, 0.0f, 0.0f}, 0.0f, R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS},
+    {"STEP_13_ALL_LEGS_DOWN_10_X2", R2_CLIMB_MAIN_STEP_LEG_TARGET, 0x0FU, R2_CLIMB_DRIVE_GROUP_ALL, {-20.0f, -20.0f, -20.0f, -20.0f}, 0.0f, R2_CLIMB_STEP_LEG_20_TIMEOUT_MS},
+    {"STEP_14_CHASSIS_FORWARD_100_X2", R2_CLIMB_MAIN_STEP_CHASSIS_DELTA, 0x00U, R2_CLIMB_DRIVE_GROUP_ALL, {-20.0f, -20.0f, -20.0f, -20.0f}, 0.20f, R2_CLIMB_STEP_CHASSIS_200_TIMEOUT_MS},
 };
 
 static const R2_ClimbMainStep_t s_downstairs_steps[R2_CLIMB_DOWNSTAIRS_STEP_COUNT] = {
@@ -141,6 +142,20 @@ static uint8_t LegsReached(const R2_Climb_Ctrl_t *ctrl, uint8_t mask);
 static uint8_t DrivesReached(const R2_Climb_Ctrl_t *ctrl);
 static uint8_t StateUsesChassis(const R2_Climb_Ctrl_t *ctrl,
                                 R2_ClimbState_t state);
+static uint8_t ShouldPauseAfterState(const R2_Climb_Ctrl_t *ctrl,
+                                     R2_ClimbState_t state);
+static R2_ClimbState_t InitialAutoState(const R2_Climb_Ctrl_t *ctrl);
+static void BeginState(R2_Climb_Ctrl_t *ctrl,
+                       R2_Move_Ctrl_t *move_ctrl,
+                       R2_ClimbState_t state,
+                       uint32_t now_ms);
+static void RecoverOrEnterError(R2_Climb_Ctrl_t *ctrl,
+                                R2_Move_Ctrl_t *move_ctrl,
+                                uint32_t now_ms,
+                                uint8_t error_flags);
+static void RestartAutoAfterRecovery(R2_Climb_Ctrl_t *ctrl,
+                                     R2_Move_Ctrl_t *move_ctrl,
+                                     uint32_t now_ms);
 static uint8_t UpLaserXReady(const R2_LaserMeasure_t *laser);
 static uint8_t UpLaserTriggerReached(void);
 static uint8_t UpLaserXInvalidTimedOut(R2_Climb_Ctrl_t *ctrl,
@@ -318,12 +333,30 @@ static uint32_t StateTimeoutMs(const R2_Climb_Ctrl_t *ctrl,
         return R2_CLIMB_DOWN_APPROACH_TIMEOUT_MS;
     }
 
+    if (state == R2_CLIMB_STATE_RECOVER_PREPARE) {
+        return R2_CLIMB_PREPARE_TIMEOUT_MS;
+    }
+
+    if (state == R2_CLIMB_STATE_RECOVER_BACK) {
+        return R2_CLIMB_RECOVERY_CHASSIS_TIMEOUT_MS;
+    }
+
     if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
         (step <= count)) {
         return steps[step - 1U].timeout_ms;
     }
 
     return 0U;
+}
+
+static R2_ClimbState_t InitialAutoState(const R2_Climb_Ctrl_t *ctrl)
+{
+    if ((ctrl != 0) &&
+        (NormalizeFlow(ctrl->flow) == (uint8_t)R2_CLIMB_FLOW_DOWNSTAIRS)) {
+        return R2_CLIMB_STATE_DOWN_LASER_APPROACH;
+    }
+
+    return R2_CLIMB_STATE_UP_LASER_APPROACH;
 }
 
 static R2_ClimbState_t NextState(const R2_Climb_Ctrl_t *ctrl,
@@ -342,6 +375,14 @@ static R2_ClimbState_t NextState(const R2_Climb_Ctrl_t *ctrl,
 
     if (state == R2_CLIMB_STATE_DOWN_APPROACH) {
         return R2_CLIMB_STATE_PREPARE;
+    }
+
+    if (state == R2_CLIMB_STATE_RECOVER_PREPARE) {
+        return R2_CLIMB_STATE_RECOVER_BACK;
+    }
+
+    if (state == R2_CLIMB_STATE_RECOVER_BACK) {
+        return InitialAutoState(ctrl);
     }
 
     if (state == R2_CLIMB_STATE_PREPARE) {
@@ -400,6 +441,14 @@ static const char *StateName(uint8_t flow, R2_ClimbState_t state)
 
     if (state == R2_CLIMB_STATE_DOWN_APPROACH) {
         return "DOWN_PREPARE_CHASSIS_FORWARD_5";
+    }
+
+    if (state == R2_CLIMB_STATE_RECOVER_PREPARE) {
+        return "RECOVER_ALL_LEGS_MINUS_30";
+    }
+
+    if (state == R2_CLIMB_STATE_RECOVER_BACK) {
+        return "RECOVER_CHASSIS_BACKWARD_200";
     }
 
     if ((step >= (uint32_t)R2_CLIMB_STATE_STEP_1) &&
@@ -726,6 +775,9 @@ static uint32_t TestActionTimeoutMs(uint8_t action)
     case R2_CLIMB_TEST_REAR_MINUS_30:
         return R2_CLIMB_STEP_LONG_LEG_TIMEOUT_MS;
 
+    case R2_CLIMB_TEST_ALL_LEGS_300:
+        return R2_CLIMB_TEST_ALL_LEGS_300_TIMEOUT_MS;
+
     default:
         break;
     }
@@ -751,7 +803,8 @@ static uint8_t StateUsesChassis(const R2_Climb_Ctrl_t *ctrl,
     if ((state == R2_CLIMB_STATE_UP_APPROACH) ||
         (state == R2_CLIMB_STATE_UP_LASER_APPROACH) ||
         (state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) ||
-        (state == R2_CLIMB_STATE_DOWN_APPROACH)) {
+        (state == R2_CLIMB_STATE_DOWN_APPROACH) ||
+        (state == R2_CLIMB_STATE_RECOVER_BACK)) {
         return 1U;
     }
 
@@ -762,6 +815,177 @@ static uint8_t StateUsesChassis(const R2_Climb_Ctrl_t *ctrl,
     }
 
     return 0U;
+}
+
+static uint8_t ShouldPauseAfterState(const R2_Climb_Ctrl_t *ctrl,
+                                     R2_ClimbState_t state)
+{
+    uint32_t step = (uint32_t)state;
+
+    if (ctrl == 0) {
+        return 0U;
+    }
+
+    if (ctrl->auto_pause_enabled == 0U) {
+        return 0U;
+    }
+
+    if ((step < (uint32_t)R2_CLIMB_STATE_STEP_1) ||
+        (step > CtrlStepCount(ctrl))) {
+        return 0U;
+    }
+
+    return (((uint8_t)step) == ctrl->auto_pause_step) ? 1U : 0U;
+}
+
+static void ClearAutoPause(R2_Climb_Ctrl_t *ctrl)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    ctrl->pending_resume = 0U;
+    ctrl->auto_pause_enabled = 0U;
+    ctrl->auto_pause_active = 0U;
+    ctrl->auto_pause_step = 0U;
+    ctrl->auto_pause_resume_state = R2_CLIMB_STATE_IDLE;
+}
+
+static void StopClimbChassis(R2_Climb_Ctrl_t *ctrl,
+                             R2_Move_Ctrl_t *move_ctrl)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    if ((move_ctrl != 0) &&
+        ((ctrl->test_chassis_active != 0U) ||
+         (StateUsesChassis(ctrl, ctrl->state) != 0U))) {
+        R2_Move_Stop(move_ctrl);
+    }
+    ctrl->test_chassis_active = 0U;
+}
+
+static void EnterErrorState(R2_Climb_Ctrl_t *ctrl,
+                            R2_Move_Ctrl_t *move_ctrl,
+                            uint8_t error_flags)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    StopClimbChassis(ctrl, move_ctrl);
+    ctrl->error_flags |= error_flags;
+    if ((ctrl->recovery_active != 0U) ||
+        (ctrl->recovery_attempted != 0U)) {
+        ctrl->error_flags |= R2_CLIMB_ERR_RECOVERY_FAILED;
+    }
+    ctrl->auto_run = 0U;
+    ctrl->gate_active = 0U;
+    ctrl->pending_step = 0U;
+    ctrl->pending_auto = 0U;
+    ctrl->pending_gate = 0U;
+    ctrl->pending_resume = 0U;
+    ctrl->pending_test_action = 0U;
+    ctrl->test_active = 0U;
+    ctrl->test_action = R2_CLIMB_TEST_NONE;
+    ctrl->state_done = 0U;
+    ctrl->recovery_active = 0U;
+    ClearAutoPause(ctrl);
+    ctrl->state = R2_CLIMB_STATE_ERROR;
+}
+
+static void RestartAutoAfterRecovery(R2_Climb_Ctrl_t *ctrl,
+                                     R2_Move_Ctrl_t *move_ctrl,
+                                     uint32_t now_ms)
+{
+    uint8_t flow;
+
+    if (ctrl == 0) {
+        return;
+    }
+
+    flow = NormalizeFlow(ctrl->recovery_flow);
+    StopClimbChassis(ctrl, move_ctrl);
+
+    ctrl->flow = flow;
+    ctrl->pending_flow = flow;
+    ctrl->auto_run = 1U;
+    ctrl->gate_active = 0U;
+    ctrl->pending_step = 0U;
+    ctrl->pending_auto = 0U;
+    ctrl->pending_gate = 0U;
+    ctrl->pending_resume = 0U;
+    ctrl->pending_test_action = 0U;
+    ctrl->test_active = 0U;
+    ctrl->test_action = R2_CLIMB_TEST_NONE;
+    ctrl->state_done = 0U;
+    ctrl->recovery_active = 0U;
+
+    BeginState(ctrl, move_ctrl, InitialAutoState(ctrl), now_ms);
+}
+
+static uint8_t StartAutoRecovery(R2_Climb_Ctrl_t *ctrl,
+                                 R2_Move_Ctrl_t *move_ctrl,
+                                 uint32_t now_ms)
+{
+    uint8_t flow;
+
+    if (ctrl == 0) {
+        return 0U;
+    }
+
+    if ((ctrl->auto_run == 0U) ||
+        (ctrl->recovery_active != 0U) ||
+        (ctrl->recovery_attempted != 0U)) {
+        return 0U;
+    }
+
+    flow = NormalizeFlow(ctrl->flow);
+    if (flow == (uint8_t)R2_CLIMB_FLOW_UPSTAIRS) {
+        return 0U;
+    }
+
+    StopClimbChassis(ctrl, move_ctrl);
+    ctrl->recovery_attempted = 1U;
+    ctrl->recovery_active = 1U;
+    ctrl->recovery_flow = flow;
+    ctrl->flow = flow;
+    ctrl->pending_flow = flow;
+    ctrl->error_flags = 0U;
+    ctrl->auto_run = 1U;
+    ctrl->gate_active = 0U;
+    ctrl->pending_step = 0U;
+    ctrl->pending_auto = 0U;
+    ctrl->pending_gate = 0U;
+    ctrl->pending_resume = 0U;
+    ctrl->pending_test_action = 0U;
+    ctrl->test_active = 0U;
+    ctrl->test_action = R2_CLIMB_TEST_NONE;
+    ctrl->state_done = 0U;
+    if (ctrl->auto_pause_active != 0U) {
+        ClearAutoPause(ctrl);
+    }
+    BeginState(ctrl, move_ctrl, R2_CLIMB_STATE_RECOVER_PREPARE, now_ms);
+
+    return (ctrl->state == R2_CLIMB_STATE_ERROR) ? 0U : 1U;
+}
+
+static void RecoverOrEnterError(R2_Climb_Ctrl_t *ctrl,
+                                R2_Move_Ctrl_t *move_ctrl,
+                                uint32_t now_ms,
+                                uint8_t error_flags)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    ctrl->error_flags |= error_flags;
+    if (StartAutoRecovery(ctrl, move_ctrl, now_ms) != 0U) {
+        return;
+    }
+
+    EnterErrorState(ctrl, move_ctrl, error_flags);
 }
 
 static void BeginState(R2_Climb_Ctrl_t *ctrl,
@@ -793,11 +1017,41 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
     ctrl->down_laser_invalid_start_ms = 0U;
     SetDriveGroup(ctrl, R2_CLIMB_DRIVE_GROUP_ALL);
 
-    if (state == R2_CLIMB_STATE_PREPARE) {
+    if ((state == R2_CLIMB_STATE_PREPARE) ||
+        (state == R2_CLIMB_STATE_RECOVER_PREPARE)) {
         ClearLegPidByMask(0x0FU);
         SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
         CaptureDriveSegmentStart(ctrl);
         SetDriveTarget(ctrl, 0.0f);
+        UpdatePositions(ctrl);
+        return;
+    }
+
+    if (state == R2_CLIMB_STATE_RECOVER_BACK) {
+        SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
+        CaptureDriveSegmentStart(ctrl);
+        SetDriveTarget(ctrl, 0.0f);
+        if (move_ctrl == 0) {
+            RecoverOrEnterError(ctrl,
+                                move_ctrl,
+                                now_ms,
+                                R2_CLIMB_ERR_TEST_ACTION);
+        } else {
+            R2_Move_Stop(move_ctrl);
+            R2_Move_Resume(move_ctrl);
+            R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_POS);
+            if (R2_Move_SetDist(move_ctrl,
+                                0.0f,
+                                -R2_CLIMB_RECOVERY_CHASSIS_BACK_M,
+                                0.0f) == 0) {
+                ctrl->test_chassis_active = 1U;
+            } else {
+                RecoverOrEnterError(ctrl,
+                                    move_ctrl,
+                                    now_ms,
+                                    R2_CLIMB_ERR_TEST_ACTION);
+            }
+        }
         UpdatePositions(ctrl);
         return;
     }
@@ -812,9 +1066,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
 
         if (UpLaserTriggerReached() == 0U) {
             if (move_ctrl == 0) {
-                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-                ctrl->auto_run = 0U;
-                ctrl->state = R2_CLIMB_STATE_ERROR;
+                RecoverOrEnterError(ctrl,
+                                    move_ctrl,
+                                    now_ms,
+                                    R2_CLIMB_ERR_TEST_ACTION);
             } else {
                 R2_Move_Resume(move_ctrl);
                 R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_VEL);
@@ -840,9 +1095,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
 
         if (DownLaserTriggerReached() == 0U) {
             if (move_ctrl == 0) {
-                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-                ctrl->auto_run = 0U;
-                ctrl->state = R2_CLIMB_STATE_ERROR;
+                RecoverOrEnterError(ctrl,
+                                    move_ctrl,
+                                    now_ms,
+                                    R2_CLIMB_ERR_TEST_ACTION);
             } else {
                 R2_Move_Resume(move_ctrl);
                 R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_NO_YAW_VEL);
@@ -863,9 +1119,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
         CaptureDriveSegmentStart(ctrl);
         SetDriveTarget(ctrl, 0.0f);
         if (move_ctrl == 0) {
-            ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-            ctrl->auto_run = 0U;
-            ctrl->state = R2_CLIMB_STATE_ERROR;
+            RecoverOrEnterError(ctrl,
+                                move_ctrl,
+                                now_ms,
+                                R2_CLIMB_ERR_TEST_ACTION);
         } else {
             R2_Move_Stop(move_ctrl);
             R2_Move_Resume(move_ctrl);
@@ -876,9 +1133,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
                                 0.0f) == 0) {
                 ctrl->test_chassis_active = 1U;
             } else {
-                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-                ctrl->auto_run = 0U;
-                ctrl->state = R2_CLIMB_STATE_ERROR;
+                RecoverOrEnterError(ctrl,
+                                    move_ctrl,
+                                    now_ms,
+                                    R2_CLIMB_ERR_TEST_ACTION);
             }
         }
         UpdatePositions(ctrl);
@@ -890,9 +1148,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
         CaptureDriveSegmentStart(ctrl);
         SetDriveTarget(ctrl, 0.0f);
         if (move_ctrl == 0) {
-            ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-            ctrl->auto_run = 0U;
-            ctrl->state = R2_CLIMB_STATE_ERROR;
+            RecoverOrEnterError(ctrl,
+                                move_ctrl,
+                                now_ms,
+                                R2_CLIMB_ERR_TEST_ACTION);
         } else {
             R2_Move_Stop(move_ctrl);
             R2_Move_Resume(move_ctrl);
@@ -903,9 +1162,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
                                 0.0f) == 0) {
                 ctrl->test_chassis_active = 1U;
             } else {
-                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-                ctrl->auto_run = 0U;
-                ctrl->state = R2_CLIMB_STATE_ERROR;
+                RecoverOrEnterError(ctrl,
+                                    move_ctrl,
+                                    now_ms,
+                                    R2_CLIMB_ERR_TEST_ACTION);
             }
         }
         UpdatePositions(ctrl);
@@ -932,9 +1192,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
             SetDriveTargetForGroup(ctrl, step->delta, step->drive_group_mask);
         } else if (step->kind == R2_CLIMB_MAIN_STEP_CHASSIS_DELTA) {
             if (move_ctrl == 0) {
-                ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-                ctrl->auto_run = 0U;
-                ctrl->state = R2_CLIMB_STATE_ERROR;
+                RecoverOrEnterError(ctrl,
+                                    move_ctrl,
+                                    now_ms,
+                                    R2_CLIMB_ERR_TEST_ACTION);
             } else {
                 R2_Move_Stop(move_ctrl);
                 R2_Move_Resume(move_ctrl);
@@ -942,9 +1203,10 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
                 if (R2_Move_SetDist(move_ctrl, 0.0f, step->delta, 0.0f) == 0) {
                     ctrl->test_chassis_active = 1U;
                 } else {
-                    ctrl->error_flags |= R2_CLIMB_ERR_TEST_ACTION;
-                    ctrl->auto_run = 0U;
-                    ctrl->state = R2_CLIMB_STATE_ERROR;
+                    RecoverOrEnterError(ctrl,
+                                        move_ctrl,
+                                        now_ms,
+                                        R2_CLIMB_ERR_TEST_ACTION);
                 }
             }
         }
@@ -954,7 +1216,11 @@ static void BeginState(R2_Climb_Ctrl_t *ctrl,
     }
 
     if (state == R2_CLIMB_STATE_DONE) {
+        if (move_ctrl != 0) {
+            R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_VEL);
+        }
         ctrl->auto_run = 0U;
+        ctrl->recovery_active = 0U;
         ctrl->state_done = 1U;
         SetAllLegTarget(ctrl, R2_CLIMB_STANDBY_MM);
         CaptureDriveSegmentStart(ctrl);
@@ -988,8 +1254,16 @@ static void BeginTestAction(R2_Climb_Ctrl_t *ctrl,
 
     ctrl->enabled = 1U;
     ctrl->auto_run = 0U;
+    ctrl->gate_active = 0U;
     ctrl->pending_step = 0U;
     ctrl->pending_auto = 0U;
+    ctrl->pending_gate = 0U;
+    if (ctrl->auto_pause_active != 0U) {
+        ctrl->pending_resume = 0U;
+        ctrl->auto_pause_enabled = 0U;
+    } else {
+        ClearAutoPause(ctrl);
+    }
     ctrl->state = R2_CLIMB_STATE_IDLE;
     ctrl->state_done = 0U;
     ctrl->state_start_ms = now_ms;
@@ -1002,6 +1276,11 @@ static void BeginTestAction(R2_Climb_Ctrl_t *ctrl,
     case R2_CLIMB_TEST_ALL_LEGS_220:
         ClearLegPidByMask(0x0FU);
         SetAllLegTarget(ctrl, R2_CLIMB_LIFT_HIGH_MM);
+        break;
+
+    case R2_CLIMB_TEST_ALL_LEGS_300:
+        ClearLegPidByMask(0x0FU);
+        SetAllLegTarget(ctrl, R2_CLIMB_TEST_ALL_LEGS_300_MM);
         break;
 
     case R2_CLIMB_TEST_ALL_LEGS_UP_10:
@@ -1178,6 +1457,7 @@ static uint8_t TestActionReached(const R2_Climb_Ctrl_t *ctrl,
 
     switch ((R2_ClimbTestAction_t)ctrl->test_action) {
     case R2_CLIMB_TEST_ALL_LEGS_220:
+    case R2_CLIMB_TEST_ALL_LEGS_300:
     case R2_CLIMB_TEST_ALL_LEGS_UP_10:
     case R2_CLIMB_TEST_ALL_LEGS_DOWN_10:
     case R2_CLIMB_TEST_ALL_LEGS_ZERO:
@@ -1348,6 +1628,18 @@ static uint8_t CurrentStateReached(const R2_Climb_Ctrl_t *ctrl,
         return LegsReached(ctrl, 0x0FU);
     }
 
+    if (ctrl->state == R2_CLIMB_STATE_RECOVER_PREPARE) {
+        return LegsReached(ctrl, 0x0FU);
+    }
+
+    if (ctrl->state == R2_CLIMB_STATE_RECOVER_BACK) {
+        if ((move_ctrl != 0) &&
+            (R2_Move_GetPosState(move_ctrl) == R2_POS_DONE)) {
+            return 1U;
+        }
+        return 0U;
+    }
+
     if (ctrl->state == R2_CLIMB_STATE_UP_LASER_APPROACH) {
         return UpLaserTriggerReached();
     }
@@ -1483,6 +1775,7 @@ static void BuildDebugView(const R2_Climb_Ctrl_t *ctrl,
     view->flow = ctrl->flow;
     view->pending_step = ctrl->pending_step;
     view->pending_auto = ctrl->pending_auto;
+    view->auto_pause_active = ctrl->auto_pause_active;
     view->state_start_ms = ctrl->state_start_ms;
     view->last_update_ms = ctrl->last_update_ms;
     view->state_name = StateName(ctrl->flow, ctrl->state);
@@ -1619,8 +1912,11 @@ static void RequestFlow(R2_Climb_Ctrl_t *ctrl, uint8_t flow, uint8_t auto_run)
     if (FlowCanSwitch(ctrl, flow) == 0U) {
         ctrl->error_flags |= R2_CLIMB_ERR_FLOW_SWITCH;
         ctrl->auto_run = 0U;
+        ctrl->gate_active = 0U;
         ctrl->pending_step = 0U;
         ctrl->pending_auto = 0U;
+        ctrl->pending_gate = 0U;
+        ClearAutoPause(ctrl);
         ctrl->state_done = 0U;
         ctrl->state = R2_CLIMB_STATE_ERROR;
         return;
@@ -1631,14 +1927,75 @@ static void RequestFlow(R2_Climb_Ctrl_t *ctrl, uint8_t flow, uint8_t auto_run)
         ctrl->state = R2_CLIMB_STATE_IDLE;
         ctrl->state_done = 0U;
         ctrl->auto_run = 0U;
+        ctrl->gate_active = 0U;
+        ClearAutoPause(ctrl);
+    }
+
+    if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
+        (ctrl->state == R2_CLIMB_STATE_DONE) ||
+        (ctrl->state == R2_CLIMB_STATE_ERROR)) {
+        ctrl->recovery_active = 0U;
+        ctrl->recovery_attempted = 0U;
+        ctrl->recovery_flow = flow;
     }
 
     ctrl->pending_flow = flow;
+    ctrl->gate_active = 0U;
+    ctrl->pending_gate = 0U;
+    ClearAutoPause(ctrl);
     if (auto_run != 0U) {
         ctrl->pending_auto = 1U;
     } else {
         ctrl->pending_step = 1U;
     }
+}
+
+void R2_Climb_RequestFlowGate(R2_Climb_Ctrl_t *ctrl, uint8_t flow)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    flow = NormalizeFlow(flow);
+    if (ctrl->enabled == 0U) {
+        ctrl->enabled = 1U;
+    }
+
+    if (FlowCanSwitch(ctrl, flow) == 0U) {
+        ctrl->error_flags |= R2_CLIMB_ERR_FLOW_SWITCH;
+        ctrl->auto_run = 0U;
+        ctrl->gate_active = 0U;
+        ctrl->pending_step = 0U;
+        ctrl->pending_auto = 0U;
+        ctrl->pending_gate = 0U;
+        ClearAutoPause(ctrl);
+        ctrl->state_done = 0U;
+        ctrl->state = R2_CLIMB_STATE_ERROR;
+        return;
+    }
+
+    if (ctrl->flow != flow) {
+        ctrl->flow = flow;
+        ctrl->state = R2_CLIMB_STATE_IDLE;
+        ctrl->state_done = 0U;
+        ctrl->auto_run = 0U;
+        ctrl->gate_active = 0U;
+        ClearAutoPause(ctrl);
+    }
+
+    if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
+        (ctrl->state == R2_CLIMB_STATE_DONE) ||
+        (ctrl->state == R2_CLIMB_STATE_ERROR)) {
+        ctrl->recovery_active = 0U;
+        ctrl->recovery_attempted = 0U;
+        ctrl->recovery_flow = flow;
+    }
+
+    ctrl->pending_flow = flow;
+    ctrl->pending_step = 0U;
+    ctrl->pending_auto = 0U;
+    ctrl->pending_gate = 1U;
+    ClearAutoPause(ctrl);
 }
 
 void R2_Climb_RequestFlowStep(R2_Climb_Ctrl_t *ctrl, uint8_t flow)
@@ -1649,6 +2006,41 @@ void R2_Climb_RequestFlowStep(R2_Climb_Ctrl_t *ctrl, uint8_t flow)
 void R2_Climb_RequestFlowAuto(R2_Climb_Ctrl_t *ctrl, uint8_t flow)
 {
     RequestFlow(ctrl, flow, 1U);
+}
+
+void R2_Climb_RequestFlowAutoPause(R2_Climb_Ctrl_t *ctrl, uint8_t flow)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    flow = NormalizeFlow(flow);
+    RequestFlow(ctrl, flow, 1U);
+    if (ctrl->state == R2_CLIMB_STATE_ERROR) {
+        return;
+    }
+
+    ctrl->auto_pause_enabled = 1U;
+    ctrl->auto_pause_active = 0U;
+    ctrl->auto_pause_step =
+        (flow == (uint8_t)R2_CLIMB_FLOW_DOWNSTAIRS) ?
+        R2_CLIMB_DOWN_INTERRUPT_PAUSE_STEP :
+        R2_CLIMB_UP_INTERRUPT_PAUSE_STEP;
+    ctrl->auto_pause_resume_state = R2_CLIMB_STATE_IDLE;
+    ctrl->pending_resume = 0U;
+}
+
+void R2_Climb_RequestAutoResume(R2_Climb_Ctrl_t *ctrl)
+{
+    if (ctrl == 0) {
+        return;
+    }
+
+    if (ctrl->enabled == 0U) {
+        ctrl->enabled = 1U;
+    }
+
+    ctrl->pending_resume = 1U;
 }
 
 void R2_Climb_RequestTestAction(R2_Climb_Ctrl_t *ctrl, uint8_t action)
@@ -1710,7 +2102,10 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
     uint8_t reached;
     uint8_t step;
     uint8_t auto_req;
+    uint8_t gate_req;
+    uint8_t resume_req;
     uint8_t test_req;
+    R2_ClimbState_t resume_state;
 
     if (ctrl == 0) {
         return;
@@ -1729,6 +2124,9 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
         ctrl->state_done = 0U;
         ctrl->pending_step = 0U;
         ctrl->pending_auto = 0U;
+        ctrl->pending_gate = 0U;
+        ClearAutoPause(ctrl);
+        ctrl->gate_active = 0U;
         ctrl->pending_test_action = 0U;
         if (ctrl->test_chassis_active != 0U) {
             if (move_ctrl != 0) {
@@ -1751,6 +2149,7 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
     if (ctrl->test_active != 0U) {
         ctrl->pending_step = 0U;
         ctrl->pending_auto = 0U;
+        ctrl->pending_resume = 0U;
 
         if ((now_ms - ctrl->state_start_ms) >
             TestActionTimeoutMs(ctrl->test_action)) {
@@ -1777,8 +2176,55 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
 
     step = ctrl->pending_step;
     auto_req = ctrl->pending_auto;
+    gate_req = ctrl->pending_gate;
+    resume_req = ctrl->pending_resume;
     ctrl->pending_step = 0U;
     ctrl->pending_auto = 0U;
+    ctrl->pending_gate = 0U;
+    ctrl->pending_resume = 0U;
+
+    if (resume_req != 0U) {
+        if ((ctrl->auto_pause_active != 0U) &&
+            (ctrl->state_done != 0U) &&
+            (ctrl->state != R2_CLIMB_STATE_DONE) &&
+            (ctrl->state != R2_CLIMB_STATE_ERROR)) {
+            resume_state = ctrl->auto_pause_resume_state;
+            if (resume_state == R2_CLIMB_STATE_IDLE) {
+                resume_state = ctrl->state;
+            }
+            ClearAutoPause(ctrl);
+            ctrl->auto_run = 1U;
+            ctrl->gate_active = 0U;
+            BeginState(ctrl, move_ctrl, NextState(ctrl, resume_state), now_ms);
+        } else {
+            ctrl->error_flags |= R2_CLIMB_ERR_FLOW_SWITCH;
+            ctrl->auto_run = 0U;
+            ctrl->gate_active = 0U;
+            ClearAutoPause(ctrl);
+            ctrl->state_done = 0U;
+            ctrl->state = R2_CLIMB_STATE_ERROR;
+        }
+        step = 0U;
+        auto_req = 0U;
+        gate_req = 0U;
+    }
+
+    if (gate_req != 0U) {
+        ctrl->auto_run = 0U;
+        ctrl->gate_active = 1U;
+        if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
+            (ctrl->state == R2_CLIMB_STATE_DONE) ||
+            (ctrl->state_done != 0U)) {
+            BeginState(ctrl, move_ctrl, InitialAutoState(ctrl), now_ms);
+        } else {
+            ctrl->error_flags |= R2_CLIMB_ERR_FLOW_SWITCH;
+            ctrl->gate_active = 0U;
+            ctrl->state_done = 0U;
+            ctrl->state = R2_CLIMB_STATE_ERROR;
+        }
+        step = 0U;
+        auto_req = 0U;
+    }
 
     if (auto_req != 0U) {
         if (ctrl->state == R2_CLIMB_STATE_ERROR) {
@@ -1787,18 +2233,7 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
             ctrl->auto_run = 1U;
             if ((ctrl->state == R2_CLIMB_STATE_IDLE) ||
                 (ctrl->state == R2_CLIMB_STATE_DONE)) {
-                if (NormalizeFlow(ctrl->flow) ==
-                    (uint8_t)R2_CLIMB_FLOW_UPSTAIRS) {
-                    BeginState(ctrl,
-                               move_ctrl,
-                               R2_CLIMB_STATE_UP_LASER_APPROACH,
-                               now_ms);
-                } else {
-                    BeginState(ctrl,
-                               move_ctrl,
-                               R2_CLIMB_STATE_DOWN_LASER_APPROACH,
-                               now_ms);
-                }
+                BeginState(ctrl, move_ctrl, InitialAutoState(ctrl), now_ms);
             } else if (ctrl->state_done != 0U) {
                 BeginState(ctrl, move_ctrl, NextState(ctrl, ctrl->state), now_ms);
             }
@@ -1825,47 +2260,28 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
 
     if ((ctrl->state == R2_CLIMB_STATE_UP_LASER_APPROACH) &&
         (UpLaserXInvalidTimedOut(ctrl, now_ms) != 0U)) {
-        ctrl->error_flags |= R2_CLIMB_ERR_TIMEOUT;
-        if (ctrl->test_chassis_active != 0U) {
-            if (move_ctrl != 0) {
-                R2_Move_Stop(move_ctrl);
-            }
-            ctrl->test_chassis_active = 0U;
-        }
-        ctrl->auto_run = 0U;
-        ctrl->state_done = 0U;
-        ctrl->state = R2_CLIMB_STATE_ERROR;
+        RecoverOrEnterError(ctrl,
+                            move_ctrl,
+                            now_ms,
+                            R2_CLIMB_ERR_TIMEOUT);
         return;
     }
 
     if ((ctrl->state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) &&
         (DownLaserHeightInvalidTimedOut(ctrl, now_ms) != 0U)) {
-        ctrl->error_flags |= R2_CLIMB_ERR_TIMEOUT;
-        if (ctrl->test_chassis_active != 0U) {
-            if (move_ctrl != 0) {
-                R2_Move_Stop(move_ctrl);
-            }
-            ctrl->test_chassis_active = 0U;
-        }
-        ctrl->auto_run = 0U;
-        ctrl->state_done = 0U;
-        ctrl->state = R2_CLIMB_STATE_ERROR;
+        RecoverOrEnterError(ctrl,
+                            move_ctrl,
+                            now_ms,
+                            R2_CLIMB_ERR_TIMEOUT);
         return;
     }
 
     if (StateTimeoutMs(ctrl, ctrl->state) != 0U) {
         if ((now_ms - ctrl->state_start_ms) > StateTimeoutMs(ctrl, ctrl->state)) {
-            ctrl->error_flags |= R2_CLIMB_ERR_TIMEOUT;
-            if ((StateUsesChassis(ctrl, ctrl->state) != 0U) &&
-                (ctrl->test_chassis_active != 0U)) {
-                if (move_ctrl != 0) {
-                    R2_Move_Stop(move_ctrl);
-                }
-                ctrl->test_chassis_active = 0U;
-            }
-            ctrl->auto_run = 0U;
-            ctrl->state_done = 0U;
-            ctrl->state = R2_CLIMB_STATE_ERROR;
+            RecoverOrEnterError(ctrl,
+                                move_ctrl,
+                                now_ms,
+                                R2_CLIMB_ERR_TIMEOUT);
             return;
         }
     }
@@ -1883,9 +2299,37 @@ void R2_Climb_Update(R2_Climb_Ctrl_t *ctrl,
         ctrl->test_chassis_active = 0U;
     }
 
+    if (ctrl->state == R2_CLIMB_STATE_RECOVER_BACK) {
+        RestartAutoAfterRecovery(ctrl, move_ctrl, now_ms);
+        return;
+    }
+
+    if (ctrl->gate_active != 0U) {
+        if (ctrl->state == R2_CLIMB_STATE_DOWN_LASER_APPROACH) {
+            BeginState(ctrl, move_ctrl, R2_CLIMB_STATE_DOWN_APPROACH, now_ms);
+        } else {
+            ctrl->gate_active = 0U;
+            ctrl->auto_run = 0U;
+            ctrl->state_done = 1U;
+        }
+        return;
+    }
+
     if (ctrl->auto_run != 0U) {
+        if (ShouldPauseAfterState(ctrl, ctrl->state) != 0U) {
+            ctrl->auto_run = 0U;
+            ctrl->auto_pause_enabled = 0U;
+            ctrl->auto_pause_active = 1U;
+            ctrl->auto_pause_resume_state = ctrl->state;
+            ctrl->state_done = 1U;
+            return;
+        }
         BeginState(ctrl, move_ctrl, NextState(ctrl, ctrl->state), now_ms);
     } else {
+        if ((NextState(ctrl, ctrl->state) == R2_CLIMB_STATE_DONE) &&
+            (move_ctrl != 0)) {
+            R2_Move_SetMode(move_ctrl, R2_MODE_ROBOT_VEL);
+        }
         ctrl->state_done = 1U;
     }
 }

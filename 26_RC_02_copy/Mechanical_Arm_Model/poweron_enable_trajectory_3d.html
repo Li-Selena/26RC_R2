@@ -1,0 +1,362 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Power-on Enable Trajectory 3D</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172033;
+      --muted: #5f6b7a;
+      --line: #d9e2ec;
+      --panel: #ffffff;
+      --bg: #f6f8fb;
+      --blue: #2563eb;
+      --orange: #f97316;
+      --green: #059669;
+      --red: #dc2626;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      color: var(--ink);
+      background: var(--bg);
+      display: grid;
+      grid-template-columns: minmax(360px, 480px) 1fr;
+    }
+    aside {
+      background: var(--panel);
+      border-right: 1px solid var(--line);
+      padding: 22px;
+      overflow: auto;
+    }
+    main { position: relative; min-width: 0; min-height: 100vh; }
+    #scene { position: absolute; inset: 0; }
+    h1 { margin: 0 0 8px; font-size: 22px; letter-spacing: 0; }
+    p { margin: 0 0 14px; line-height: 1.55; color: var(--muted); }
+    table { width: 100%; border-collapse: collapse; margin: 18px 0; font-size: 13px; }
+    th, td { padding: 7px 4px; border-bottom: 1px solid var(--line); text-align: right; white-space: nowrap; }
+    th:first-child, td:first-child { text-align: left; }
+    .legend { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin: 16px 0; font-size: 13px; color: var(--muted); }
+    .item { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .swatch { width: 28px; height: 4px; border-radius: 2px; flex: 0 0 auto; background: #999; }
+    .meta { display: grid; gap: 6px; margin-top: 14px; color: var(--muted); font-size: 13px; }
+    .hud {
+      position: absolute;
+      left: 18px;
+      bottom: 18px;
+      padding: 10px 12px;
+      background: rgba(255,255,255,.86);
+      border: 1px solid rgba(217,226,236,.9);
+      border-radius: 6px;
+      font-size: 13px;
+      color: var(--muted);
+      pointer-events: none;
+    }
+    .error {
+      position: absolute;
+      inset: 0;
+      display: none;
+      place-items: center;
+      padding: 30px;
+      color: var(--red);
+      background: #fff;
+      text-align: center;
+      line-height: 1.5;
+    }
+    @media (max-width: 900px) {
+      body { grid-template-columns: 1fr; }
+      aside { border-right: 0; border-bottom: 1px solid var(--line); }
+      main { min-height: 620px; }
+    }
+  </style>
+</head>
+<body>
+  <aside>
+    <h1>上电到使能轨迹</h1>
+    <p>初始为 J1=180deg，曲柄长端在 XOY 平面以下 30deg；先只动 J2 抬到 alpha=80deg，J3 保持零位，再由 J1 回到 Y+ 工作空间。</p>
+    <div class="legend">
+      <div class="item"><span class="swatch" style="background:var(--blue)"></span>曲柄长端</div>
+      <div class="item"><span class="swatch" style="background:var(--orange)"></span>曲柄短端</div>
+      <div class="item"><span class="swatch" style="background:var(--green)"></span>J4 轨迹</div>
+      <div class="item"><span class="swatch" style="background:var(--red)"></span>S1 工具点轨迹</div>
+    </div>
+    <table>
+      <thead>
+        <tr>
+          <th>点</th><th>J1</th><th>alpha</th><th>theta2</th><th>theta3</th><th>phi</th>
+        </tr>
+      </thead>
+      <tbody id="poseRows"></tbody>
+    </table>
+    <table>
+      <thead>
+        <tr>
+          <th>点</th><th>J4 X</th><th>J4 Y</th><th>J4 Z</th><th>S1 Z</th>
+        </tr>
+      </thead>
+      <tbody id="pointRows"></tbody>
+    </table>
+    <div class="meta">
+      <div>长段: 330.0 mm；短段: 124.55 mm；短端相对长端下折 30deg。</div>
+      <div>上电 Frame4: X4+ = X0-，Y4+ = Z0-，Z4+ = Y0-。</div>
+      <div>结束 Frame4: X4+ = X0+，Y4+ = Y0+，Z4+ = Z0+。</div>
+      <div>所有采样点使用同一凸型侧面分支，yaw 只旋转工作平面。</div>
+    </div>
+  </aside>
+  <main>
+    <div id="scene"></div>
+    <div class="hud">拖动旋转，滚轮缩放</div>
+    <div id="error" class="error">Three.js 未加载，无法显示三维轨迹。请确认网络可访问 CDN 后重新打开。</div>
+  </main>
+  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  <script>
+    const DEG = Math.PI / 180;
+    const MODEL = {
+      d1: 98.18,
+      j2y: 42.64,
+      long: 330.0,
+      short: 124.55,
+      bend: 30 * DEG,
+      s1: { x: 0, y: -46.79, z: 45.5 }
+    };
+    MODEL.offset = Math.atan2(
+      MODEL.short * Math.sin(MODEL.bend),
+      MODEL.long + MODEL.short * Math.cos(MODEL.bend)
+    );
+    MODEL.l23 = Math.hypot(
+      MODEL.long + MODEL.short * Math.cos(MODEL.bend),
+      MODEL.short * Math.sin(MODEL.bend)
+    );
+
+    if (!window.THREE) {
+      document.getElementById("error").style.display = "grid";
+      throw new Error("Three.js failed to load");
+    }
+
+    const powerTheta2 = alphaToTheta2(-30 * DEG);
+    const powerTheta3 = -0.5 * Math.PI - powerTheta2;
+
+    const keyPoses = [
+      { id: "P0", name: "上电", yaw: 180 * DEG, alpha: -30 * DEG, theta3: powerTheta3, color: 0x64748b },
+      { id: "P1", name: "J2 抬升", yaw: 180 * DEG, alpha: 80 * DEG, theta3: powerTheta3, color: 0x2563eb },
+      { id: "P2", name: "J1 回零", yaw: 0, alpha: 80 * DEG, theta3: powerTheta3, color: 0x059669 }
+    ].map(p => ({ ...p, geom: solvePose(p.yaw, p.alpha, p.theta3) }));
+
+    function alphaToTheta2(alpha) {
+      return alpha - MODEL.offset - 0.5 * Math.PI;
+    }
+    function v(x, y, z) { return new THREE.Vector3(x, y, z); }
+    function addScaled(a, b, s) { return a.clone().add(b.clone().multiplyScalar(s)); }
+    function fmtRad(rad) { return (rad / DEG).toFixed(1); }
+    function fmtMm(mm) { return mm.toFixed(1); }
+    function solvePose(yaw, alpha, theta3) {
+      const theta2 = alphaToTheta2(alpha);
+      const phi = theta2 + theta3;
+      const cy = Math.cos(yaw), sy = Math.sin(yaw);
+      const xAxis = v(cy, sy, 0);
+      const yBase = v(-sy, cy, 0);
+      const zBase = v(0, 0, 1);
+      const yAxis = yBase.clone().multiplyScalar(Math.cos(phi)).add(zBase.clone().multiplyScalar(Math.sin(phi)));
+      const zAxis = yBase.clone().multiplyScalar(-Math.sin(phi)).add(zBase.clone().multiplyScalar(Math.cos(phi)));
+      const j2 = v(-MODEL.j2y * sy, MODEL.j2y * cy, MODEL.d1);
+      const elbow = addScaled(j2, yBase, MODEL.long * Math.cos(alpha));
+      elbow.addScaledVector(zBase, MODEL.long * Math.sin(alpha));
+      const j4 = addScaled(elbow, yBase, MODEL.short * Math.cos(alpha - MODEL.bend));
+      j4.addScaledVector(zBase, MODEL.short * Math.sin(alpha - MODEL.bend));
+      const tool = j4.clone()
+        .addScaledVector(xAxis, MODEL.s1.x)
+        .addScaledVector(yAxis, MODEL.s1.y)
+        .addScaledVector(zAxis, MODEL.s1.z);
+      return { theta2, theta3, phi, xAxis, yAxis, zAxis, j2, elbow, j4, tool };
+    }
+    function pathSamples() {
+      const out = [];
+      for (let i = 0; i <= 48; i++) {
+        const t = i / 48;
+        out.push(solvePose(Math.PI, (-30 + 110 * t) * DEG, powerTheta3));
+      }
+      for (let i = 1; i <= 48; i++) {
+        const t = i / 48;
+        out.push(solvePose((180 - 180 * t) * DEG, 80 * DEG, powerTheta3));
+      }
+      return out;
+    }
+
+    function fillTables() {
+      document.getElementById("poseRows").innerHTML = keyPoses.map(p => `
+        <tr>
+          <td>${p.id} ${p.name}</td>
+          <td>${fmtRad(p.yaw)}</td>
+          <td>${fmtRad(p.alpha)}</td>
+          <td>${fmtRad(p.geom.theta2)}</td>
+          <td>${fmtRad(p.geom.theta3)}</td>
+          <td>${fmtRad(p.geom.phi)}</td>
+        </tr>`).join("");
+      document.getElementById("pointRows").innerHTML = keyPoses.map(p => `
+        <tr>
+          <td>${p.id}</td>
+          <td>${fmtMm(p.geom.j4.x)}</td>
+          <td>${fmtMm(p.geom.j4.y)}</td>
+          <td>${fmtMm(p.geom.j4.z)}</td>
+          <td>${fmtMm(p.geom.tool.z)}</td>
+        </tr>`).join("");
+    }
+
+    fillTables();
+
+    if (!window.THREE) {
+      document.getElementById("error").style.display = "grid";
+    } else {
+      const mount = document.getElementById("scene");
+      const scene = new THREE.Scene();
+      scene.background = new THREE.Color(0xf6f8fb);
+      const camera = new THREE.PerspectiveCamera(45, 1, 1, 4000);
+      camera.up.set(0, 0, 1);
+      const renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      renderer.shadowMap.enabled = true;
+      mount.appendChild(renderer.domElement);
+
+      const root = new THREE.Group();
+      scene.add(root);
+      scene.add(new THREE.HemisphereLight(0xffffff, 0xdde7f0, 1.5));
+      const sun = new THREE.DirectionalLight(0xffffff, 1.8);
+      sun.position.set(300, -500, 700);
+      scene.add(sun);
+
+      drawGrid(root);
+      drawAxes(root);
+      drawPath(root, pathSamples().map(g => g.j4), 0x059669);
+      drawPath(root, pathSamples().map(g => g.tool), 0xdc2626);
+      keyPoses.forEach((pose, index) => drawArm(root, pose, index));
+
+      let azimuth = -44 * DEG;
+      let elevation = 27 * DEG;
+      let distance = 880;
+      let dragging = false;
+      let lastX = 0, lastY = 0;
+
+      renderer.domElement.addEventListener("pointerdown", event => {
+        dragging = true;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        renderer.domElement.setPointerCapture(event.pointerId);
+      });
+      renderer.domElement.addEventListener("pointermove", event => {
+        if (!dragging) return;
+        const dx = event.clientX - lastX;
+        const dy = event.clientY - lastY;
+        lastX = event.clientX;
+        lastY = event.clientY;
+        azimuth -= dx * 0.006;
+        elevation = Math.max(-0.15, Math.min(1.35, elevation + dy * 0.004));
+        render();
+      });
+      renderer.domElement.addEventListener("pointerup", () => { dragging = false; });
+      renderer.domElement.addEventListener("wheel", event => {
+        event.preventDefault();
+        distance = Math.max(420, Math.min(1600, distance + event.deltaY * 0.45));
+        render();
+      }, { passive: false });
+
+      window.addEventListener("resize", resize);
+      resize();
+
+      function resize() {
+        const rect = mount.getBoundingClientRect();
+        renderer.setSize(rect.width, rect.height);
+        camera.aspect = rect.width / Math.max(rect.height, 1);
+        camera.updateProjectionMatrix();
+        render();
+      }
+      function updateCamera() {
+        const target = new THREE.Vector3(0, 0, 130);
+        camera.position.set(
+          target.x + distance * Math.cos(elevation) * Math.cos(azimuth),
+          target.y + distance * Math.cos(elevation) * Math.sin(azimuth),
+          target.z + distance * Math.sin(elevation)
+        );
+        camera.lookAt(target);
+      }
+      function render() {
+        updateCamera();
+        renderer.render(scene, camera);
+      }
+      function drawGrid(group) {
+        const material = new THREE.LineBasicMaterial({ color: 0xd9e2ec });
+        const bold = new THREE.LineBasicMaterial({ color: 0xb8c5d3 });
+        for (let i = -500; i <= 500; i += 100) {
+          line(group, [v(-500, i, 0), v(500, i, 0)], i === 0 ? bold : material);
+          line(group, [v(i, -500, 0), v(i, 500, 0)], i === 0 ? bold : material);
+        }
+      }
+      function drawAxes(group) {
+        cylinder(group, v(0, 0, 0), v(180, 0, 0), 0xdc2626, 3);
+        cylinder(group, v(0, 0, 0), v(0, 180, 0), 0x059669, 3);
+        cylinder(group, v(0, 0, 0), v(0, 0, 180), 0x2563eb, 3);
+      }
+      function drawPath(group, points, color) {
+        const material = new THREE.LineBasicMaterial({ color });
+        line(group, points, material);
+        points.forEach((point, index) => {
+          if (index % 12 === 0) sphere(group, point, 5, color);
+        });
+      }
+      function drawArm(group, pose, index) {
+        const g = pose.geom;
+        const alpha = index === 0 ? 0.45 : 1.0;
+        cylinder(group, v(0, 0, 0), g.j2, 0x94a3b8, 4, alpha);
+        cylinder(group, g.j2, g.elbow, 0x2563eb, 9, alpha);
+        cylinder(group, g.elbow, g.j4, 0xf97316, 8, alpha);
+        cylinder(group, g.j2, g.j4, 0x64748b, 2, 0.45);
+        cylinder(group, g.j4, g.tool, pose.color, 3, alpha);
+        [v(0,0,0), g.j2, g.elbow, g.j4, g.tool].forEach((point, i) => {
+          sphere(group, point, i === 4 ? 9 : 7, i === 4 ? pose.color : 0x172033, alpha);
+        });
+        drawFrame4(group, g, alpha);
+      }
+      function drawFrame4(group, geom, alpha) {
+        const o = geom.j4;
+        cylinder(group, o, o.clone().addScaledVector(geom.xAxis, 70), 0xdc2626, 2.5, alpha);
+        cylinder(group, o, o.clone().addScaledVector(geom.yAxis, 70), 0x059669, 2.5, alpha);
+        cylinder(group, o, o.clone().addScaledVector(geom.zAxis, 70), 0x2563eb, 2.5, alpha);
+      }
+      function line(group, points, material) {
+        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+        group.add(new THREE.Line(geometry, material));
+      }
+      function sphere(group, point, radius, color, opacity = 1) {
+        const material = new THREE.MeshStandardMaterial({
+          color,
+          transparent: opacity < 1,
+          opacity,
+          roughness: 0.7
+        });
+        const mesh = new THREE.Mesh(new THREE.SphereGeometry(radius, 18, 12), material);
+        mesh.position.copy(point);
+        group.add(mesh);
+      }
+      function cylinder(group, a, b, color, radius, opacity = 1) {
+        const delta = b.clone().sub(a);
+        const length = delta.length();
+        if (length < 0.001) return;
+        const material = new THREE.MeshStandardMaterial({
+          color,
+          transparent: opacity < 1,
+          opacity,
+          roughness: 0.72,
+          metalness: 0.02
+        });
+        const mesh = new THREE.Mesh(new THREE.CylinderGeometry(radius, radius, length, 18), material);
+        mesh.position.copy(a).addScaledVector(delta, 0.5);
+        mesh.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.normalize());
+        group.add(mesh);
+      }
+    }
+  </script>
+</body>
+</html>
